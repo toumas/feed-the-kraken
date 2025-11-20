@@ -11,6 +11,7 @@ import {
   type LobbyState,
   type MessagePayload,
   MIN_PLAYERS,
+  type Role,
   type ViewState,
 } from "./types";
 
@@ -27,6 +28,7 @@ export default function KrakenCompanion() {
 
   // Lobby State (now synced via PartyKit)
   const [lobby, setLobby] = useState<LobbyState | null>(null);
+  const [myRole, setMyRole] = useState<Role | null>(null);
 
   // PartyKit connection
   const [socket, setSocket] = useState<PartySocket | null>(null);
@@ -79,6 +81,14 @@ export default function KrakenCompanion() {
             if (data.lobby?.status === "PLAYING") {
               setView("GAME");
             }
+            break;
+          case "GAME_STARTED":
+            // Server sent us the role assignments
+            // In a real secure app, we'd only get our own, but here we get all and pick ours
+            if (data.assignments?.[myPlayerId]) {
+              setMyRole(data.assignments[myPlayerId]);
+            }
+            setView("GAME");
             break;
           case "ERROR":
             setError(data.message);
@@ -245,7 +255,7 @@ export default function KrakenCompanion() {
               </div>
             ))}
           {view === "GAME" && lobby && (
-            <GameView lobby={lobby} onLeave={leaveLobby} />
+            <GameView lobby={lobby} myRole={myRole} onLeave={leaveLobby} />
           )}
         </div>
       </main>

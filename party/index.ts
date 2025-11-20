@@ -231,9 +231,29 @@ export default class Server implements Party.Server {
     const player = this.lobbyState.players.find((p) => p.id === playerId);
 
     if (player?.isHost && this.lobbyState.players.length >= 5) {
+      // 1. Determine roles based on player count
+      const playerCount = this.lobbyState.players.length;
+      const roles = getRolesForPlayerCount(playerCount);
+
+      // 2. Shuffle roles
+      const shuffledRoles = roles.sort(() => Math.random() - 0.5);
+
+      // 3. Assign roles to players map for easy lookup (optional, but good for server authority if we wanted to store it)
+      const assignments: Record<string, Role> = {};
+      this.lobbyState.players.forEach((p, index) => {
+        assignments[p.id] = shuffledRoles[index];
+      });
+
       this.lobbyState.status = "PLAYING";
       await this.saveLobbyState();
-      this.broadcastLobbyUpdate();
+
+      // Broadcast the start with assignments
+      this.room.broadcast(
+        JSON.stringify({
+          type: "GAME_STARTED",
+          assignments,
+        }),
+      );
     }
   }
 
@@ -294,3 +314,67 @@ export default class Server implements Party.Server {
 }
 
 Server satisfies Party.Worker;
+
+// --- Helpers ---
+
+export type Role = "SAILOR" | "PIRATE" | "CULT_LEADER" | "CULTIST";
+
+export function getRolesForPlayerCount(count: number): Role[] {
+  const roles: Role[] = [];
+
+  // Always 1 Cult Leader
+  roles.push("CULT_LEADER");
+
+  let sailors = 0;
+  let pirates = 0;
+  let cultists = 0;
+
+  switch (count) {
+    case 5:
+      // 5 players: 3 Sailors, 1 Pirate OR 2 Sailors, 2 Pirates
+      if (Math.random() < 0.5) {
+        sailors = 3;
+        pirates = 1;
+      } else {
+        sailors = 2;
+        pirates = 2;
+      }
+      break;
+    case 6:
+      sailors = 3;
+      pirates = 2;
+      break;
+    case 7:
+      sailors = 4;
+      pirates = 2;
+      break;
+    case 8:
+      sailors = 4;
+      pirates = 3;
+      break;
+    case 9:
+      sailors = 5;
+      pirates = 3;
+      break;
+    case 10:
+      sailors = 5;
+      pirates = 4;
+      break;
+    case 11:
+      sailors = 5;
+      pirates = 4;
+      cultists = 1;
+      break;
+    default:
+      // Fallback for unexpected counts (should be blocked by UI/logic)
+      // Just fill with sailors to avoid crash
+      sailors = count - 1;
+      break;
+  }
+
+  for (let i = 0; i < sailors; i++) roles.push("SAILOR");
+  for (let i = 0; i < pirates; i++) roles.push("PIRATE");
+  for (let i = 0; i < cultists; i++) roles.push("CULTIST");
+
+  return roles;
+}

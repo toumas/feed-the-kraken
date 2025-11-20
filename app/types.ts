@@ -48,3 +48,5 @@ export type MessagePayload =
 // --- Constants ---
 export const MIN_PLAYERS = 5;
 export const MAX_PLAYERS = 11;
+
+export type Role = "SAILOR" | "PIRATE" | "CULT_LEADER" | "CULTIST";

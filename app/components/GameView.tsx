@@ -1,22 +1,66 @@
-import { Skull } from "lucide-react";
-import type { LobbyState } from "../types";
+import { Anchor, Eye, Ghost, Skull, User } from "lucide-react";
+import type { LobbyState, Role } from "../types";
 import { Avatar } from "./Avatar";
 
 interface GameViewProps {
   lobby: LobbyState;
+  myRole: Role | null;
   onLeave: () => void;
 }
 
-export function GameView({ lobby, onLeave }: GameViewProps) {
+export function GameView({ lobby, myRole, onLeave }: GameViewProps) {
+  const getRoleDetails = (role: Role | null) => {
+    switch (role) {
+      case "SAILOR":
+        return {
+          title: "Loyal Sailor",
+          color: "text-blue-400",
+          icon: <Anchor className="w-32 h-32 text-blue-500 animate-pulse" />,
+          desc: "Steer the ship to safety! Trust no one but your fellow sailors.",
+        };
+      case "PIRATE":
+        return {
+          title: "Pirate",
+          color: "text-red-500",
+          icon: <Skull className="w-32 h-32 text-red-600 animate-pulse" />,
+          desc: "Sabotage the voyage! Feed the Kraken or mutiny!",
+        };
+      case "CULT_LEADER":
+        return {
+          title: "Cult Leader",
+          color: "text-yellow-500",
+          icon: <Eye className="w-32 h-32 text-yellow-500 animate-pulse" />,
+          desc: "Convert others to your cause. The Kraken awaits!",
+        };
+      case "CULTIST":
+        return {
+          title: "Cultist",
+          color: "text-green-500",
+          icon: <Ghost className="w-32 h-32 text-green-500 animate-pulse" />,
+          desc: "Serve the Cult Leader. The deep calls!",
+        };
+      default:
+        return {
+          title: "Stowaway",
+          color: "text-slate-400",
+          icon: <User className="w-32 h-32 text-slate-500 animate-pulse" />,
+          desc: "Wait... how did you get here?",
+        };
+    }
+  };
+
+  const roleInfo = getRoleDetails(myRole);
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center space-y-6 animate-in zoom-in-95 duration-700">
-      <Skull className="w-32 h-32 text-cyan-800 animate-pulse" />
-      <h2 className="text-3xl font-bold text-center bg-linear-to-br from-white to-slate-500 bg-clip-text text-transparent">
-        Voyage Underway
+      {roleInfo.icon}
+      <h2
+        className={`text-4xl font-bold text-center ${roleInfo.color} drop-shadow-lg`}
+      >
+        {roleInfo.title}
       </h2>
-      <p className="text-slate-400 text-center max-w-xs">
-        The ship has departed with {lobby.players.length} brave souls. Keep your
-        eyes on the horizon (and the main board game)!
+      <p className="text-slate-300 text-center max-w-xs text-lg font-medium">
+        {roleInfo.desc}
       </p>
       <div className="p-6 bg-slate-900 rounded-xl border border-slate-800 w-full max-w-sm">
         <h3 className="text-sm text-slate-500 uppercase mb-4 font-bold">

@@ -42,3 +42,7 @@ next-env.d.ts
 
 # Partykit
 .partykit
+
+# Playwright
+playwright-report/
+test-results/
