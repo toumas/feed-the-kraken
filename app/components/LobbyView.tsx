@@ -35,7 +35,9 @@ export function LobbyView({
   const canStart = playerCount >= MIN_PLAYERS && playerCount <= MAX_PLAYERS;
 
   const [isEditing, setIsEditing] = useState(
-    !myPlayer?.name || myPlayer.name.includes("Player"),
+    !myPlayer?.name ||
+      myPlayer.name.includes("Player") ||
+      myPlayer.name === "New Sailor",
   );
   const [copied, setCopied] = useState(false);
 
@@ -148,13 +150,22 @@ export function LobbyView({
             <div
               key={player.id}
               className={cn(
-                "flex items-center p-2 rounded-lg border bg-slate-900/50 transition-all duration-300",
+                "flex items-center p-2 rounded-lg border transition-all duration-300",
                 player.id === myPlayerId
                   ? "border-cyan-700/50 bg-cyan-950/30"
-                  : "border-slate-800",
+                  : "border-slate-800 bg-slate-900/50",
+                !player.isOnline && "opacity-50 grayscale",
               )}
             >
-              <Avatar url={player.photoUrl} size="sm" className="mr-3" />
+              <div className="relative">
+                <Avatar url={player.photoUrl} size="sm" className="mr-3" />
+                {!player.isOnline && (
+                  <div
+                    className="absolute -bottom-1 -right-1 w-3 h-3 bg-slate-500 rounded-full border-2 border-slate-900"
+                    title="Offline"
+                  />
+                )}
+              </div>
               <div className="overflow-hidden">
                 <p className="font-medium truncate text-slate-200 text-sm">
                   {player.name}
@@ -166,6 +177,9 @@ export function LobbyView({
                   <p className="text-xs text-yellow-500/80 flex items-center gap-1">
                     Captain
                   </p>
+                )}
+                {!player.isOnline && (
+                  <p className="text-xs text-slate-500">Offline</p>
                 )}
               </div>
             </div>

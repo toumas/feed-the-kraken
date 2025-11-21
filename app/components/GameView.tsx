@@ -1,5 +1,6 @@
 import { Anchor, Eye, Ghost, Skull, User } from "lucide-react";
 import type { LobbyState, Role } from "../types";
+import { cn } from "../utils";
 import { Avatar } from "./Avatar";
 
 interface GameViewProps {
@@ -72,11 +73,22 @@ export function GameView({ lobby, myRole, onLeave }: GameViewProps) {
               key={p.id}
               className="relative hover:z-10 hover:-translate-y-1 transition-transform"
             >
-              <Avatar
-                url={p.photoUrl}
-                size="md"
-                className="ring-4 ring-slate-950"
-              />
+              <div className="relative">
+                <Avatar
+                  url={p.photoUrl}
+                  size="md"
+                  className={cn(
+                    "ring-4 ring-slate-950",
+                    !p.isOnline && "opacity-50 grayscale",
+                  )}
+                />
+                {!p.isOnline && (
+                  <div
+                    className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-500 rounded-full border-2 border-slate-900 z-20"
+                    title="Offline"
+                  />
+                )}
+              </div>
             </div>
           ))}
         </div>

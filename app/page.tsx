@@ -1,7 +1,7 @@
 "use client";
 import { AlertCircle, Anchor, X } from "lucide-react";
 import PartySocket from "partysocket";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { GameView } from "./components/GameView";
 import { HomeView } from "./components/HomeView";
 import { JoinView } from "./components/JoinView";
@@ -22,9 +22,31 @@ export default function KrakenCompanion() {
   const [error, setError] = useState<string | null>(null);
 
   // User State
-  const [myPlayerId] = useState<string>(
-    () => `player_${Math.random().toString(36).substr(2, 9)}`,
-  );
+  // User State
+  const [myPlayerId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("kraken_player_id");
+      if (stored) return stored;
+      const newId = `player_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem("kraken_player_id", newId);
+      return newId;
+    }
+    return `player_${Math.random().toString(36).substr(2, 9)}`;
+  });
+
+  const [myName, setMyName] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("kraken_player_name") || "New Sailor";
+    }
+    return "New Sailor";
+  });
+
+  const [myPhoto, setMyPhoto] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("kraken_player_photo");
+    }
+    return null;
+  });
 
   // Lobby State (now synced via PartyKit)
   const [lobby, setLobby] = useState<LobbyState | null>(null);
@@ -37,71 +59,92 @@ export default function KrakenCompanion() {
 
   // Connect to PartyKit room
   // Accept an optional initialPayload which will be sent once the socket opens.
-  const connectToLobby = (
-    lobbyCode: string,
-    initialPayload?: MessagePayload,
-  ) => {
-    if (socket) {
-      socket.close();
-    }
+  const connectToLobby = useCallback(
+    (lobbyCode: string, initialPayload?: MessagePayload) => {
+      if (socket) {
+        socket.close();
+      }
 
-    setConnectionStatus("connecting");
-    const newSocket = new PartySocket({
-      host: process.env.NEXT_PUBLIC_PARTYKIT_HOST || "localhost:1999",
-      room: lobbyCode,
-    });
+      setConnectionStatus("connecting");
+      const newSocket = new PartySocket({
+        host: process.env.NEXT_PUBLIC_PARTYKIT_HOST || "localhost:1999",
+        room: lobbyCode,
+      });
 
-    newSocket.onopen = () => {
-      setConnectionStatus("connected");
-      // If caller provided an initial payload (CREATE/JOIN), send it now
-      if (initialPayload) {
+      newSocket.onopen = () => {
+        setConnectionStatus("connected");
+        // If caller provided an initial payload (CREATE/JOIN), send it now
+        if (initialPayload) {
+          try {
+            newSocket.send(JSON.stringify(initialPayload));
+          } catch (err) {
+            console.error("Failed to send initial payload:", err);
+          }
+        }
+      };
+
+      newSocket.onclose = () => {
+        setConnectionStatus("disconnected");
+      };
+
+      newSocket.onerror = () => {
+        setConnectionStatus("error");
+      };
+
+      newSocket.onmessage = (event) => {
         try {
-          newSocket.send(JSON.stringify(initialPayload));
-        } catch (err) {
-          console.error("Failed to send initial payload:", err);
-        }
-      }
-    };
-
-    newSocket.onclose = () => {
-      setConnectionStatus("disconnected");
-    };
-
-    newSocket.onerror = () => {
-      setConnectionStatus("error");
-    };
-
-    newSocket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        switch (data.type) {
-          case "LOBBY_UPDATE":
-            setLobby(data.lobby);
-            // Keep view in sync with authoritative server state.
-            if (data.lobby?.status === "PLAYING") {
+          const data = JSON.parse(event.data);
+          switch (data.type) {
+            case "LOBBY_UPDATE":
+              setLobby(data.lobby);
+              // Keep view in sync with authoritative server state.
+              if (data.lobby?.status === "PLAYING") {
+                setView("GAME");
+                // Restore role if available in persisted state
+                if (data.lobby.assignments?.[myPlayerId]) {
+                  setMyRole(data.lobby.assignments[myPlayerId]);
+                }
+              }
+              break;
+            case "GAME_STARTED":
+              // Server sent us the role assignments
+              // In a real secure app, we'd only get our own, but here we get all and pick ours
+              if (data.assignments?.[myPlayerId]) {
+                setMyRole(data.assignments[myPlayerId]);
+              }
               setView("GAME");
-            }
-            break;
-          case "GAME_STARTED":
-            // Server sent us the role assignments
-            // In a real secure app, we'd only get our own, but here we get all and pick ours
-            if (data.assignments?.[myPlayerId]) {
-              setMyRole(data.assignments[myPlayerId]);
-            }
-            setView("GAME");
-            break;
-          case "ERROR":
-            setError(data.message);
-            setTimeout(() => setError(null), 3000);
-            break;
+              break;
+            case "ERROR":
+              setError(data.message);
+              setTimeout(() => setError(null), 3000);
+              break;
+          }
+        } catch (error) {
+          console.error("Error parsing message:", error);
         }
-      } catch (error) {
-        console.error("Error parsing message:", error);
-      }
-    };
+      };
 
-    setSocket(newSocket);
-  };
+      setSocket(newSocket);
+    },
+    [myPlayerId, socket],
+  );
+
+  // Auto-reconnect on mount
+  useEffect(() => {
+    if (socket) return;
+    if (typeof window !== "undefined") {
+      const savedCode = localStorage.getItem("kraken_lobby_code");
+      if (savedCode) {
+        connectToLobby(savedCode, {
+          type: "JOIN_LOBBY",
+          playerId: myPlayerId,
+          playerName: myName,
+          playerPhoto: myPhoto,
+        });
+        setView("LOBBY");
+      }
+    }
+  }, [connectToLobby, myName, myPhoto, myPlayerId, socket]);
 
   // Disconnect from current lobby
   const disconnectFromLobby = () => {
@@ -119,10 +162,11 @@ export default function KrakenCompanion() {
     connectToLobby(newCode, {
       type: "CREATE_LOBBY",
       playerId: myPlayerId,
-      playerName: "Captain Host",
-      playerPhoto: null,
+      playerName: myName === "New Sailor" ? "Captain Host" : myName,
+      playerPhoto: myPhoto,
     });
 
+    localStorage.setItem("kraken_lobby_code", newCode);
     setView("LOBBY");
     setError(null);
   };
@@ -135,15 +179,27 @@ export default function KrakenCompanion() {
     connectToLobby(codeEntered.toUpperCase(), {
       type: "JOIN_LOBBY",
       playerId: myPlayerId,
-      playerName: "New Sailor",
-      playerPhoto: null,
+      playerName: myName,
+      playerPhoto: myPhoto,
     });
 
+    localStorage.setItem("kraken_lobby_code", codeEntered.toUpperCase());
     setView("LOBBY");
     setError(null);
   };
 
   const updateMyProfile = (name: string, photoUrl: string | null) => {
+    setMyName(name);
+    setMyPhoto(photoUrl);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("kraken_player_name", name);
+      if (photoUrl) {
+        localStorage.setItem("kraken_player_photo", photoUrl);
+      } else {
+        localStorage.removeItem("kraken_player_photo");
+      }
+    }
+
     if (!socket) return;
     socket.send(
       JSON.stringify({
@@ -175,6 +231,7 @@ export default function KrakenCompanion() {
       );
     }
     disconnectFromLobby();
+    localStorage.removeItem("kraken_lobby_code");
     setView("HOME");
     setError(null);
   };

@@ -7,6 +7,7 @@ export type Player = {
   photoUrl: string | null;
   isHost: boolean;
   isReady: boolean;
+  isOnline: boolean;
   joinedAt: number;
 };
 
@@ -14,6 +15,7 @@ export type LobbyState = {
   code: string;
   players: Player[];
   status: "WAITING" | "PLAYING";
+  assignments?: Record<string, Role>;
 };
 
 export type ConnectionStatus =

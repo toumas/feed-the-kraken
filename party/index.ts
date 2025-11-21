@@ -6,6 +6,7 @@ export type Player = {
   photoUrl: string | null;
   isHost: boolean;
   isReady: boolean;
+  isOnline: boolean;
   joinedAt: number;
 };
 
@@ -13,6 +14,7 @@ export type LobbyState = {
   code: string;
   players: Player[];
   status: "WAITING" | "PLAYING";
+  assignments?: Record<string, Role>;
 };
 
 type CreateLobbyMessage = {
@@ -76,6 +78,24 @@ export default class Server implements Party.Server {
     }
   }
 
+  async onClose(conn: Party.Connection) {
+    if (!this.lobbyState) return;
+
+    const playerId = this.connectionToPlayer.get(conn.id);
+    if (!playerId) return;
+
+    this.connectionToPlayer.delete(conn.id);
+
+    const player = this.lobbyState.players.find((p) => p.id === playerId);
+    if (!player) return;
+
+    player.isOnline = false;
+    this.broadcastLobbyUpdate();
+  }
+
+  // Map connection ID to player ID
+  connectionToPlayer = new Map<string, string>();
+
   async onMessage(message: string, sender: Party.Connection) {
     try {
       const data = JSON.parse(message);
@@ -129,12 +149,14 @@ export default class Server implements Party.Server {
           photoUrl: playerPhoto,
           isHost: true,
           isReady: false,
+          isOnline: true,
           joinedAt: Date.now(),
         },
       ],
       status: "WAITING",
     };
 
+    this.connectionToPlayer.set(sender.id, playerId);
     await this.saveLobbyState();
     this.broadcastLobbyUpdate();
   }
@@ -160,27 +182,36 @@ export default class Server implements Party.Server {
       // Player is rejoining, just update their info
       existingPlayer.name = playerName;
       existingPlayer.photoUrl = playerPhoto;
-    } else {
-      // New player joining
-      if (this.lobbyState.players.length >= 11) {
-        sender.send(
-          JSON.stringify({
-            type: "ERROR",
-            message: "Lobby is full",
-          }),
-        );
-        return;
-      }
+      existingPlayer.isOnline = true;
 
-      this.lobbyState.players.push({
-        id: playerId,
-        name: playerName,
-        photoUrl: playerPhoto,
-        isHost: false,
-        isReady: false,
-        joinedAt: Date.now(),
-      });
+      this.connectionToPlayer.set(sender.id, playerId);
+      await this.saveLobbyState();
+      this.broadcastLobbyUpdate();
+      return;
     }
+
+    // New player joining
+    if (this.lobbyState.players.length >= 11) {
+      sender.send(
+        JSON.stringify({
+          type: "ERROR",
+          message: "Lobby is full",
+        }),
+      );
+      return;
+    }
+
+    this.lobbyState.players.push({
+      id: playerId,
+      name: playerName,
+      photoUrl: playerPhoto,
+      isHost: false,
+      isReady: false,
+      isOnline: true,
+      joinedAt: Date.now(),
+    });
+
+    this.connectionToPlayer.set(sender.id, playerId);
 
     await this.saveLobbyState();
     this.broadcastLobbyUpdate();
@@ -214,14 +245,20 @@ export default class Server implements Party.Server {
     if (this.lobbyState.players.length === 0) {
       this.lobbyState = null;
       await this.room.storage.delete("lobby");
-    } else {
-      // If host left, assign new host
-      if (!this.lobbyState.players.some((p) => p.isHost)) {
-        this.lobbyState.players[0].isHost = true;
-      }
-      await this.saveLobbyState();
-      this.broadcastLobbyUpdate();
+      return;
     }
+
+    // If host left, assign new host
+    if (!this.lobbyState.players.some((p) => p.isHost)) {
+      this.lobbyState.players[0].isHost = true;
+    }
+    await this.saveLobbyState();
+    this.broadcastLobbyUpdate();
+
+    // Also remove from connection map
+    // We might not know the connection ID here if it came from a different connection (unlikely but possible)
+    // But usually sender is the one leaving.
+    // We'll clean up in onClose anyway.
   }
 
   async handleStartGame(data: StartGameMessage, _sender: Party.Connection) {
@@ -230,31 +267,32 @@ export default class Server implements Party.Server {
     const { playerId } = data;
     const player = this.lobbyState.players.find((p) => p.id === playerId);
 
-    if (player?.isHost && this.lobbyState.players.length >= 5) {
-      // 1. Determine roles based on player count
-      const playerCount = this.lobbyState.players.length;
-      const roles = getRolesForPlayerCount(playerCount);
+    if (!player?.isHost || this.lobbyState.players.length < 5) return;
 
-      // 2. Shuffle roles
-      const shuffledRoles = roles.sort(() => Math.random() - 0.5);
+    // 1. Determine roles based on player count
+    const playerCount = this.lobbyState.players.length;
+    const roles = getRolesForPlayerCount(playerCount);
 
-      // 3. Assign roles to players map for easy lookup (optional, but good for server authority if we wanted to store it)
-      const assignments: Record<string, Role> = {};
-      this.lobbyState.players.forEach((p, index) => {
-        assignments[p.id] = shuffledRoles[index];
-      });
+    // 2. Shuffle roles
+    const shuffledRoles = roles.sort(() => Math.random() - 0.5);
 
-      this.lobbyState.status = "PLAYING";
-      await this.saveLobbyState();
+    // 3. Assign roles to players map for easy lookup (optional, but good for server authority if we wanted to store it)
+    const assignments: Record<string, Role> = {};
+    this.lobbyState.players.forEach((p, index) => {
+      assignments[p.id] = shuffledRoles[index];
+    });
 
-      // Broadcast the start with assignments
-      this.room.broadcast(
-        JSON.stringify({
-          type: "GAME_STARTED",
-          assignments,
-        }),
-      );
-    }
+    this.lobbyState.status = "PLAYING";
+    this.lobbyState.assignments = assignments;
+    await this.saveLobbyState();
+
+    // Broadcast the start with assignments
+    this.room.broadcast(
+      JSON.stringify({
+        type: "GAME_STARTED",
+        assignments,
+      }),
+    );
   }
 
   async handleAddBot(_data: AddBotMessage, sender: Party.Connection) {
@@ -288,6 +326,7 @@ export default class Server implements Party.Server {
       photoUrl: null,
       isHost: false,
       isReady: true,
+      isOnline: true,
       joinedAt: Date.now(),
     });
 
