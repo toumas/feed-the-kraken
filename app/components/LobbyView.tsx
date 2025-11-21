@@ -8,6 +8,7 @@ import {
 } from "../types";
 import { cn } from "../utils";
 import { Avatar } from "./Avatar";
+import { EditableProfile } from "./EditableProfile";
 import { ProfileEditor } from "./ProfileEditor";
 
 interface LobbyViewProps {
@@ -34,11 +35,6 @@ export function LobbyView({
   const playerCount = lobby.players.length;
   const canStart = playerCount >= MIN_PLAYERS && playerCount <= MAX_PLAYERS;
 
-  const [isEditing, setIsEditing] = useState(
-    !myPlayer?.name ||
-      myPlayer.name.includes("Player") ||
-      myPlayer.name === "New Sailor",
-  );
   const [copied, setCopied] = useState(false);
 
   const copyCode = () => {
@@ -98,35 +94,44 @@ export function LobbyView({
         <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider">
           My Identity
         </h3>
-        {isEditing ? (
-          <ProfileEditor
-            initialName={myPlayer?.name || ""}
-            initialPhoto={myPlayer?.photoUrl || null}
-            onSave={(name, photo) => {
-              onUpdateProfile(name, photo);
-              setIsEditing(false);
-            }}
-          />
-        ) : (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Avatar url={myPlayer?.photoUrl} size="lg" />
-              <div>
-                <p className="font-bold text-xl text-white">{myPlayer?.name}</p>
-                <p className="text-sm text-cyan-500">
-                  {isHost ? "Captain (Host)" : "Sailor"}
-                </p>
+        <EditableProfile
+          defaultEditing={
+            !myPlayer?.name ||
+            myPlayer.name.includes("Player") ||
+            myPlayer.name === "New Sailor"
+          }
+        >
+          <EditableProfile.Editor>
+            {(save) => (
+              <ProfileEditor
+                initialName={myPlayer?.name || ""}
+                initialPhoto={myPlayer?.photoUrl || null}
+                onSave={(name, photo) => {
+                  onUpdateProfile(name, photo);
+                  save();
+                }}
+              />
+            )}
+          </EditableProfile.Editor>
+          <EditableProfile.Display>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Avatar url={myPlayer?.photoUrl} size="lg" />
+                <div>
+                  <p className="font-bold text-xl text-white">
+                    {myPlayer?.name}
+                  </p>
+                  <p className="text-sm text-cyan-500">
+                    {isHost ? "Captain (Host)" : "Sailor"}
+                  </p>
+                </div>
               </div>
+              <EditableProfile.EditTrigger className="px-4 py-2 text-sm bg-slate-800 hover:bg-slate-700 rounded-lg font-medium text-slate-300">
+                Edit
+              </EditableProfile.EditTrigger>
             </div>
-            <button
-              onClick={() => setIsEditing(true)}
-              type="button"
-              className="px-4 py-2 text-sm bg-slate-800 hover:bg-slate-700 rounded-lg font-medium text-slate-300"
-            >
-              Edit
-            </button>
-          </div>
-        )}
+          </EditableProfile.Display>
+        </EditableProfile>
       </div>
 
       {/* Player Grid */}
