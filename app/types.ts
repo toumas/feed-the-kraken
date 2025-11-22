@@ -1,5 +1,5 @@
 // --- Types ---
-export type ViewState = "HOME" | "JOIN" | "LOBBY" | "GAME";
+export type ViewState = "HOME" | "JOIN" | "LOBBY" | "GAME" | "PROFILE_SETUP";
 
 export type Player = {
   id: string;

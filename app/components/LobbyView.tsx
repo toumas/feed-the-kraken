@@ -103,14 +103,18 @@ export function LobbyView({
         >
           <EditableProfile.Editor>
             {(save) => (
-              <ProfileEditor
+              <ProfileEditor.Root
                 initialName={myPlayer?.name || ""}
                 initialPhoto={myPlayer?.photoUrl || null}
                 onSave={(name, photo) => {
                   onUpdateProfile(name, photo);
                   save();
                 }}
-              />
+              >
+                <ProfileEditor.Photo />
+                <ProfileEditor.Name />
+                <ProfileEditor.Submit />
+              </ProfileEditor.Root>
             )}
           </EditableProfile.Editor>
           <EditableProfile.Display>

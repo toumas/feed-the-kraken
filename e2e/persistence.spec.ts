@@ -2,25 +2,37 @@ import { expect, test } from "@playwright/test";
 
 test("Profile persistence across reloads", async ({ page }) => {
   // 1. Navigate to home
+  // We pre-fill photo but NOT name, to trigger profile setup but allow saving
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "kraken_player_photo",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    );
+  });
   await page.goto("/");
 
-  // 2. Create a lobby
+  // 2. Create a lobby - should be intercepted
   await page.getByRole("button", { name: "Create Voyage" }).click();
 
-  // 3. Edit Profile
-  await page.getByRole("button", { name: "Edit" }).click();
+  // 3. Verify we are in Profile Setup
+  await expect(page.getByText("Identify Yourself")).toBeVisible();
+
+  // 4. Fill Name and Save
+  // First try to save without name to verify validation
+  await page.getByRole("button", { name: "Save Profile" }).click();
+  await expect(page.getByText("Please enter your name.")).toBeVisible();
+
   await page.getByPlaceholder("Enter your pirate name...").fill("Captain Jack");
   await page.getByRole("button", { name: "Save Profile" }).click();
 
-  // 4. Verify name is updated
-  await expect(page.getByText("Captain Jack").first()).toBeVisible();
+  // 5. Verify we are now in Lobby
+  await expect(page.getByText("Ship Code")).toBeVisible();
+  await expect(page.getByText("Captain Jack(You)")).toBeVisible();
 
-  // 5. Reload the page
+  // 6. Reload the page
   await page.reload();
 
-  // 6. Verify name persists
-  await expect(page.getByText("Captain Jack").first()).toBeVisible();
-
-  // 7. Verify we are still in the lobby (reconnection logic)
+  // 7. Verify name persists and we reconnect
+  await expect(page.getByText("Captain Jack(You)")).toBeVisible();
   await expect(page.getByText("Ship Code")).toBeVisible();
 });

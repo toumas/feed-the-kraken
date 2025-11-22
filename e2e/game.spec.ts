@@ -4,6 +4,13 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
   // 1. Host creates lobby
   const hostContext = await browser.newContext();
   const hostPage = await hostContext.newPage();
+  await hostPage.addInitScript(() => {
+    localStorage.setItem("kraken_player_name", "Captain Host");
+    localStorage.setItem(
+      "kraken_player_photo",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    );
+  });
   await hostPage.goto("/");
   await hostPage.getByRole("button", { name: "Create Voyage" }).click();
   await expect(hostPage.getByText("Captain Host(You)")).toBeVisible();
@@ -20,6 +27,14 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
   for (let i = 0; i < 4; i++) {
     const context = await browser.newContext();
     const page = await context.newPage();
+    const playerName = `Player ${i + 1}`;
+    await page.addInitScript((name) => {
+      localStorage.setItem("kraken_player_name", name);
+      localStorage.setItem(
+        "kraken_player_photo",
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      );
+    }, playerName);
     await page.goto("/");
     await page.getByRole("button", { name: "Join Crew" }).click();
 
@@ -27,10 +42,9 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
     await page.getByPlaceholder("XP7K9L").fill(code);
     await page.getByRole("button", { name: "Board Ship" }).click();
 
-    // Fill profile form
-    const playerName = `Player ${i + 1}`;
-    await page.getByPlaceholder("Enter your pirate name...").fill(playerName);
-    await page.getByRole("button", { name: "Save Profile" }).click();
+    // Profile setup is bypassed via localStorage
+    // await page.getByPlaceholder("Enter your pirate name...").fill(playerName);
+    // await page.getByRole("button", { name: "Save Profile" }).click();
 
     await expect(page.getByText(`${playerName}(You)`)).toBeVisible();
     players.push({ context, page, name: playerName });

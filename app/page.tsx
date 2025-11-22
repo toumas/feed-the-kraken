@@ -6,6 +6,7 @@ import { GameView } from "./components/GameView";
 import { HomeView } from "./components/HomeView";
 import { JoinView } from "./components/JoinView";
 import { LobbyView } from "./components/LobbyView";
+import { ProfileEditor } from "./components/ProfileEditor";
 import {
   type ConnectionStatus,
   type LobbyState,
@@ -20,6 +21,9 @@ export default function KrakenCompanion() {
   // App State
   const [view, setView] = useState<ViewState>("HOME");
   const [error, setError] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<{
+    type: "CREATE" | "JOIN";
+  } | null>(null);
 
   // User State
   // User State
@@ -157,13 +161,57 @@ export default function KrakenCompanion() {
   };
 
   // --- Actions ---
-  const createLobby = () => {
+  const hasValidProfile = () => {
+    return myName !== "New Sailor" && myPhoto !== null;
+  };
+
+  const handleProfileSave = (name: string, photo: string | null) => {
+    updateMyProfile(name, photo);
+
+    if (!pendingAction) {
+      setView("HOME");
+      return;
+    }
+
+    if (pendingAction.type === "CREATE") {
+      createLobby(name, photo);
+    } else if (pendingAction.type === "JOIN") {
+      setView("JOIN");
+    }
+    setPendingAction(null);
+  };
+
+  const requestCreateLobby = () => {
+    if (hasValidProfile()) {
+      createLobby();
+    } else {
+      setPendingAction({ type: "CREATE" });
+      setView("PROFILE_SETUP");
+    }
+  };
+
+  const requestJoinLobby = () => {
+    if (hasValidProfile()) {
+      setView("JOIN");
+    } else {
+      setPendingAction({ type: "JOIN" });
+      setView("PROFILE_SETUP");
+    }
+  };
+
+  const createLobby = (
+    overrideName?: string,
+    overridePhoto?: string | null,
+  ) => {
     const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const nameToUse = overrideName || myName;
+    const photoToUse = overridePhoto !== undefined ? overridePhoto : myPhoto;
+
     connectToLobby(newCode, {
       type: "CREATE_LOBBY",
       playerId: myPlayerId,
-      playerName: myName === "New Sailor" ? "Captain Host" : myName,
-      playerPhoto: myPhoto,
+      playerName: nameToUse === "New Sailor" ? "Captain Host" : nameToUse,
+      playerPhoto: photoToUse,
     });
 
     localStorage.setItem("kraken_lobby_code", newCode);
@@ -286,7 +334,38 @@ export default function KrakenCompanion() {
         {/* View Content */}
         <div className="flex-1 flex flex-col p-4">
           {view === "HOME" && (
-            <HomeView onCreate={createLobby} onJoin={() => setView("JOIN")} />
+            <HomeView onCreate={requestCreateLobby} onJoin={requestJoinLobby} />
+          )}
+          {view === "PROFILE_SETUP" && (
+            <div className="flex-1 flex flex-col animate-in slide-in-from-right">
+              <button
+                onClick={() => {
+                  setPendingAction(null);
+                  setView("HOME");
+                }}
+                type="button"
+                className="text-slate-400 hover:text-white flex items-center self-start mb-8 py-2"
+              >
+                ← Back to shore
+              </button>
+              <div className="flex-1 flex flex-col justify-center max-w-xs mx-auto w-full">
+                <h2 className="text-2xl font-bold mb-6 text-center">
+                  Identify Yourself
+                </h2>
+                <p className="text-slate-400 text-center mb-8">
+                  Every sailor needs a name and a face before boarding.
+                </p>
+                <ProfileEditor.Root
+                  initialName={myName === "New Sailor" ? "" : myName}
+                  initialPhoto={myPhoto}
+                  onSave={handleProfileSave}
+                >
+                  <ProfileEditor.Photo />
+                  <ProfileEditor.Name />
+                  <ProfileEditor.Submit />
+                </ProfileEditor.Root>
+              </div>
+            </div>
           )}
           {view === "JOIN" && (
             <JoinView onJoin={joinLobby} onBack={() => setView("HOME")} />
