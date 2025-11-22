@@ -210,7 +210,7 @@ export default function KrakenCompanion() {
     connectToLobby(newCode, {
       type: "CREATE_LOBBY",
       playerId: myPlayerId,
-      playerName: nameToUse === "New Sailor" ? "Captain Host" : nameToUse,
+      playerName: nameToUse === "New Sailor" ? "Host" : nameToUse,
       playerPhoto: photoToUse,
     });
 

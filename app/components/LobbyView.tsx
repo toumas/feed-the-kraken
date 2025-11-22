@@ -126,7 +126,7 @@ export function LobbyView({
                     {myPlayer?.name}
                   </p>
                   <p className="text-sm text-cyan-500">
-                    {isHost ? "Captain (Host)" : "Sailor"}
+                    {isHost ? "Host" : "Sailor"}
                   </p>
                 </div>
               </div>
@@ -184,7 +184,7 @@ export function LobbyView({
                 </p>
                 {player.isHost && (
                   <p className="text-xs text-yellow-500/80 flex items-center gap-1">
-                    Captain
+                    Host
                   </p>
                 )}
                 {!player.isOnline && (
@@ -229,7 +229,7 @@ export function LobbyView({
         ) : (
           <div className="w-full py-4 bg-slate-800 text-slate-400 rounded-xl font-bold text-center flex items-center justify-center gap-2 animate-pulse">
             <Anchor className="w-5 h-5" />
-            Awaiting Captain...
+            Awaiting Host...
           </div>
         )}
 

@@ -5,7 +5,7 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
   const hostContext = await browser.newContext();
   const hostPage = await hostContext.newPage();
   await hostPage.addInitScript(() => {
-    localStorage.setItem("kraken_player_name", "Captain Host");
+    localStorage.setItem("kraken_player_name", "Host");
     localStorage.setItem(
       "kraken_player_photo",
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -13,7 +13,7 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
   });
   await hostPage.goto("/");
   await hostPage.getByRole("button", { name: "Create Voyage" }).click();
-  await expect(hostPage.getByText("Captain Host(You)")).toBeVisible();
+  await expect(hostPage.getByText("Host(You)")).toBeVisible();
 
   // Get the room code
   const codeElement = hostPage.locator("p.font-mono");

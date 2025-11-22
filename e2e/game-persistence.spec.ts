@@ -4,7 +4,7 @@ test("Game persistence across reloads", async ({ page }) => {
   // 1. Host creates a lobby
   // 1. Host creates a lobby
   await page.addInitScript(() => {
-    localStorage.setItem("kraken_player_name", "Captain Host");
+    localStorage.setItem("kraken_player_name", "Host");
     localStorage.setItem(
       "kraken_player_photo",
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
