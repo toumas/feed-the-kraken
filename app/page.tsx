@@ -300,6 +300,17 @@ export default function KrakenCompanion() {
     }
   };
 
+  const handleDenialOfCommand = () => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "DENIAL_OF_COMMAND",
+          playerId: myPlayerId,
+        }),
+      );
+    }
+  };
+
   // --- Render ---
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-cyan-900">
@@ -391,7 +402,13 @@ export default function KrakenCompanion() {
               </div>
             ))}
           {view === "GAME" && lobby && (
-            <GameView lobby={lobby} myRole={myRole} onLeave={leaveLobby} />
+            <GameView
+              lobby={lobby}
+              myRole={myRole}
+              myPlayerId={myPlayerId}
+              onLeave={leaveLobby}
+              onDenialOfCommand={handleDenialOfCommand}
+            />
           )}
         </div>
       </main>

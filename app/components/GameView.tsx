@@ -1,4 +1,4 @@
-import { Anchor, Eye, Ghost, Skull, User } from "lucide-react";
+import { Anchor, Eye, Ghost, LogOut, Skull, User } from "lucide-react";
 import type { LobbyState, Role } from "../types";
 import { cn } from "../utils";
 import { Avatar } from "./Avatar";
@@ -6,10 +6,18 @@ import { Avatar } from "./Avatar";
 interface GameViewProps {
   lobby: LobbyState;
   myRole: Role | null;
+  myPlayerId: string;
   onLeave: () => void;
+  onDenialOfCommand: () => void;
 }
 
-export function GameView({ lobby, myRole, onLeave }: GameViewProps) {
+export function GameView({
+  lobby,
+  myRole,
+  myPlayerId,
+  onLeave,
+  onDenialOfCommand,
+}: GameViewProps) {
   const getRoleDetails = (role: Role | null) => {
     switch (role) {
       case "SAILOR":
@@ -51,6 +59,30 @@ export function GameView({ lobby, myRole, onLeave }: GameViewProps) {
   };
 
   const roleInfo = getRoleDetails(myRole);
+  const me = lobby.players.find((p) => p.id === myPlayerId);
+  const isEliminated = me?.isEliminated;
+
+  if (isEliminated) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center space-y-6 animate-in zoom-in-95 duration-700">
+        <Skull className="w-32 h-32 text-slate-600" />
+        <h2 className="text-4xl font-bold text-center text-slate-500 drop-shadow-lg">
+          Eliminated
+        </h2>
+        <p className="text-slate-400 text-center max-w-xs text-lg font-medium">
+          You have chosen Denial of Command. You are eliminated from the game.
+        </p>
+        <button
+          onClick={onLeave}
+          type="button"
+          className="mt-12 group relative px-6 py-3 bg-slate-900/80 hover:bg-slate-900 text-slate-300 rounded-lg text-sm font-medium border border-slate-700 transition-all duration-300 flex items-center gap-2 hover:shadow-lg hover:shadow-slate-900/50"
+        >
+          <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+          Leave Game
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center space-y-6 animate-in zoom-in-95 duration-700">
@@ -80,9 +112,18 @@ export function GameView({ lobby, myRole, onLeave }: GameViewProps) {
                   className={cn(
                     "ring-4 ring-slate-950",
                     !p.isOnline && "opacity-50 grayscale",
+                    p.isEliminated && "opacity-50 grayscale ring-red-900",
                   )}
                 />
-                {!p.isOnline && (
+                {p.isEliminated && (
+                  <div
+                    className="absolute -top-1 -right-1 w-6 h-6 bg-red-900 rounded-full border-2 border-slate-900 z-20 flex items-center justify-center"
+                    title="Eliminated"
+                  >
+                    <Skull className="w-3 h-3 text-red-200" />
+                  </div>
+                )}
+                {!p.isOnline && !p.isEliminated && (
                   <div
                     className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-500 rounded-full border-2 border-slate-900 z-20"
                     title="Offline"
@@ -99,6 +140,26 @@ export function GameView({ lobby, myRole, onLeave }: GameViewProps) {
         className="mt-12 px-6 py-3 bg-red-950/50 hover:bg-red-900/50 text-red-300 rounded-lg text-sm border border-red-900/50 transition-colors"
       >
         End Session
+      </button>
+
+      <button
+        onClick={() => {
+          if (
+            confirm(
+              "Are you sure? You will be eliminated from the game and cannot take further actions.",
+            )
+          ) {
+            onDenialOfCommand();
+          }
+        }}
+        type="button"
+        className="mt-4 group relative px-6 py-3 bg-slate-900/80 hover:bg-slate-900 text-slate-400 hover:text-red-400 rounded-lg text-sm font-medium border border-slate-800 hover:border-red-900/50 transition-all duration-300 overflow-hidden"
+      >
+        <span className="relative z-10 flex items-center gap-2">
+          <Skull className="w-4 h-4 transition-transform group-hover:scale-110" />
+          Denial of Command
+        </span>
+        <div className="absolute inset-0 bg-linear-to-r from-transparent via-red-950/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
       </button>
     </div>
   );

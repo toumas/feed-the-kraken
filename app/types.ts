@@ -8,6 +8,7 @@ export type Player = {
   isHost: boolean;
   isReady: boolean;
   isOnline: boolean;
+  isEliminated: boolean;
   joinedAt: number;
 };
 
@@ -26,26 +27,27 @@ export type ConnectionStatus =
 
 export type MessagePayload =
   | {
-      type: "CREATE_LOBBY";
-      playerId: string;
-      playerName: string;
-      playerPhoto: string | null;
-    }
+    type: "CREATE_LOBBY";
+    playerId: string;
+    playerName: string;
+    playerPhoto: string | null;
+  }
   | {
-      type: "JOIN_LOBBY";
-      playerId: string;
-      playerName: string;
-      playerPhoto: string | null;
-    }
+    type: "JOIN_LOBBY";
+    playerId: string;
+    playerName: string;
+    playerPhoto: string | null;
+  }
   | {
-      type: "UPDATE_PROFILE";
-      playerId: string;
-      name: string;
-      photoUrl: string | null;
-    }
+    type: "UPDATE_PROFILE";
+    playerId: string;
+    name: string;
+    photoUrl: string | null;
+  }
   | { type: "ADD_BOT" }
   | { type: "LEAVE_LOBBY"; playerId: string }
-  | { type: "START_GAME"; playerId: string };
+  | { type: "START_GAME"; playerId: string }
+  | { type: "DENIAL_OF_COMMAND"; playerId: string };
 
 // --- Constants ---
 export const MIN_PLAYERS = 5;

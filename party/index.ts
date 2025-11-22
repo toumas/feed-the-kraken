@@ -7,6 +7,7 @@ export type Player = {
   isHost: boolean;
   isReady: boolean;
   isOnline: boolean;
+  isEliminated: boolean;
   joinedAt: number;
 };
 
@@ -52,8 +53,13 @@ type AddBotMessage = {
   type: "ADD_BOT";
 };
 
+type DenialOfCommandMessage = {
+  type: "DENIAL_OF_COMMAND";
+  playerId: string;
+};
+
 export default class Server implements Party.Server {
-  constructor(readonly room: Party.Room) {}
+  constructor(readonly room: Party.Room) { }
 
   // Store lobby state in durable storage
   lobbyState: LobbyState | null = null;
@@ -119,6 +125,9 @@ export default class Server implements Party.Server {
         case "ADD_BOT":
           await this.handleAddBot(data, sender);
           break;
+        case "DENIAL_OF_COMMAND":
+          await this.handleDenialOfCommand(data, sender);
+          break;
       }
     } catch (error) {
       console.error("Error handling message:", error);
@@ -150,6 +159,7 @@ export default class Server implements Party.Server {
           isHost: true,
           isReady: false,
           isOnline: true,
+          isEliminated: false,
           joinedAt: Date.now(),
         },
       ],
@@ -208,6 +218,7 @@ export default class Server implements Party.Server {
       isHost: false,
       isReady: false,
       isOnline: true,
+      isEliminated: false,
       joinedAt: Date.now(),
     });
 
@@ -327,11 +338,28 @@ export default class Server implements Party.Server {
       isHost: false,
       isReady: true,
       isOnline: true,
+      isEliminated: false,
       joinedAt: Date.now(),
     });
 
     await this.saveLobbyState();
     this.broadcastLobbyUpdate();
+  }
+
+  async handleDenialOfCommand(
+    data: DenialOfCommandMessage,
+    _sender: Party.Connection,
+  ) {
+    if (!this.lobbyState) return;
+
+    const { playerId } = data;
+    const player = this.lobbyState.players.find((p) => p.id === playerId);
+
+    if (player && !player.isEliminated) {
+      player.isEliminated = true;
+      await this.saveLobbyState();
+      this.broadcastLobbyUpdate();
+    }
   }
 
   async saveLobbyState() {
