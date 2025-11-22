@@ -59,7 +59,7 @@ type DenialOfCommandMessage = {
 };
 
 export default class Server implements Party.Server {
-  constructor(readonly room: Party.Room) { }
+  constructor(readonly room: Party.Room) {}
 
   // Store lobby state in durable storage
   lobbyState: LobbyState | null = null;

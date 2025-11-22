@@ -135,7 +135,11 @@ export function GameView({
         </div>
       </div>
       <button
-        onClick={onLeave}
+        onClick={() => {
+          if (confirm("Are you sure you want to end the session?")) {
+            onLeave();
+          }
+        }}
         type="button"
         className="mt-12 px-6 py-3 bg-red-950/50 hover:bg-red-900/50 text-red-300 rounded-lg text-sm border border-red-900/50 transition-colors"
       >
