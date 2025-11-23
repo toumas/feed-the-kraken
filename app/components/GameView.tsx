@@ -139,18 +139,6 @@ export function GameView({
       </div>
       <button
         onClick={() => {
-          if (confirm("Are you sure you want to end the session?")) {
-            onLeave();
-          }
-        }}
-        type="button"
-        className="mt-12 px-6 py-3 bg-red-950/50 hover:bg-red-900/50 text-red-300 rounded-lg text-sm border border-red-900/50 transition-colors"
-      >
-        End Session
-      </button>
-
-      <button
-        onClick={() => {
           if (
             confirm(
               "Are you sure? You will be eliminated from the game and cannot take further actions.",
@@ -167,6 +155,17 @@ export function GameView({
           Denial of Command
         </span>
         <div className="absolute inset-0 bg-linear-to-r from-transparent via-red-950/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+      </button>
+      <button
+        onClick={() => {
+          if (confirm("Are you sure you want to end the session?")) {
+            onLeave();
+          }
+        }}
+        type="button"
+        className="mt-12 px-6 py-3 bg-red-950/50 hover:bg-red-900/50 text-red-300 rounded-lg text-sm border border-red-900/50 transition-colors"
+      >
+        End Session
       </button>
     </div>
   );
