@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import {
@@ -209,6 +210,28 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, [connectToLobby, myName, myPhoto, myPlayerId, socket]);
+
+  // Refs for event listeners to access latest state without re-binding
+  const lobbyRef = useRef(lobby);
+  const connectionStatusRef = useRef(connectionStatus);
+
+  useEffect(() => {
+    lobbyRef.current = lobby;
+    connectionStatusRef.current = connectionStatus;
+  }, [lobby, connectionStatus]);
+
+  // Prevent accidental navigation (refresh, close tab, back to other site)
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (lobbyRef.current && connectionStatusRef.current === "connected") {
+        e.preventDefault();
+        e.returnValue = ""; // Required for Chrome
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   const disconnectFromLobby = () => {
     if (socket) {
