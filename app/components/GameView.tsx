@@ -1,17 +1,23 @@
-import { Anchor, Eye, Ghost, LogOut, Search, Skull, User } from "lucide-react";
+import {
+  AlertTriangle,
+  Anchor,
+  Eye,
+  LogOut,
+  Search,
+  Skull,
+} from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
+import { Avatar } from "../components/Avatar";
+import { RoleReveal } from "../components/RoleReveal";
 import type { LobbyState, Role } from "../types";
-import { cn } from "../utils";
-import { Avatar } from "./Avatar";
-import { CabinSearch } from "./CabinSearch";
-import { RoleReveal } from "./RoleReveal";
 
 interface GameViewProps {
   lobby: LobbyState;
   myRole: Role | null;
   myPlayerId: string;
   onLeave: () => void;
-  onDenialOfCommand: () => void;
+
   onCabinSearch: (targetPlayerId: string) => void;
   cabinSearchPrompt: { searcherId: string } | null;
   cabinSearchResult: { targetPlayerId: string; role: Role } | null;
@@ -25,52 +31,34 @@ export function GameView({
   myRole,
   myPlayerId,
   onLeave,
-  onDenialOfCommand,
-  onCabinSearch,
+
   cabinSearchPrompt,
-  cabinSearchResult,
   onCabinSearchResponse,
-  onClearCabinSearchResult,
-  isCabinSearchPending,
 }: GameViewProps) {
-  const [showCabinSearch, setShowCabinSearch] = useState(false);
+  const [showEndSessionConfirm, setShowEndSessionConfirm] = useState(false);
 
   const getRoleDetails = (role: Role | null) => {
     switch (role) {
-      case "SAILOR":
-        return {
-          title: "Loyal Sailor",
-          color: "text-blue-400",
-          icon: <Anchor className="w-32 h-32 text-blue-500 animate-pulse" />,
-          desc: "Steer the ship to safety! Trust no one but your fellow sailors.",
-        };
       case "PIRATE":
         return {
           title: "Pirate",
+          desc: "Sabotage the journey! Feed the Kraken or kill the Captain.",
+          icon: <Skull className="w-16 h-16 text-red-500" />,
           color: "text-red-500",
-          icon: <Skull className="w-32 h-32 text-red-600 animate-pulse" />,
-          desc: "Sabotage the voyage! Feed the Kraken or mutiny!",
         };
       case "CULT_LEADER":
         return {
           title: "Cult Leader",
-          color: "text-yellow-500",
-          icon: <Eye className="w-32 h-32 text-yellow-500 animate-pulse" />,
-          desc: "Convert others to your cause. The Kraken awaits!",
-        };
-      case "CULTIST":
-        return {
-          title: "Cultist",
-          color: "text-green-500",
-          icon: <Ghost className="w-32 h-32 text-green-500 animate-pulse" />,
-          desc: "Serve the Cult Leader. The deep calls!",
+          desc: "Convert others to your cause. You win if you are chosen to feed the Kraken.",
+          icon: <Eye className="w-16 h-16 text-purple-500" />,
+          color: "text-purple-500",
         };
       default:
         return {
-          title: "Stowaway",
-          color: "text-slate-400",
-          icon: <User className="w-32 h-32 text-slate-500 animate-pulse" />,
-          desc: "Wait... how did you get here?",
+          title: "Loyal Sailor",
+          desc: "Steer the ship safely to port. Trust no one!",
+          icon: <Anchor className="w-16 h-16 text-cyan-500" />,
+          color: "text-cyan-500",
         };
     }
   };
@@ -82,21 +70,52 @@ export function GameView({
   if (isEliminated) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center space-y-6 animate-in zoom-in-95 duration-700">
-        <Skull className="w-32 h-32 text-slate-600" />
-        <h2 className="text-4xl font-bold text-center text-slate-500 drop-shadow-lg">
-          Eliminated
-        </h2>
-        <p className="text-slate-400 text-center max-w-xs text-lg font-medium">
-          You have chosen Denial of Command. You are eliminated from the game.
-        </p>
+        <div className="text-center space-y-4">
+          <Skull className="w-24 h-24 text-slate-600 mx-auto" />
+          <h2 className="text-3xl font-bold text-slate-500">Eliminated</h2>
+          <p className="text-slate-400 max-w-xs mx-auto">
+            You have been thrown overboard or fed to the Kraken. Your journey
+            ends here.
+          </p>
+        </div>
         <button
-          onClick={onLeave}
           type="button"
-          className="mt-12 group relative px-6 py-3 bg-slate-900/80 hover:bg-slate-900 text-slate-300 rounded-lg text-sm font-medium border border-slate-700 transition-all duration-300 flex items-center gap-2 hover:shadow-lg hover:shadow-slate-900/50"
+          onClick={() => setShowEndSessionConfirm(true)}
+          className="px-6 py-3 bg-slate-800/50 hover:bg-slate-800 text-slate-400 rounded-xl font-medium transition-colors border border-slate-700"
         >
-          <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-          Leave Game
+          Return to Shore
         </button>
+
+        {/* End Session Confirmation Modal */}
+        {showEndSessionConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
+              <h2 className="text-xl font-bold text-white mb-4">
+                End Session?
+              </h2>
+              <p className="text-slate-400 mb-8">
+                Are you sure you want to leave the game? You won't be able to
+                rejoin with the same role.
+              </p>
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEndSessionConfirm(false)}
+                  className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
+                >
+                  Stay
+                </button>
+                <button
+                  type="button"
+                  onClick={onLeave}
+                  className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors"
+                >
+                  Leave
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -111,9 +130,7 @@ export function GameView({
             <RoleReveal.Title className={roleInfo.color}>
               {roleInfo.title}
             </RoleReveal.Title>
-            <RoleReveal.Description>
-              {roleInfo.desc}
-            </RoleReveal.Description>
+            <RoleReveal.Description>{roleInfo.desc}</RoleReveal.Description>
             {myRole === "PIRATE" && lobby.assignments && (
               <div className="mt-6 pt-6 border-t border-slate-700 w-full">
                 <h3 className="text-red-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
@@ -127,7 +144,10 @@ export function GameView({
                         lobby.assignments?.[p.id] === "PIRATE",
                     )
                     .map((p) => (
-                      <div key={p.id} className="flex flex-col items-center gap-1">
+                      <div
+                        key={p.id}
+                        className="flex flex-col items-center gap-1"
+                      >
                         <Avatar
                           url={p.photoUrl}
                           size="sm"
@@ -140,12 +160,13 @@ export function GameView({
                     ))}
                   {lobby.players.filter(
                     (p) =>
-                      p.id !== myPlayerId && lobby.assignments?.[p.id] === "PIRATE",
+                      p.id !== myPlayerId &&
+                      lobby.assignments?.[p.id] === "PIRATE",
                   ).length === 0 && (
-                      <p className="text-xs text-slate-500 italic">
-                        No other pirates
-                      </p>
-                    )}
+                    <p className="text-xs text-slate-500 italic">
+                      No other pirates
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -156,83 +177,78 @@ export function GameView({
         <h3 className="text-sm text-slate-500 uppercase mb-4 font-bold">
           Crew Status
         </h3>
-        <div className="flex -space-x-2 overflow-hidden justify-center py-4">
-          {lobby.players.map((p) => (
-            <div
-              key={p.id}
-              className="relative hover:z-10 hover:-translate-y-1 transition-transform"
-            >
-              <div className="relative">
-                <Avatar
-                  url={p.photoUrl}
-                  size="md"
-                  className={cn(
-                    "ring-4 ring-slate-950",
-                    !p.isOnline && "opacity-50 grayscale",
-                    p.isEliminated && "opacity-50 grayscale ring-red-900",
-                  )}
-                />
-                {p.isEliminated && (
-                  <div
-                    className="absolute -top-1 -right-1 w-6 h-6 bg-red-900 rounded-full border-2 border-slate-900 z-20 flex items-center justify-center"
-                    title="Eliminated"
-                  >
-                    <Skull className="w-3 h-3 text-red-200" />
-                  </div>
-                )}
-                {!p.isOnline && !p.isEliminated && (
-                  <div
-                    className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-500 rounded-full border-2 border-slate-900 z-20"
-                    title="Offline"
-                  />
-                )}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex -space-x-2">
+            {lobby.players.slice(0, 5).map((p) => (
+              <Avatar
+                key={p.id}
+                url={p.photoUrl}
+                size="sm"
+                className="ring-2 ring-slate-900"
+              />
+            ))}
+            {lobby.players.length > 5 && (
+              <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-400 ring-2 ring-slate-900">
+                +{lobby.players.length - 5}
               </div>
-            </div>
-          ))}
+            )}
+          </div>
+          <div className="text-right">
+            <p className="text-2xl font-bold text-white">
+              {lobby.players.length}
+            </p>
+            <p className="text-xs text-slate-500 uppercase">Sailors</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <Link
+            href="/cabin-search"
+            className="w-full py-3 bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-200 border border-cyan-800/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+          >
+            <Search className="w-5 h-5" />
+            Cabin Search
+          </Link>
+
+          <Link
+            href="/denial"
+            className="w-full py-3 bg-red-950/30 hover:bg-red-900/50 text-red-200 border border-red-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+          >
+            <AlertTriangle className="w-5 h-5" />
+            Denial of Command
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setShowEndSessionConfirm(true)}
+            className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+          >
+            <LogOut className="w-5 h-5" />
+            End Session
+          </button>
         </div>
       </div>
-
-      <button
-        onClick={() => setShowCabinSearch(true)}
-        type="button"
-        className="mt-4 group relative px-6 py-3 bg-slate-900/80 hover:bg-slate-900 text-slate-400 hover:text-cyan-400 rounded-lg text-sm font-medium border border-slate-800 hover:border-cyan-900/50 transition-all duration-300 overflow-hidden"
-      >
-        <span className="relative z-10 flex items-center gap-2">
-          <Search className="w-4 h-4 transition-transform group-hover:scale-110" />
-          Cabin Search
-        </span>
-        <div className="absolute inset-0 bg-linear-to-r from-transparent via-cyan-950/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-      </button>
-
-      {showCabinSearch && (
-        <CabinSearch
-          players={lobby.players.filter(
-            (p) => p.id !== myPlayerId && !p.isEliminated,
-          )}
-          onConfirm={(targetId) => {
-            onCabinSearch(targetId);
-            setShowCabinSearch(false);
-          }}
-          onCancel={() => setShowCabinSearch(false)}
-        />
-      )}
 
       {/* Cabin Search Confirmation Modal (Target) */}
       {cabinSearchPrompt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
-            <h2 className="text-xl font-bold text-white mb-4">Cabin Search Request</h2>
+            <h2 className="text-xl font-bold text-white mb-4">
+              Cabin Search Request
+            </h2>
             <p className="text-slate-300 mb-6">
               The Captain wants to search your cabin. Do you allow this?
             </p>
             <div className="flex gap-4">
               <button
+                type="button"
                 onClick={() => onCabinSearchResponse(false)}
                 className="flex-1 py-3 bg-red-900/50 hover:bg-red-900 text-red-200 rounded-xl font-bold transition-colors"
               >
                 Deny
               </button>
               <button
+                type="button"
                 onClick={() => onCabinSearchResponse(true)}
                 className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold transition-colors"
               >
@@ -243,109 +259,34 @@ export function GameView({
         </div>
       )}
 
-      {/* Cabin Search Result Modal (Searcher) */}
-      {cabinSearchResult && (
+      {/* End Session Confirmation Modal */}
+      {showEndSessionConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300 flex flex-col items-center">
-            <h2 className="text-xl font-bold text-white mb-6">Cabin Search Result</h2>
-
-            {(() => {
-              const resultInfo = getRoleDetails(cabinSearchResult.role);
-              const targetPlayer = lobby.players.find(p => p.id === cabinSearchResult.targetPlayerId);
-
-              return (
-                <div className="w-full">
-                  <RoleReveal.Root>
-                    <RoleReveal.Canvas className="h-96">
-                      <RoleReveal.Hidden>
-                        <div className="flex flex-col items-center justify-center">
-                          <div className="w-20 h-20 rounded-full bg-slate-800/50 flex items-center justify-center mb-4 border-2 border-slate-700/50">
-                            <Eye className="w-10 h-10 text-slate-500" />
-                          </div>
-                          <p className="text-slate-400 font-medium text-center">
-                            Press and hold to reveal
-                          </p>
-                        </div>
-                      </RoleReveal.Hidden>
-                      <RoleReveal.Revealed>
-                        <div className="flex flex-col items-center gap-6">
-                          <div className="flex flex-col items-center gap-2">
-                            <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">Target</span>
-                            <Avatar url={targetPlayer?.photoUrl || null} size="lg" className="ring-4 ring-slate-800" />
-                            <span className="text-sm text-slate-300 font-medium">{targetPlayer?.name}</span>
-                          </div>
-
-                          <RoleReveal.Icon>
-                            {resultInfo.icon}
-                          </RoleReveal.Icon>
-
-                          <div className="text-center">
-                            <p className="text-slate-400 text-sm">Role</p>
-                            <RoleReveal.Title className={cn("text-2xl", resultInfo.color)}>
-                              {resultInfo.title}
-                            </RoleReveal.Title>
-                          </div>
-                        </div>
-                      </RoleReveal.Revealed>
-                    </RoleReveal.Canvas>
-                  </RoleReveal.Root>
-                </div>
-              );
-            })()}
-
-            <button
-              onClick={onClearCabinSearchResult}
-              className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors mt-4"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Pending State Modal */}
-      {isCabinSearchPending && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 animate-in zoom-in-95 duration-300 flex flex-col items-center">
-            <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-6" />
-            <h2 className="text-xl font-bold text-white mb-2">Waiting for Confirmation</h2>
-            <p className="text-slate-400 text-center">
-              The crewmate must allow the search...
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
+            <h2 className="text-xl font-bold text-white mb-4">End Session?</h2>
+            <p className="text-slate-400 mb-8">
+              Are you sure you want to leave the game? You won't be able to
+              rejoin with the same role.
             </p>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setShowEndSessionConfirm(false)}
+                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
+              >
+                Stay
+              </button>
+              <button
+                type="button"
+                onClick={onLeave}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors"
+              >
+                Leave
+              </button>
+            </div>
           </div>
         </div>
       )}
-
-      <button
-        onClick={() => {
-          if (
-            confirm(
-              "Are you sure? You will be eliminated from the game and cannot take further actions.",
-            )
-          ) {
-            onDenialOfCommand();
-          }
-        }}
-        type="button"
-        className="mt-4 group relative px-6 py-3 bg-slate-900/80 hover:bg-slate-900 text-slate-400 hover:text-red-400 rounded-lg text-sm font-medium border border-slate-800 hover:border-red-900/50 transition-all duration-300 overflow-hidden"
-      >
-        <span className="relative z-10 flex items-center gap-2">
-          <Skull className="w-4 h-4 transition-transform group-hover:scale-110" />
-          Denial of Command
-        </span>
-        <div className="absolute inset-0 bg-linear-to-r from-transparent via-red-950/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-      </button>
-      <button
-        onClick={() => {
-          if (confirm("Are you sure you want to end the session?")) {
-            onLeave();
-          }
-        }}
-        type="button"
-        className="mt-12 px-6 py-3 bg-red-950/50 hover:bg-red-900/50 text-red-300 rounded-lg text-sm border border-red-900/50 transition-colors"
-      >
-        End Session
-      </button>
     </div>
   );
 }

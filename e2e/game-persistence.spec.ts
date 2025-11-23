@@ -42,5 +42,7 @@ test("Game persistence across reloads", async ({ page }) => {
 
   // 6. Verify back in Game with same Role
   await expect(page.getByText("Crew Status")).toBeVisible();
-  await expect(page.getByText(assignedRole)).toBeVisible();
+  await expect(
+    page.locator("h2").filter({ hasText: assignedRole }),
+  ).toBeVisible({ timeout: 10000 });
 });

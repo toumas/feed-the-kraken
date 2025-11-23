@@ -70,13 +70,8 @@ type CabinSearchResponseMessage = {
   confirmed: boolean;
 };
 
-type CabinSearchDeniedMessage = {
-  type: "CABIN_SEARCH_DENIED";
-  targetPlayerId: string;
-};
-
 export default class Server implements Party.Server {
-  constructor(readonly room: Party.Room) { }
+  constructor(readonly room: Party.Room) {}
 
   // Store lobby state in durable storage
   lobbyState: LobbyState | null = null;
@@ -405,14 +400,16 @@ export default class Server implements Party.Server {
     // We can iterate connections or create a reverse map. Iterating is fine for small lobbies.
 
     const targetConnection = Array.from(this.room.getConnections()).find(
-      conn => this.connectionToPlayer.get(conn.id) === targetPlayerId
+      (conn) => this.connectionToPlayer.get(conn.id) === targetPlayerId,
     );
 
     if (targetConnection) {
-      targetConnection.send(JSON.stringify({
-        type: "CABIN_SEARCH_PROMPT",
-        searcherId,
-      }));
+      targetConnection.send(
+        JSON.stringify({
+          type: "CABIN_SEARCH_PROMPT",
+          searcherId,
+        }),
+      );
     }
   }
 
@@ -428,7 +425,9 @@ export default class Server implements Party.Server {
     const { searcherId, confirmed } = data;
 
     if (confirmed) {
-      const targetPlayer = this.lobbyState.players.find(p => p.id === targetPlayerId);
+      const targetPlayer = this.lobbyState.players.find(
+        (p) => p.id === targetPlayerId,
+      );
       if (targetPlayer) {
         targetPlayer.isUnconvertible = true;
         await this.saveLobbyState();
@@ -436,29 +435,33 @@ export default class Server implements Party.Server {
 
         // Send result to searcher
         const searcherConnection = Array.from(this.room.getConnections()).find(
-          conn => this.connectionToPlayer.get(conn.id) === searcherId
+          (conn) => this.connectionToPlayer.get(conn.id) === searcherId,
         );
 
         if (searcherConnection) {
           const role = this.lobbyState.assignments[targetPlayerId];
-          searcherConnection.send(JSON.stringify({
-            type: "CABIN_SEARCH_RESULT",
-            targetPlayerId,
-            role,
-          }));
+          searcherConnection.send(
+            JSON.stringify({
+              type: "CABIN_SEARCH_RESULT",
+              targetPlayerId,
+              role,
+            }),
+          );
         }
       }
     } else {
       // Notify searcher of denial
       const searcherConnection = Array.from(this.room.getConnections()).find(
-        conn => this.connectionToPlayer.get(conn.id) === searcherId
+        (conn) => this.connectionToPlayer.get(conn.id) === searcherId,
       );
 
       if (searcherConnection) {
-        searcherConnection.send(JSON.stringify({
-          type: "CABIN_SEARCH_DENIED",
-          targetPlayerId,
-        }));
+        searcherConnection.send(
+          JSON.stringify({
+            type: "CABIN_SEARCH_DENIED",
+            targetPlayerId,
+          }),
+        );
       }
     }
   }

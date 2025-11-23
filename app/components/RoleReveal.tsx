@@ -16,7 +16,9 @@ const RoleRevealContext = createContext<RoleRevealContextValue | null>(null);
 function useRoleReveal() {
   const context = useContext(RoleRevealContext);
   if (!context) {
-    throw new Error("RoleReveal components must be used within a RoleReveal.Root");
+    throw new Error(
+      "RoleReveal components must be used within a RoleReveal.Root",
+    );
   }
   return context;
 }
@@ -53,7 +55,7 @@ function Canvas({ children, className, ...props }: CanvasProps) {
       type="button"
       className={cn(
         "relative flex flex-col items-center justify-center w-full cursor-pointer select-none touch-none bg-transparent border-none p-0 focus:outline-none",
-        className
+        className,
       )}
       onMouseDown={startReveal}
       onMouseUp={endReveal}
@@ -93,8 +95,10 @@ function Hidden({ children, className }: HiddenProps) {
     <div
       className={cn(
         "absolute inset-0 flex flex-col items-center justify-center transition-all duration-200 ease-in-out",
-        isRevealed ? "opacity-0 scale-110 pointer-events-none" : "opacity-100 scale-100",
-        className
+        isRevealed
+          ? "opacity-0 scale-110 pointer-events-none"
+          : "opacity-100 scale-100",
+        className,
       )}
     >
       {children || (
@@ -130,8 +134,10 @@ function Revealed({ children, className }: RevealedProps) {
     <div
       className={cn(
         "transition-all duration-200 ease-in-out flex flex-col items-center w-full",
-        isRevealed ? "opacity-100 scale-100 blur-none" : "opacity-0 scale-95 blur-md pointer-events-none",
-        className
+        isRevealed
+          ? "opacity-100 scale-100 blur-none"
+          : "opacity-0 scale-95 blur-md pointer-events-none",
+        className,
       )}
     >
       {children}
@@ -145,11 +151,7 @@ interface IconProps {
 }
 
 function Icon({ children, className }: IconProps) {
-  return (
-    <div className={cn("relative", className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn("relative", className)}>{children}</div>;
 }
 
 interface TitleProps {
@@ -160,10 +162,7 @@ interface TitleProps {
 function Title({ children, className }: TitleProps) {
   return (
     <h2
-      className={cn(
-        "text-4xl font-bold text-center drop-shadow-lg",
-        className
-      )}
+      className={cn("text-4xl font-bold text-center drop-shadow-lg", className)}
     >
       {children}
     </h2>
@@ -180,7 +179,7 @@ function Description({ children, className }: DescriptionProps) {
     <p
       className={cn(
         "text-slate-300 text-center max-w-xs text-lg font-medium",
-        className
+        className,
       )}
     >
       {children}

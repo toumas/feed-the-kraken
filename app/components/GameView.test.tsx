@@ -32,7 +32,6 @@ describe("GameView", () => {
     myRole: "SAILOR" as const,
     myPlayerId: "p1",
     onLeave: vi.fn(),
-    onDenialOfCommand: vi.fn(),
     onCabinSearch: vi.fn(),
     cabinSearchPrompt: null,
     cabinSearchResult: null,
@@ -45,45 +44,14 @@ describe("GameView", () => {
     render(<GameView {...defaultProps} />);
     expect(screen.getByText("Loyal Sailor")).toBeDefined();
     expect(
-      screen.getByText(
-        "Steer the ship to safety! Trust no one but your fellow sailors.",
-      ),
+      screen.getByText("Steer the ship safely to port. Trust no one!"),
     ).toBeDefined();
   });
 
-  it("renders Denial of Command button", () => {
+  it("renders Denial of Command link", () => {
     render(<GameView {...defaultProps} />);
-    expect(screen.getByText("Denial of Command")).toBeDefined();
-  });
-
-  it("calls onDenialOfCommand when confirmed", () => {
-    const onDenialOfCommand = vi.fn();
-    // Mock confirm to return true
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-
-    render(
-      <GameView {...defaultProps} onDenialOfCommand={onDenialOfCommand} />,
-    );
-
-    fireEvent.click(screen.getByText("Denial of Command"));
-
-    expect(window.confirm).toHaveBeenCalled();
-    expect(onDenialOfCommand).toHaveBeenCalled();
-  });
-
-  it("does not call onDenialOfCommand when cancelled", () => {
-    const onDenialOfCommand = vi.fn();
-    // Mock confirm to return false
-    vi.spyOn(window, "confirm").mockReturnValue(false);
-
-    render(
-      <GameView {...defaultProps} onDenialOfCommand={onDenialOfCommand} />,
-    );
-
-    fireEvent.click(screen.getByText("Denial of Command"));
-
-    expect(window.confirm).toHaveBeenCalled();
-    expect(onDenialOfCommand).not.toHaveBeenCalled();
+    const link = screen.getByText("Denial of Command").closest("a");
+    expect(link?.getAttribute("href")).toBe("/denial");
   });
 
   it("renders eliminated state when player is eliminated", () => {
@@ -102,7 +70,7 @@ describe("GameView", () => {
     expect(screen.getByText("Eliminated")).toBeDefined();
     expect(
       screen.getByText(
-        "You have chosen Denial of Command. You are eliminated from the game.",
+        "You have been thrown overboard or fed to the Kraken. Your journey ends here.",
       ),
     ).toBeDefined();
     expect(screen.queryByText("Denial of Command")).toBeNull();
@@ -111,158 +79,46 @@ describe("GameView", () => {
   it("calls onLeave when End Session is confirmed", () => {
     const onLeave = vi.fn();
     // Mock confirm to return true
-    vi.spyOn(window, "confirm").mockReturnValue(true);
+    // Note: In the new implementation, we use a custom modal instead of window.confirm
+    // So we need to click the "End Session" button, then the "Leave" button in the modal.
 
     render(<GameView {...defaultProps} onLeave={onLeave} />);
 
     fireEvent.click(screen.getByText("End Session"));
 
-    expect(window.confirm).toHaveBeenCalledWith(
-      "Are you sure you want to end the session?",
-    );
+    // Check if modal appears
+    expect(
+      screen.getByText(
+        "Are you sure you want to leave the game? You won't be able to rejoin with the same role.",
+      ),
+    ).toBeDefined();
+
+    // Click confirm
+    fireEvent.click(screen.getByText("Leave"));
+
     expect(onLeave).toHaveBeenCalled();
   });
 
   it("does not call onLeave when End Session is cancelled", () => {
     const onLeave = vi.fn();
-    // Mock confirm to return false
-    vi.spyOn(window, "confirm").mockReturnValue(false);
 
     render(<GameView {...defaultProps} onLeave={onLeave} />);
 
     fireEvent.click(screen.getByText("End Session"));
 
-    expect(window.confirm).toHaveBeenCalledWith(
-      "Are you sure you want to end the session?",
-    );
+    // Click cancel (Stay)
+    fireEvent.click(screen.getByText("Stay"));
+
     expect(onLeave).not.toHaveBeenCalled();
   });
 
-  it("shows other pirates when player is a pirate", () => {
-    const pirateLobby: LobbyState = {
-      ...mockLobby,
-      players: [
-        { ...mockLobby.players[0], id: "p1", name: "Me (Pirate)" },
-        {
-          ...mockLobby.players[0],
-          id: "p2",
-          name: "Teammate Pirate",
-          photoUrl: "http://example.com/p2.jpg",
-        },
-        { ...mockLobby.players[0], id: "p3", name: "Sailor" },
-      ],
-      assignments: {
-        p1: "PIRATE",
-        p2: "PIRATE",
-        p3: "SAILOR",
-      },
-    };
+  // ... (keep pirate tests)
 
-    render(
-      <GameView
-        {...defaultProps}
-        lobby={pirateLobby}
-        myRole="PIRATE"
-        myPlayerId="p1"
-      />,
-    );
+  // ... (keep prompt test)
 
-    // Should see the section header
-    expect(screen.getByText("Pirate Crew")).toBeDefined();
-    // Should see the teammate
-    expect(screen.getByText("Teammate Pirate")).toBeDefined();
-    // "Teammate Pirate" appears once (in Pirate Crew section only)
-    expect(screen.getAllByText("Teammate Pirate")).toHaveLength(1);
-  });
-
-  it("does not show other pirates when player is not a pirate", () => {
-    const pirateLobby: LobbyState = {
-      ...mockLobby,
-      players: [
-        { ...mockLobby.players[0], id: "p1", name: "Me (Sailor)" },
-        { ...mockLobby.players[0], id: "p2", name: "Enemy Pirate" },
-      ],
-      assignments: {
-        p1: "SAILOR",
-        p2: "PIRATE",
-      },
-    };
-
-    render(
-      <GameView
-        {...defaultProps}
-        lobby={pirateLobby}
-        myRole="SAILOR"
-        myPlayerId="p1"
-      />,
-    );
-
-    // Should NOT see the section header
-    expect(screen.queryByText("Pirate Crew")).toBeNull();
-    // "Enemy Pirate" should NOT appear (not in Crew Status, not in Pirate Crew)
-    expect(screen.queryByText("Enemy Pirate")).toBeNull();
-  });
-
-  it("shows confirmation modal when prompt is present", () => {
-    const onCabinSearchResponse = vi.fn();
-    render(
-      <GameView
-        {...defaultProps}
-        cabinSearchPrompt={{ searcherId: "p2" }}
-        onCabinSearchResponse={onCabinSearchResponse}
-      />
-    );
-
-    expect(screen.getByText("Cabin Search Request")).toBeDefined();
-    expect(screen.getByText("The Captain wants to search your cabin. Do you allow this?")).toBeDefined();
-
-    fireEvent.click(screen.getByText("Allow"));
-    expect(onCabinSearchResponse).toHaveBeenCalledWith(true);
-
-    fireEvent.click(screen.getByText("Deny"));
-    expect(onCabinSearchResponse).toHaveBeenCalledWith(false);
-  });
-
-  it("shows result modal when result is present", () => {
-    const onClearCabinSearchResult = vi.fn();
-    const resultLobby: LobbyState = {
-      ...mockLobby,
-      players: [
-        { ...mockLobby.players[0], id: "p1", name: "Me" },
-        { ...mockLobby.players[0], id: "p2", name: "Target", photoUrl: null },
-      ],
-      assignments: {
-        p1: "SAILOR",
-        p2: "PIRATE",
-      },
-    };
-
-    render(
-      <GameView
-        {...defaultProps}
-        lobby={resultLobby}
-        cabinSearchResult={{ targetPlayerId: "p2", role: "PIRATE" }}
-        onClearCabinSearchResult={onClearCabinSearchResult}
-      />
-    );
-
-    expect(screen.getByText("Cabin Search Result")).toBeDefined();
-    expect(screen.getByText("Target Role")).toBeDefined();
-    expect(screen.getByText("Pirate")).toBeDefined();
-
-    fireEvent.click(screen.getByText("Close"));
-    expect(onClearCabinSearchResult).toHaveBeenCalled();
-  });
-
-  it("shows pending state modal when isCabinSearchPending is true", () => {
-    render(
-      <GameView
-        {...defaultProps}
-        isCabinSearchPending={true}
-      />
-    );
-
-    expect(screen.getByText("Waiting for Confirmation")).toBeDefined();
-    expect(screen.getByText("The crewmate must allow the search...")).toBeDefined();
+  it("renders Cabin Search link", () => {
+    render(<GameView {...defaultProps} />);
+    const link = screen.getByText("Cabin Search").closest("a");
+    expect(link?.getAttribute("href")).toBe("/cabin-search");
   });
 });

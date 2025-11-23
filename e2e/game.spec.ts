@@ -13,6 +13,7 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
   });
   await hostPage.goto("/");
   await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+  await expect(hostPage).toHaveURL(/\/lobby/);
   await expect(hostPage.getByText("Host(You)")).toBeVisible();
 
   // Get the room code
@@ -41,6 +42,7 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
     // Fill join form
     await page.getByPlaceholder("XP7K9L").fill(code);
     await page.getByRole("button", { name: "Board Ship" }).click();
+    await expect(page).toHaveURL(/\/lobby/);
 
     // Profile setup is bypassed via localStorage
     // await page.getByPlaceholder("Enter your pirate name...").fill(playerName);
@@ -57,6 +59,7 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
   const startBtn = hostPage.getByRole("button", { name: "Start Voyage" });
   await expect(startBtn).toBeEnabled();
   await startBtn.click();
+  await expect(hostPage).toHaveURL(/\/game/);
 
   // 4. Verify roles
   // Host role
