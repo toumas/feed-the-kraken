@@ -9,22 +9,33 @@ describe("RoleReveal", () => {
 
   it("renders hidden state initially", () => {
     render(
-      <RoleReveal>
-        <div>Secret Content</div>
-      </RoleReveal>,
+      <RoleReveal.Root>
+        <RoleReveal.Canvas>
+          <RoleReveal.Hidden />
+          <RoleReveal.Revealed>
+            <RoleReveal.Title>Secret Title</RoleReveal.Title>
+            <RoleReveal.Description>Secret Description</RoleReveal.Description>
+          </RoleReveal.Revealed>
+        </RoleReveal.Canvas>
+      </RoleReveal.Root>,
     );
 
     expect(screen.getByText("Role Hidden")).toBeDefined();
     expect(
-      screen.getByText("Secret Content").parentElement?.className,
+      screen.getByText("Secret Title").parentElement?.className, // Parent is Revealed div
     ).toContain("opacity-0");
   });
 
   it("reveals content on mouse down", () => {
     render(
-      <RoleReveal>
-        <div>Secret Content</div>
-      </RoleReveal>,
+      <RoleReveal.Root>
+        <RoleReveal.Canvas>
+          <RoleReveal.Hidden />
+          <RoleReveal.Revealed>
+            <div>Secret Content</div>
+          </RoleReveal.Revealed>
+        </RoleReveal.Canvas>
+      </RoleReveal.Root>,
     );
 
     const button = screen.getByRole("button");
@@ -40,9 +51,14 @@ describe("RoleReveal", () => {
 
   it("hides content on mouse up", () => {
     render(
-      <RoleReveal>
-        <div>Secret Content</div>
-      </RoleReveal>,
+      <RoleReveal.Root>
+        <RoleReveal.Canvas>
+          <RoleReveal.Hidden />
+          <RoleReveal.Revealed>
+            <div>Secret Content</div>
+          </RoleReveal.Revealed>
+        </RoleReveal.Canvas>
+      </RoleReveal.Root>,
     );
 
     const button = screen.getByRole("button");
@@ -59,9 +75,14 @@ describe("RoleReveal", () => {
 
   it("reveals content on touch start", () => {
     render(
-      <RoleReveal>
-        <div>Secret Content</div>
-      </RoleReveal>,
+      <RoleReveal.Root>
+        <RoleReveal.Canvas>
+          <RoleReveal.Hidden />
+          <RoleReveal.Revealed>
+            <div>Secret Content</div>
+          </RoleReveal.Revealed>
+        </RoleReveal.Canvas>
+      </RoleReveal.Root>,
     );
 
     const button = screen.getByRole("button");
@@ -77,9 +98,14 @@ describe("RoleReveal", () => {
 
   it("hides content on touch end", () => {
     render(
-      <RoleReveal>
-        <div>Secret Content</div>
-      </RoleReveal>,
+      <RoleReveal.Root>
+        <RoleReveal.Canvas>
+          <RoleReveal.Hidden />
+          <RoleReveal.Revealed>
+            <div>Secret Content</div>
+          </RoleReveal.Revealed>
+        </RoleReveal.Canvas>
+      </RoleReveal.Root>,
     );
 
     const button = screen.getByRole("button");
@@ -96,9 +122,14 @@ describe("RoleReveal", () => {
 
   it("reveals content on Enter key down", () => {
     render(
-      <RoleReveal>
-        <div>Secret Content</div>
-      </RoleReveal>,
+      <RoleReveal.Root>
+        <RoleReveal.Canvas>
+          <RoleReveal.Hidden />
+          <RoleReveal.Revealed>
+            <div>Secret Content</div>
+          </RoleReveal.Revealed>
+        </RoleReveal.Canvas>
+      </RoleReveal.Root>,
     );
 
     const button = screen.getByRole("button");
@@ -114,9 +145,14 @@ describe("RoleReveal", () => {
 
   it("hides content on Enter key up", () => {
     render(
-      <RoleReveal>
-        <div>Secret Content</div>
-      </RoleReveal>,
+      <RoleReveal.Root>
+        <RoleReveal.Canvas>
+          <RoleReveal.Hidden />
+          <RoleReveal.Revealed>
+            <div>Secret Content</div>
+          </RoleReveal.Revealed>
+        </RoleReveal.Canvas>
+      </RoleReveal.Root>,
     );
 
     const button = screen.getByRole("button");

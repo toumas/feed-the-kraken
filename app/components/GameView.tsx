@@ -1,7 +1,9 @@
-import { Anchor, Eye, Ghost, LogOut, Skull, User } from "lucide-react";
+import { Anchor, Eye, Ghost, LogOut, Search, Skull, User } from "lucide-react";
+import { useState } from "react";
 import type { LobbyState, Role } from "../types";
 import { cn } from "../utils";
 import { Avatar } from "./Avatar";
+import { CabinSearch } from "./CabinSearch";
 import { RoleReveal } from "./RoleReveal";
 
 interface GameViewProps {
@@ -10,6 +12,12 @@ interface GameViewProps {
   myPlayerId: string;
   onLeave: () => void;
   onDenialOfCommand: () => void;
+  onCabinSearch: (targetPlayerId: string) => void;
+  cabinSearchPrompt: { searcherId: string } | null;
+  cabinSearchResult: { targetPlayerId: string; role: Role } | null;
+  onCabinSearchResponse: (confirmed: boolean) => void;
+  onClearCabinSearchResult: () => void;
+  isCabinSearchPending: boolean;
 }
 
 export function GameView({
@@ -18,7 +26,15 @@ export function GameView({
   myPlayerId,
   onLeave,
   onDenialOfCommand,
+  onCabinSearch,
+  cabinSearchPrompt,
+  cabinSearchResult,
+  onCabinSearchResponse,
+  onClearCabinSearchResult,
+  isCabinSearchPending,
 }: GameViewProps) {
+  const [showCabinSearch, setShowCabinSearch] = useState(false);
+
   const getRoleDetails = (role: Role | null) => {
     switch (role) {
       case "SAILOR":
@@ -87,52 +103,55 @@ export function GameView({
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center space-y-6 animate-in zoom-in-95 duration-700">
-      <RoleReveal>
-        {roleInfo.icon}
-        <h2
-          className={`text-4xl font-bold text-center ${roleInfo.color} drop-shadow-lg`}
-        >
-          {roleInfo.title}
-        </h2>
-        <p className="text-slate-300 text-center max-w-xs text-lg font-medium">
-          {roleInfo.desc}
-        </p>
-        {myRole === "PIRATE" && lobby.assignments && (
-          <div className="mt-6 pt-6 border-t border-slate-700 w-full">
-            <h3 className="text-red-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
-              Pirate Crew
-            </h3>
-            <div className="flex flex-wrap justify-center gap-3">
-              {lobby.players
-                .filter(
-                  (p) =>
-                    p.id !== myPlayerId &&
-                    lobby.assignments?.[p.id] === "PIRATE",
-                )
-                .map((p) => (
-                  <div key={p.id} className="flex flex-col items-center gap-1">
-                    <Avatar
-                      url={p.photoUrl}
-                      size="sm"
-                      className="ring-2 ring-red-900/50"
-                    />
-                    <span className="text-xs text-red-200/70 font-medium max-w-[60px] truncate">
-                      {p.name}
-                    </span>
-                  </div>
-                ))}
-              {lobby.players.filter(
-                (p) =>
-                  p.id !== myPlayerId && lobby.assignments?.[p.id] === "PIRATE",
-              ).length === 0 && (
-                <p className="text-xs text-slate-500 italic">
-                  No other pirates
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-      </RoleReveal>
+      <RoleReveal.Root className="max-w-sm mx-auto">
+        <RoleReveal.Canvas className="h-[480px]">
+          <RoleReveal.Hidden />
+          <RoleReveal.Revealed className="space-y-6">
+            <RoleReveal.Icon>{roleInfo.icon}</RoleReveal.Icon>
+            <RoleReveal.Title className={roleInfo.color}>
+              {roleInfo.title}
+            </RoleReveal.Title>
+            <RoleReveal.Description>
+              {roleInfo.desc}
+            </RoleReveal.Description>
+            {myRole === "PIRATE" && lobby.assignments && (
+              <div className="mt-6 pt-6 border-t border-slate-700 w-full">
+                <h3 className="text-red-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
+                  Pirate Crew
+                </h3>
+                <div className="flex flex-wrap justify-center gap-3">
+                  {lobby.players
+                    .filter(
+                      (p) =>
+                        p.id !== myPlayerId &&
+                        lobby.assignments?.[p.id] === "PIRATE",
+                    )
+                    .map((p) => (
+                      <div key={p.id} className="flex flex-col items-center gap-1">
+                        <Avatar
+                          url={p.photoUrl}
+                          size="sm"
+                          className="ring-2 ring-red-900/50"
+                        />
+                        <span className="text-xs text-red-200/70 font-medium max-w-[60px] truncate">
+                          {p.name}
+                        </span>
+                      </div>
+                    ))}
+                  {lobby.players.filter(
+                    (p) =>
+                      p.id !== myPlayerId && lobby.assignments?.[p.id] === "PIRATE",
+                  ).length === 0 && (
+                      <p className="text-xs text-slate-500 italic">
+                        No other pirates
+                      </p>
+                    )}
+                </div>
+              </div>
+            )}
+          </RoleReveal.Revealed>
+        </RoleReveal.Canvas>
+      </RoleReveal.Root>
       <div className="p-6 bg-slate-900 rounded-xl border border-slate-800 w-full max-w-sm">
         <h3 className="text-sm text-slate-500 uppercase mb-4 font-bold">
           Crew Status
@@ -172,6 +191,131 @@ export function GameView({
           ))}
         </div>
       </div>
+
+      <button
+        onClick={() => setShowCabinSearch(true)}
+        type="button"
+        className="mt-4 group relative px-6 py-3 bg-slate-900/80 hover:bg-slate-900 text-slate-400 hover:text-cyan-400 rounded-lg text-sm font-medium border border-slate-800 hover:border-cyan-900/50 transition-all duration-300 overflow-hidden"
+      >
+        <span className="relative z-10 flex items-center gap-2">
+          <Search className="w-4 h-4 transition-transform group-hover:scale-110" />
+          Cabin Search
+        </span>
+        <div className="absolute inset-0 bg-linear-to-r from-transparent via-cyan-950/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+      </button>
+
+      {showCabinSearch && (
+        <CabinSearch
+          players={lobby.players.filter(
+            (p) => p.id !== myPlayerId && !p.isEliminated,
+          )}
+          onConfirm={(targetId) => {
+            onCabinSearch(targetId);
+            setShowCabinSearch(false);
+          }}
+          onCancel={() => setShowCabinSearch(false)}
+        />
+      )}
+
+      {/* Cabin Search Confirmation Modal (Target) */}
+      {cabinSearchPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
+            <h2 className="text-xl font-bold text-white mb-4">Cabin Search Request</h2>
+            <p className="text-slate-300 mb-6">
+              The Captain wants to search your cabin. Do you allow this?
+            </p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => onCabinSearchResponse(false)}
+                className="flex-1 py-3 bg-red-900/50 hover:bg-red-900 text-red-200 rounded-xl font-bold transition-colors"
+              >
+                Deny
+              </button>
+              <button
+                onClick={() => onCabinSearchResponse(true)}
+                className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold transition-colors"
+              >
+                Allow
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cabin Search Result Modal (Searcher) */}
+      {cabinSearchResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300 flex flex-col items-center">
+            <h2 className="text-xl font-bold text-white mb-6">Cabin Search Result</h2>
+
+            {(() => {
+              const resultInfo = getRoleDetails(cabinSearchResult.role);
+              const targetPlayer = lobby.players.find(p => p.id === cabinSearchResult.targetPlayerId);
+
+              return (
+                <div className="w-full">
+                  <RoleReveal.Root>
+                    <RoleReveal.Canvas className="h-96">
+                      <RoleReveal.Hidden>
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="w-20 h-20 rounded-full bg-slate-800/50 flex items-center justify-center mb-4 border-2 border-slate-700/50">
+                            <Eye className="w-10 h-10 text-slate-500" />
+                          </div>
+                          <p className="text-slate-400 font-medium text-center">
+                            Press and hold to reveal
+                          </p>
+                        </div>
+                      </RoleReveal.Hidden>
+                      <RoleReveal.Revealed>
+                        <div className="flex flex-col items-center gap-6">
+                          <div className="flex flex-col items-center gap-2">
+                            <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">Target</span>
+                            <Avatar url={targetPlayer?.photoUrl || null} size="lg" className="ring-4 ring-slate-800" />
+                            <span className="text-sm text-slate-300 font-medium">{targetPlayer?.name}</span>
+                          </div>
+
+                          <RoleReveal.Icon>
+                            {resultInfo.icon}
+                          </RoleReveal.Icon>
+
+                          <div className="text-center">
+                            <p className="text-slate-400 text-sm">Role</p>
+                            <RoleReveal.Title className={cn("text-2xl", resultInfo.color)}>
+                              {resultInfo.title}
+                            </RoleReveal.Title>
+                          </div>
+                        </div>
+                      </RoleReveal.Revealed>
+                    </RoleReveal.Canvas>
+                  </RoleReveal.Root>
+                </div>
+              );
+            })()}
+
+            <button
+              onClick={onClearCabinSearchResult}
+              className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors mt-4"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Pending State Modal */}
+      {isCabinSearchPending && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 animate-in zoom-in-95 duration-300 flex flex-col items-center">
+            <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-6" />
+            <h2 className="text-xl font-bold text-white mb-2">Waiting for Confirmation</h2>
+            <p className="text-slate-400 text-center">
+              The crewmate must allow the search...
+            </p>
+          </div>
+        </div>
+      )}
+
       <button
         onClick={() => {
           if (

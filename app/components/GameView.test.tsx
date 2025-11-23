@@ -20,6 +20,7 @@ describe("GameView", () => {
         isReady: true,
         isOnline: true,
         isEliminated: false,
+        isUnconvertible: false,
         joinedAt: Date.now(),
       },
     ],
@@ -32,6 +33,12 @@ describe("GameView", () => {
     myPlayerId: "p1",
     onLeave: vi.fn(),
     onDenialOfCommand: vi.fn(),
+    onCabinSearch: vi.fn(),
+    cabinSearchPrompt: null,
+    cabinSearchResult: null,
+    onCabinSearchResponse: vi.fn(),
+    onClearCabinSearchResult: vi.fn(),
+    isCabinSearchPending: false,
   };
 
   it("renders role information", () => {
@@ -194,5 +201,68 @@ describe("GameView", () => {
     expect(screen.queryByText("Pirate Crew")).toBeNull();
     // "Enemy Pirate" should NOT appear (not in Crew Status, not in Pirate Crew)
     expect(screen.queryByText("Enemy Pirate")).toBeNull();
+  });
+
+  it("shows confirmation modal when prompt is present", () => {
+    const onCabinSearchResponse = vi.fn();
+    render(
+      <GameView
+        {...defaultProps}
+        cabinSearchPrompt={{ searcherId: "p2" }}
+        onCabinSearchResponse={onCabinSearchResponse}
+      />
+    );
+
+    expect(screen.getByText("Cabin Search Request")).toBeDefined();
+    expect(screen.getByText("The Captain wants to search your cabin. Do you allow this?")).toBeDefined();
+
+    fireEvent.click(screen.getByText("Allow"));
+    expect(onCabinSearchResponse).toHaveBeenCalledWith(true);
+
+    fireEvent.click(screen.getByText("Deny"));
+    expect(onCabinSearchResponse).toHaveBeenCalledWith(false);
+  });
+
+  it("shows result modal when result is present", () => {
+    const onClearCabinSearchResult = vi.fn();
+    const resultLobby: LobbyState = {
+      ...mockLobby,
+      players: [
+        { ...mockLobby.players[0], id: "p1", name: "Me" },
+        { ...mockLobby.players[0], id: "p2", name: "Target", photoUrl: null },
+      ],
+      assignments: {
+        p1: "SAILOR",
+        p2: "PIRATE",
+      },
+    };
+
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={resultLobby}
+        cabinSearchResult={{ targetPlayerId: "p2", role: "PIRATE" }}
+        onClearCabinSearchResult={onClearCabinSearchResult}
+      />
+    );
+
+    expect(screen.getByText("Cabin Search Result")).toBeDefined();
+    expect(screen.getByText("Target Role")).toBeDefined();
+    expect(screen.getByText("Pirate")).toBeDefined();
+
+    fireEvent.click(screen.getByText("Close"));
+    expect(onClearCabinSearchResult).toHaveBeenCalled();
+  });
+
+  it("shows pending state modal when isCabinSearchPending is true", () => {
+    render(
+      <GameView
+        {...defaultProps}
+        isCabinSearchPending={true}
+      />
+    );
+
+    expect(screen.getByText("Waiting for Confirmation")).toBeDefined();
+    expect(screen.getByText("The crewmate must allow the search...")).toBeDefined();
   });
 });

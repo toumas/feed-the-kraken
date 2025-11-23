@@ -25,6 +25,16 @@ export default function KrakenCompanion() {
     type: "CREATE" | "JOIN";
   } | null>(null);
 
+  // Game State
+  const [cabinSearchPrompt, setCabinSearchPrompt] = useState<{
+    searcherId: string;
+  } | null>(null);
+  const [cabinSearchResult, setCabinSearchResult] = useState<{
+    targetPlayerId: string;
+    role: Role;
+  } | null>(null);
+  const [isCabinSearchPending, setIsCabinSearchPending] = useState(false);
+
   // User State
   // User State
   const [myPlayerId] = useState<string>(() => {
@@ -117,6 +127,22 @@ export default function KrakenCompanion() {
                 setMyRole(data.assignments[myPlayerId]);
               }
               setView("GAME");
+              break;
+              break;
+            case "CABIN_SEARCH_PROMPT":
+              setCabinSearchPrompt({ searcherId: data.searcherId });
+              break;
+            case "CABIN_SEARCH_RESULT":
+              setCabinSearchResult({
+                targetPlayerId: data.targetPlayerId,
+                role: data.role,
+              });
+              setIsCabinSearchPending(false);
+              break;
+            case "CABIN_SEARCH_DENIED":
+              setIsCabinSearchPending(false);
+              setError("The player denied the cabin search.");
+              setTimeout(() => setError(null), 3000);
               break;
             case "ERROR":
               setError(data.message);
@@ -311,6 +337,31 @@ export default function KrakenCompanion() {
     }
   };
 
+  const handleCabinSearch = (targetPlayerId: string) => {
+    if (socket) {
+      setIsCabinSearchPending(true);
+      socket.send(
+        JSON.stringify({
+          type: "CABIN_SEARCH_REQUEST",
+          targetPlayerId,
+        }),
+      );
+    }
+  };
+
+  const handleCabinSearchResponse = (confirmed: boolean) => {
+    if (socket && cabinSearchPrompt) {
+      socket.send(
+        JSON.stringify({
+          type: "CABIN_SEARCH_RESPONSE",
+          searcherId: cabinSearchPrompt.searcherId,
+          confirmed,
+        }),
+      );
+      setCabinSearchPrompt(null);
+    }
+  };
+
   // --- Render ---
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-cyan-900">
@@ -408,6 +459,12 @@ export default function KrakenCompanion() {
               myPlayerId={myPlayerId}
               onLeave={leaveLobby}
               onDenialOfCommand={handleDenialOfCommand}
+              onCabinSearch={handleCabinSearch}
+              cabinSearchPrompt={cabinSearchPrompt}
+              cabinSearchResult={cabinSearchResult}
+              onCabinSearchResponse={handleCabinSearchResponse}
+              onClearCabinSearchResult={() => setCabinSearchResult(null)}
+              isCabinSearchPending={isCabinSearchPending}
             />
           )}
         </div>

@@ -8,6 +8,7 @@ export type Player = {
   isReady: boolean;
   isOnline: boolean;
   isEliminated: boolean;
+  isUnconvertible: boolean;
   joinedAt: number;
 };
 
@@ -58,8 +59,24 @@ type DenialOfCommandMessage = {
   playerId: string;
 };
 
+type CabinSearchRequestMessage = {
+  type: "CABIN_SEARCH_REQUEST";
+  targetPlayerId: string;
+};
+
+type CabinSearchResponseMessage = {
+  type: "CABIN_SEARCH_RESPONSE";
+  searcherId: string;
+  confirmed: boolean;
+};
+
+type CabinSearchDeniedMessage = {
+  type: "CABIN_SEARCH_DENIED";
+  targetPlayerId: string;
+};
+
 export default class Server implements Party.Server {
-  constructor(readonly room: Party.Room) {}
+  constructor(readonly room: Party.Room) { }
 
   // Store lobby state in durable storage
   lobbyState: LobbyState | null = null;
@@ -128,6 +145,12 @@ export default class Server implements Party.Server {
         case "DENIAL_OF_COMMAND":
           await this.handleDenialOfCommand(data, sender);
           break;
+        case "CABIN_SEARCH_REQUEST":
+          await this.handleCabinSearchRequest(data, sender);
+          break;
+        case "CABIN_SEARCH_RESPONSE":
+          await this.handleCabinSearchResponse(data, sender);
+          break;
       }
     } catch (error) {
       console.error("Error handling message:", error);
@@ -160,6 +183,7 @@ export default class Server implements Party.Server {
           isReady: false,
           isOnline: true,
           isEliminated: false,
+          isUnconvertible: false,
           joinedAt: Date.now(),
         },
       ],
@@ -219,6 +243,7 @@ export default class Server implements Party.Server {
       isReady: false,
       isOnline: true,
       isEliminated: false,
+      isUnconvertible: false,
       joinedAt: Date.now(),
     });
 
@@ -304,6 +329,7 @@ export default class Server implements Party.Server {
         assignments,
       }),
     );
+    this.broadcastLobbyUpdate();
   }
 
   async handleAddBot(_data: AddBotMessage, sender: Party.Connection) {
@@ -339,6 +365,7 @@ export default class Server implements Party.Server {
       isReady: true,
       isOnline: true,
       isEliminated: false,
+      isUnconvertible: false,
       joinedAt: Date.now(),
     });
 
@@ -359,6 +386,80 @@ export default class Server implements Party.Server {
       player.isEliminated = true;
       await this.saveLobbyState();
       this.broadcastLobbyUpdate();
+    }
+  }
+
+  async handleCabinSearchRequest(
+    data: CabinSearchRequestMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState) return;
+
+    const searcherId = this.connectionToPlayer.get(sender.id);
+    if (!searcherId) return;
+
+    const { targetPlayerId } = data;
+    // Find target's connection
+    // We need a way to map playerId to connection(s).
+    // Currently we have connectionToPlayer (connId -> playerId).
+    // We can iterate connections or create a reverse map. Iterating is fine for small lobbies.
+
+    const targetConnection = Array.from(this.room.getConnections()).find(
+      conn => this.connectionToPlayer.get(conn.id) === targetPlayerId
+    );
+
+    if (targetConnection) {
+      targetConnection.send(JSON.stringify({
+        type: "CABIN_SEARCH_PROMPT",
+        searcherId,
+      }));
+    }
+  }
+
+  async handleCabinSearchResponse(
+    data: CabinSearchResponseMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState || !this.lobbyState.assignments) return;
+
+    const targetPlayerId = this.connectionToPlayer.get(sender.id);
+    if (!targetPlayerId) return;
+
+    const { searcherId, confirmed } = data;
+
+    if (confirmed) {
+      const targetPlayer = this.lobbyState.players.find(p => p.id === targetPlayerId);
+      if (targetPlayer) {
+        targetPlayer.isUnconvertible = true;
+        await this.saveLobbyState();
+        this.broadcastLobbyUpdate();
+
+        // Send result to searcher
+        const searcherConnection = Array.from(this.room.getConnections()).find(
+          conn => this.connectionToPlayer.get(conn.id) === searcherId
+        );
+
+        if (searcherConnection) {
+          const role = this.lobbyState.assignments[targetPlayerId];
+          searcherConnection.send(JSON.stringify({
+            type: "CABIN_SEARCH_RESULT",
+            targetPlayerId,
+            role,
+          }));
+        }
+      }
+    } else {
+      // Notify searcher of denial
+      const searcherConnection = Array.from(this.room.getConnections()).find(
+        conn => this.connectionToPlayer.get(conn.id) === searcherId
+      );
+
+      if (searcherConnection) {
+        searcherConnection.send(JSON.stringify({
+          type: "CABIN_SEARCH_DENIED",
+          targetPlayerId,
+        }));
+      }
     }
   }
 

@@ -9,6 +9,7 @@ export type Player = {
   isReady: boolean;
   isOnline: boolean;
   isEliminated: boolean;
+  isUnconvertible: boolean;
   joinedAt: number;
 };
 
@@ -27,27 +28,33 @@ export type ConnectionStatus =
 
 export type MessagePayload =
   | {
-      type: "CREATE_LOBBY";
-      playerId: string;
-      playerName: string;
-      playerPhoto: string | null;
-    }
+    type: "CREATE_LOBBY";
+    playerId: string;
+    playerName: string;
+    playerPhoto: string | null;
+  }
   | {
-      type: "JOIN_LOBBY";
-      playerId: string;
-      playerName: string;
-      playerPhoto: string | null;
-    }
+    type: "JOIN_LOBBY";
+    playerId: string;
+    playerName: string;
+    playerPhoto: string | null;
+  }
   | {
-      type: "UPDATE_PROFILE";
-      playerId: string;
-      name: string;
-      photoUrl: string | null;
-    }
+    type: "UPDATE_PROFILE";
+    playerId: string;
+    name: string;
+    photoUrl: string | null;
+  }
   | { type: "ADD_BOT" }
   | { type: "LEAVE_LOBBY"; playerId: string }
   | { type: "START_GAME"; playerId: string }
-  | { type: "DENIAL_OF_COMMAND"; playerId: string };
+  | { type: "START_GAME"; playerId: string }
+  | { type: "DENIAL_OF_COMMAND"; playerId: string }
+  | { type: "CABIN_SEARCH_REQUEST"; targetPlayerId: string }
+  | { type: "CABIN_SEARCH_PROMPT"; searcherId: string }
+  | { type: "CABIN_SEARCH_RESPONSE"; searcherId: string; confirmed: boolean }
+  | { type: "CABIN_SEARCH_RESULT"; targetPlayerId: string; role: Role }
+  | { type: "CABIN_SEARCH_DENIED"; targetPlayerId: string };
 
 // --- Constants ---
 export const MIN_PLAYERS = 5;
