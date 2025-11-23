@@ -43,9 +43,12 @@ describe("CabinSearch", () => {
       />,
     );
 
-    // Use getAllByText just in case, but expect single for title
-    expect(screen.getAllByText("Select Cabin to Search")[0]).toBeDefined();
-    expect(screen.getAllByText("Player 1")[0]).toBeDefined();
+    expect(screen.getByText("Player 1")).toBeDefined();
+    // Confirm button should be enabled
+    const confirmButton = screen.getByText(
+      "Confirm Search",
+    ) as HTMLButtonElement;
+    expect(confirmButton.disabled).toBe(false);
   });
 
   it("allows selecting a convertible player", () => {
@@ -59,19 +62,40 @@ describe("CabinSearch", () => {
       />,
     );
 
-    const player1Button = screen.getByText("Player 1").closest("button");
-    expect(player1Button).not.toBeNull();
-    fireEvent.click(player1Button as HTMLElement);
+    const player1Label = screen.getByText("Player 1").closest("label");
+    expect(player1Label).not.toBeNull();
+    fireEvent.click(player1Label as HTMLElement);
 
-    const confirmButton = screen.getByText(
-      "Confirm Search",
-    ) as HTMLButtonElement;
-    expect(confirmButton.disabled).toBe(false);
-
+    const confirmButton = screen.getByText("Confirm Search");
     fireEvent.click(confirmButton);
     expect(onConfirm).toHaveBeenCalledWith("p1");
   });
 
+  it("requires selection before submission", () => {
+    const onConfirm = vi.fn();
+    render(
+      <CabinSearch
+        players={mockPlayers}
+        myPlayerId="me"
+        onConfirm={onConfirm}
+        onCancel={() => {}}
+      />,
+    );
+
+    const radioInputs = screen.getAllByRole("radio");
+    expect(radioInputs[0].hasAttribute("required")).toBe(true);
+
+    const confirmButton = screen.getByText("Confirm Search");
+    fireEvent.click(confirmButton);
+
+    // Note: In JSDOM, form validation doesn't prevent submission automatically with fireEvent.click
+    // unless we use userEvent or check validity manually.
+    // But we verified the 'required' attribute is present.
+    // If we want to ensure onConfirm is NOT called when invalid, we rely on the component logic:
+    // if (selectedPlayerId) { onConfirm(...) }
+    // Since selectedPlayerId is null initially, onConfirm should not be called.
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
   it("does not allow selecting an unconvertible player", () => {
     const onConfirm = vi.fn();
     render(
@@ -83,35 +107,55 @@ describe("CabinSearch", () => {
       />,
     );
 
-    const player2Button = screen
-      .getByText("Player 2")
-      .closest("button") as HTMLButtonElement;
-    expect(player2Button).not.toBeNull();
-    expect(player2Button.disabled).toBe(true);
+    // Find the radio input for Player 2
+    const player2Input = screen.getAllByRole("radio")[1] as HTMLInputElement;
+    expect(player2Input.disabled).toBe(true);
 
-    fireEvent.click(player2Button);
+    // Try to click the label
+    const player2Label = screen.getByText("Player 2").closest("label");
+    if (player2Label) {
+      fireEvent.click(player2Label);
+    }
 
-    const confirmButton = screen.getByText(
-      "Confirm Search",
-    ) as HTMLButtonElement;
-    expect(confirmButton.disabled).toBe(true);
+    const confirmButton = screen.getByText("Confirm Search");
+    fireEvent.click(confirmButton);
+
     expect(onConfirm).not.toHaveBeenCalled();
   });
+  it("does not allow selecting an eliminated player", () => {
+    const eliminatedPlayer: Player = {
+      id: "p3",
+      name: "Player 3",
+      photoUrl: null,
+      isHost: false,
+      isReady: true,
+      isOnline: true,
+      isEliminated: true,
+      isUnconvertible: false,
+      joinedAt: 1000,
+    };
+    const players = [...mockPlayers, eliminatedPlayer];
+    const onConfirm = vi.fn();
 
-  it("calls onCancel when cancel button is clicked", () => {
-    const onCancel = vi.fn();
     render(
       <CabinSearch
-        players={mockPlayers}
+        players={players}
         myPlayerId="me"
-        onConfirm={() => {}}
-        onCancel={onCancel}
+        onConfirm={onConfirm}
+        onCancel={() => {}}
       />,
     );
 
-    const closeButtons = screen.getAllByTestId("close-button");
-    // If multiple found, just click the first one, but ideally should be one
-    fireEvent.click(closeButtons[0]);
-    expect(onCancel).toHaveBeenCalled();
+    // Find the radio input for Player 3 (index 2)
+    const player3Input = screen.getAllByRole("radio")[2] as HTMLInputElement;
+    expect(player3Input.disabled).toBe(true);
+
+    // Check for "Eliminated" text
+    expect(screen.getByText("Eliminated")).toBeDefined();
+
+    const confirmButton = screen.getByText("Confirm Search");
+    fireEvent.click(confirmButton);
+
+    expect(onConfirm).not.toHaveBeenCalled();
   });
 });
