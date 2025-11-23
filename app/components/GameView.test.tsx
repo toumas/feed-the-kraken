@@ -130,4 +130,69 @@ describe("GameView", () => {
     );
     expect(onLeave).not.toHaveBeenCalled();
   });
+
+  it("shows other pirates when player is a pirate", () => {
+    const pirateLobby: LobbyState = {
+      ...mockLobby,
+      players: [
+        { ...mockLobby.players[0], id: "p1", name: "Me (Pirate)" },
+        {
+          ...mockLobby.players[0],
+          id: "p2",
+          name: "Teammate Pirate",
+          photoUrl: "http://example.com/p2.jpg",
+        },
+        { ...mockLobby.players[0], id: "p3", name: "Sailor" },
+      ],
+      assignments: {
+        p1: "PIRATE",
+        p2: "PIRATE",
+        p3: "SAILOR",
+      },
+    };
+
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={pirateLobby}
+        myRole="PIRATE"
+        myPlayerId="p1"
+      />,
+    );
+
+    // Should see the section header
+    expect(screen.getByText("Pirate Crew")).toBeDefined();
+    // Should see the teammate
+    expect(screen.getByText("Teammate Pirate")).toBeDefined();
+    // "Teammate Pirate" appears once (in Pirate Crew section only)
+    expect(screen.getAllByText("Teammate Pirate")).toHaveLength(1);
+  });
+
+  it("does not show other pirates when player is not a pirate", () => {
+    const pirateLobby: LobbyState = {
+      ...mockLobby,
+      players: [
+        { ...mockLobby.players[0], id: "p1", name: "Me (Sailor)" },
+        { ...mockLobby.players[0], id: "p2", name: "Enemy Pirate" },
+      ],
+      assignments: {
+        p1: "SAILOR",
+        p2: "PIRATE",
+      },
+    };
+
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={pirateLobby}
+        myRole="SAILOR"
+        myPlayerId="p1"
+      />,
+    );
+
+    // Should NOT see the section header
+    expect(screen.queryByText("Pirate Crew")).toBeNull();
+    // "Enemy Pirate" should NOT appear (not in Crew Status, not in Pirate Crew)
+    expect(screen.queryByText("Enemy Pirate")).toBeNull();
+  });
 });

@@ -97,6 +97,41 @@ export function GameView({
         <p className="text-slate-300 text-center max-w-xs text-lg font-medium">
           {roleInfo.desc}
         </p>
+        {myRole === "PIRATE" && lobby.assignments && (
+          <div className="mt-6 pt-6 border-t border-slate-700 w-full">
+            <h3 className="text-red-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
+              Pirate Crew
+            </h3>
+            <div className="flex flex-wrap justify-center gap-3">
+              {lobby.players
+                .filter(
+                  (p) =>
+                    p.id !== myPlayerId &&
+                    lobby.assignments?.[p.id] === "PIRATE",
+                )
+                .map((p) => (
+                  <div key={p.id} className="flex flex-col items-center gap-1">
+                    <Avatar
+                      url={p.photoUrl}
+                      size="sm"
+                      className="ring-2 ring-red-900/50"
+                    />
+                    <span className="text-xs text-red-200/70 font-medium max-w-[60px] truncate">
+                      {p.name}
+                    </span>
+                  </div>
+                ))}
+              {lobby.players.filter(
+                (p) =>
+                  p.id !== myPlayerId && lobby.assignments?.[p.id] === "PIRATE",
+              ).length === 0 && (
+                <p className="text-xs text-slate-500 italic">
+                  No other pirates
+                </p>
+              )}
+            </div>
+          </div>
+        )}
       </RoleReveal>
       <div className="p-6 bg-slate-900 rounded-xl border border-slate-800 w-full max-w-sm">
         <h3 className="text-sm text-slate-500 uppercase mb-4 font-bold">

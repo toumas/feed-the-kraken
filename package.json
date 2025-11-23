@@ -10,7 +10,7 @@
     "format": "biome format --write",
     "partykit:dev": "partykit dev",
     "partykit:deploy": "partykit deploy",
-    "test:unit": "vitest --exclude e2e",
+    "test:unit": "vitest run --exclude e2e",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug"
