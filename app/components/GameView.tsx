@@ -2,6 +2,7 @@ import { Anchor, Eye, Ghost, LogOut, Skull, User } from "lucide-react";
 import type { LobbyState, Role } from "../types";
 import { cn } from "../utils";
 import { Avatar } from "./Avatar";
+import { RoleReveal } from "./RoleReveal";
 
 interface GameViewProps {
   lobby: LobbyState;
@@ -86,15 +87,17 @@ export function GameView({
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center space-y-6 animate-in zoom-in-95 duration-700">
-      {roleInfo.icon}
-      <h2
-        className={`text-4xl font-bold text-center ${roleInfo.color} drop-shadow-lg`}
-      >
-        {roleInfo.title}
-      </h2>
-      <p className="text-slate-300 text-center max-w-xs text-lg font-medium">
-        {roleInfo.desc}
-      </p>
+      <RoleReveal>
+        {roleInfo.icon}
+        <h2
+          className={`text-4xl font-bold text-center ${roleInfo.color} drop-shadow-lg`}
+        >
+          {roleInfo.title}
+        </h2>
+        <p className="text-slate-300 text-center max-w-xs text-lg font-medium">
+          {roleInfo.desc}
+        </p>
+      </RoleReveal>
       <div className="p-6 bg-slate-900 rounded-xl border border-slate-800 w-full max-w-sm">
         <h3 className="text-sm text-slate-500 uppercase mb-4 font-bold">
           Crew Status
@@ -163,7 +166,7 @@ export function GameView({
           <Skull className="w-4 h-4 transition-transform group-hover:scale-110" />
           Denial of Command
         </span>
-        <div className="absolute inset-0 bg-linear-to-r from-transparent via-red-950/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+        <div className="absolute inset-0 bg-linear-to-r from-transparent via-red-950/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
       </button>
     </div>
   );
