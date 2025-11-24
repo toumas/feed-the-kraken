@@ -28,10 +28,11 @@ function useRoleReveal() {
 interface RootProps {
   children: React.ReactNode;
   className?: string;
+  defaultRevealed?: boolean;
 }
 
-function Root({ children, className }: RootProps) {
-  const [isRevealed, setIsRevealed] = useState(false);
+function Root({ children, className, defaultRevealed = false }: RootProps) {
+  const [isRevealed, setIsRevealed] = useState(defaultRevealed);
 
   const startReveal = () => setIsRevealed(true);
   const endReveal = () => setIsRevealed(false);

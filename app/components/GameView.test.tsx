@@ -21,6 +21,7 @@ describe("GameView", () => {
         isOnline: true,
         isEliminated: false,
         isUnconvertible: false,
+        notRole: null,
         joinedAt: Date.now(),
       },
     ],
@@ -38,6 +39,11 @@ describe("GameView", () => {
     onCabinSearchResponse: vi.fn(),
     onClearCabinSearchResult: vi.fn(),
     isCabinSearchPending: false,
+
+    floggingConfirmationPrompt: null,
+    onFloggingConfirmationResponse: vi.fn(),
+    floggingReveal: null,
+    onClearFloggingReveal: vi.fn(),
   };
 
   it("renders role information", () => {
@@ -74,6 +80,20 @@ describe("GameView", () => {
       ),
     ).toBeDefined();
     expect(screen.queryByText("Denial of Command")).toBeNull();
+  });
+
+  it("shows disabled-looking but clickable flogging link when used", () => {
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={{ ...mockLobby, isFloggingUsed: true }}
+      />,
+    );
+    const link = screen.getByText("Flogging (Used)").closest("a");
+    expect(link).toBeDefined();
+    expect(link?.getAttribute("href")).toBe("/flogging");
+    expect(link?.className).toContain("bg-slate-800/50");
+    expect(link?.className).toContain("text-slate-500");
   });
 
   it("calls onLeave when End Session is confirmed", () => {

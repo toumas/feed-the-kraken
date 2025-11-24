@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   Anchor,
   Eye,
+  Gavel,
   LogOut,
   Search,
   Skull,
@@ -19,11 +20,16 @@ interface GameViewProps {
   onLeave: () => void;
 
   onCabinSearch: (targetPlayerId: string) => void;
-  cabinSearchPrompt: { searcherId: string } | null;
+  cabinSearchPrompt: { searcherId: string; searcherName: string } | null;
   cabinSearchResult: { targetPlayerId: string; role: Role } | null;
   onCabinSearchResponse: (confirmed: boolean) => void;
   onClearCabinSearchResult: () => void;
   isCabinSearchPending: boolean;
+
+  floggingConfirmationPrompt: { hostId: string; hostName: string } | null;
+  onFloggingConfirmationResponse: (confirmed: boolean) => void;
+  floggingReveal: { targetPlayerId: string; revealedRole: Role } | null;
+  onClearFloggingReveal: () => void;
 }
 
 export function GameView({
@@ -34,6 +40,11 @@ export function GameView({
 
   cabinSearchPrompt,
   onCabinSearchResponse,
+
+  floggingConfirmationPrompt,
+  onFloggingConfirmationResponse,
+  floggingReveal,
+  onClearFloggingReveal,
 }: GameViewProps) {
   const [showEndSessionConfirm, setShowEndSessionConfirm] = useState(false);
 
@@ -50,8 +61,8 @@ export function GameView({
         return {
           title: "Cult Leader",
           desc: "Convert others to your cause. You win if you are chosen to feed the Kraken.",
-          icon: <Eye className="w-16 h-16 text-purple-500" />,
-          color: "text-purple-500",
+          icon: <Eye className="w-16 h-16 text-amber-500" />,
+          color: "text-amber-500",
         };
       default:
         return {
@@ -173,7 +184,37 @@ export function GameView({
           </RoleReveal.Revealed>
         </RoleReveal.Canvas>
       </RoleReveal.Root>
+
       <div className="p-6 bg-slate-900 rounded-xl border border-slate-800 w-full max-w-sm">
+        {/* Public Info Section */}
+        {lobby.players.some((p) => p.notRole) && (
+          <div className="mb-6 pb-6 border-b border-slate-800">
+            <h3 className="text-sm text-slate-500 uppercase mb-4 font-bold">
+              Public Info
+            </h3>
+            <div className="space-y-3">
+              {lobby.players
+                .filter((p) => p.notRole)
+                .map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex items-center gap-3 bg-slate-800/50 p-2 rounded-lg border border-slate-700"
+                  >
+                    <Avatar url={p.photoUrl} size="sm" />
+                    <div>
+                      <p className="text-sm font-bold text-slate-200">
+                        {p.name}
+                      </p>
+                      <p className="text-xs font-bold text-amber-400">
+                        NOT {p.notRole?.replace("_", " ")}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
         <h3 className="text-sm text-slate-500 uppercase mb-4 font-bold">
           Crew Status
         </h3>
@@ -218,6 +259,18 @@ export function GameView({
             Denial of Command
           </Link>
 
+          <Link
+            href="/flogging"
+            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+              lobby.isFloggingUsed
+                ? "bg-slate-800/50 text-slate-500 border border-slate-800"
+                : "bg-amber-900/30 hover:bg-amber-900/50 text-amber-200 border border-amber-800/50"
+            }`}
+          >
+            <Gavel className="w-5 h-5" />
+            {lobby.isFloggingUsed ? "Flogging (Used)" : "Flogging"}
+          </Link>
+
           <button
             type="button"
             onClick={() => setShowEndSessionConfirm(true)}
@@ -237,7 +290,10 @@ export function GameView({
               Cabin Search Request
             </h2>
             <p className="text-slate-300 mb-6">
-              The Captain wants to search your cabin. Do you allow this?
+              <span className="font-bold text-white">
+                {cabinSearchPrompt.searcherName}
+              </span>{" "}
+              wants to search your cabin. Do you allow this?
             </p>
             <div className="flex gap-4">
               <button
@@ -284,6 +340,92 @@ export function GameView({
                 Leave
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Flogging Modal (Host) */}
+
+      {/* Flogging Confirmation Modal (Target) */}
+      {floggingConfirmationPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
+            <h2 className="text-xl font-bold text-white mb-4">
+              Flogging Request
+            </h2>
+            <p className="text-slate-300 mb-6">
+              <span className="font-bold text-white">
+                {floggingConfirmationPrompt.hostName}
+              </span>{" "}
+              wants to flog you. Do you allow this?
+            </p>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => onFloggingConfirmationResponse(false)}
+                className="flex-1 py-3 bg-red-900/50 hover:bg-red-900 text-red-200 rounded-xl font-bold transition-colors"
+              >
+                Deny
+              </button>
+              <button
+                type="button"
+                onClick={() => onFloggingConfirmationResponse(true)}
+                className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold transition-colors"
+              >
+                Allow
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Flogging Reveal Animation */}
+      {floggingReveal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md animate-in fade-in duration-500">
+          <div className="w-full max-w-md p-6 flex flex-col items-center">
+            <h2 className="text-2xl font-bold text-white mb-8 text-center">
+              Flogging Result
+            </h2>
+
+            <RoleReveal.Root className="mb-8" defaultRevealed={true}>
+              <RoleReveal.Canvas className="h-[400px] w-full">
+                <RoleReveal.Revealed className="space-y-6">
+                  <div className="flex flex-col items-center">
+                    <Avatar
+                      url={
+                        lobby.players.find(
+                          (p) => p.id === floggingReveal.targetPlayerId,
+                        )?.photoUrl || null
+                      }
+                      size="lg"
+                      className="mb-4 ring-4 ring-amber-500/50"
+                    />
+                    <h3 className="text-xl font-bold text-white mb-2">
+                      {
+                        lobby.players.find(
+                          (p) => p.id === floggingReveal.targetPlayerId,
+                        )?.name
+                      }
+                    </h3>
+                    <div className="bg-slate-800/80 p-6 rounded-2xl border border-slate-700 text-center">
+                      <p className="text-slate-400 text-sm uppercase font-bold mb-2">
+                        Is Definitely
+                      </p>
+                      <p className="text-3xl font-bold text-amber-400">
+                        NOT {floggingReveal.revealedRole.replace("_", " ")}
+                      </p>
+                    </div>
+                  </div>
+                </RoleReveal.Revealed>
+              </RoleReveal.Canvas>
+            </RoleReveal.Root>
+
+            <button
+              type="button"
+              onClick={onClearFloggingReveal}
+              className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

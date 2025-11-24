@@ -17,7 +17,7 @@ import {
   type Role,
 } from "../types";
 
-interface GameContextValue {
+export interface GameContextValue {
   // User State
   myPlayerId: string;
   myName: string;
@@ -41,8 +41,17 @@ interface GameContextValue {
   handleCabinSearch: (targetPlayerId: string) => void;
   handleCabinSearchResponse: (confirmed: boolean) => void;
 
+  // Flogging Actions
+  // Flogging Actions
+  // Flogging Actions
+  handleFloggingRequest: (targetPlayerId: string) => void;
+  handleFloggingConfirmationResponse: (confirmed: boolean) => void;
+  floggingConfirmationPrompt: { hostId: string; hostName: string } | null;
+  floggingReveal: { targetPlayerId: string; revealedRole: Role } | null;
+  clearFloggingReveal: () => void;
+
   // Cabin Search State
-  cabinSearchPrompt: { searcherId: string } | null;
+  cabinSearchPrompt: { searcherId: string; searcherName: string } | null;
   cabinSearchResult: { targetPlayerId: string; role: Role } | null;
   isCabinSearchPending: boolean;
   clearCabinSearchResult: () => void;
@@ -108,6 +117,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Cabin Search State
   const [cabinSearchPrompt, setCabinSearchPrompt] = useState<{
     searcherId: string;
+    searcherName: string;
   } | null>(null);
   const [cabinSearchResult, setCabinSearchResult] = useState<{
     targetPlayerId: string;
@@ -115,6 +125,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   } | null>(null);
   const [isCabinSearchPending, setIsCabinSearchPending] = useState(false);
 
+  // Flogging State
+  const [floggingConfirmationPrompt, setFloggingConfirmationPrompt] = useState<{
+    hostId: string;
+    hostName: string;
+  } | null>(null);
+  const [floggingReveal, setFloggingReveal] = useState<{
+    targetPlayerId: string;
+    revealedRole: Role;
+  } | null>(null);
   // --- Actions ---
 
   const connectToLobby = useCallback(
@@ -166,7 +185,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               }
               break;
             case "CABIN_SEARCH_PROMPT":
-              setCabinSearchPrompt({ searcherId: data.searcherId });
+              setCabinSearchPrompt({
+                searcherId: data.searcherId,
+                searcherName: data.searcherName,
+              });
               break;
             case "CABIN_SEARCH_RESULT":
               setCabinSearchResult({
@@ -182,6 +204,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               break;
             case "ERROR":
               setError(data.message);
+              setTimeout(() => setError(null), 3000);
+              break;
+            case "FLOGGING_CONFIRMATION_REQUEST":
+              setFloggingConfirmationPrompt({
+                hostId: data.hostId,
+                hostName: data.hostName,
+              });
+              break;
+            case "FLOGGING_REVEAL":
+              setFloggingReveal({
+                targetPlayerId: data.targetPlayerId,
+                revealedRole: data.revealedRole,
+              });
+              break;
+            case "FLOGGING_DENIED":
+              setError("The player denied the flogging.");
               setTimeout(() => setError(null), 3000);
               break;
           }
@@ -375,8 +413,36 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const handleFloggingRequest = (targetPlayerId: string) => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "FLOGGING_REQUEST",
+          targetPlayerId,
+        }),
+      );
+    }
+  };
+
+  const handleFloggingConfirmationResponse = (confirmed: boolean) => {
+    if (socket && floggingConfirmationPrompt) {
+      socket.send(
+        JSON.stringify({
+          type: "FLOGGING_CONFIRMATION_RESPONSE",
+          hostId: floggingConfirmationPrompt.hostId,
+          confirmed,
+        }),
+      );
+      setFloggingConfirmationPrompt(null);
+    }
+  };
+
   const clearCabinSearchResult = () => {
     setCabinSearchResult(null);
+  };
+
+  const clearFloggingReveal = () => {
+    setFloggingReveal(null);
   };
 
   return (
@@ -403,6 +469,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         cabinSearchResult,
         isCabinSearchPending,
         clearCabinSearchResult,
+        handleFloggingRequest,
+        handleFloggingConfirmationResponse,
+        floggingConfirmationPrompt,
+        floggingReveal,
+        clearFloggingReveal,
         error,
         setError,
         view: "", // Placeholder, not used in context logic directly

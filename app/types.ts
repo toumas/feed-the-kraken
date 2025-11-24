@@ -10,6 +10,7 @@ export type Player = {
   isOnline: boolean;
   isEliminated: boolean;
   isUnconvertible: boolean;
+  notRole: Role | null;
   joinedAt: number;
 };
 
@@ -18,6 +19,7 @@ export type LobbyState = {
   players: Player[];
   status: "WAITING" | "PLAYING";
   assignments?: Record<string, Role>;
+  isFloggingUsed?: boolean;
 };
 
 export type ConnectionStatus =
@@ -51,10 +53,21 @@ export type MessagePayload =
   | { type: "START_GAME"; playerId: string }
   | { type: "DENIAL_OF_COMMAND"; playerId: string }
   | { type: "CABIN_SEARCH_REQUEST"; targetPlayerId: string }
-  | { type: "CABIN_SEARCH_PROMPT"; searcherId: string }
+  | { type: "CABIN_SEARCH_PROMPT"; searcherId: string; searcherName: string }
   | { type: "CABIN_SEARCH_RESPONSE"; searcherId: string; confirmed: boolean }
   | { type: "CABIN_SEARCH_RESULT"; targetPlayerId: string; role: Role }
-  | { type: "CABIN_SEARCH_DENIED"; targetPlayerId: string };
+  | { type: "CABIN_SEARCH_RESULT"; targetPlayerId: string; role: Role }
+  | { type: "CABIN_SEARCH_DENIED"; targetPlayerId: string }
+  | { type: "FLOGGING_REQUEST"; targetPlayerId: string }
+  | { type: "FLOGGING_CONFIRMATION_REQUEST"; hostId: string; hostName: string }
+  | {
+      type: "FLOGGING_CONFIRMATION_RESPONSE";
+      hostId: string;
+      confirmed: boolean;
+    }
+  | { type: "FLOGGING_PROMPT"; targetPlayerId: string; options: Role[] }
+  | { type: "FLOGGING_REVEAL"; targetPlayerId: string; revealedRole: Role }
+  | { type: "FLOGGING_DENIED"; targetPlayerId: string };
 
 // --- Constants ---
 export const MIN_PLAYERS = 5;

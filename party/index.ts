@@ -9,6 +9,7 @@ export type Player = {
   isOnline: boolean;
   isEliminated: boolean;
   isUnconvertible: boolean;
+  notRole: Role | null;
   joinedAt: number;
 };
 
@@ -17,6 +18,7 @@ export type LobbyState = {
   players: Player[];
   status: "WAITING" | "PLAYING";
   assignments?: Record<string, Role>;
+  isFloggingUsed?: boolean;
 };
 
 type CreateLobbyMessage = {
@@ -67,6 +69,17 @@ type CabinSearchRequestMessage = {
 type CabinSearchResponseMessage = {
   type: "CABIN_SEARCH_RESPONSE";
   searcherId: string;
+  confirmed: boolean;
+};
+
+type FloggingRequestMessage = {
+  type: "FLOGGING_REQUEST";
+  targetPlayerId: string;
+};
+
+type FloggingConfirmationResponseMessage = {
+  type: "FLOGGING_CONFIRMATION_RESPONSE";
+  hostId: string;
   confirmed: boolean;
 };
 
@@ -146,6 +159,12 @@ export default class Server implements Party.Server {
         case "CABIN_SEARCH_RESPONSE":
           await this.handleCabinSearchResponse(data, sender);
           break;
+        case "FLOGGING_REQUEST":
+          await this.handleFloggingRequest(data, sender);
+          break;
+        case "FLOGGING_CONFIRMATION_RESPONSE":
+          await this.handleFloggingConfirmationResponse(data, sender);
+          break;
       }
     } catch (error) {
       console.error("Error handling message:", error);
@@ -179,6 +198,7 @@ export default class Server implements Party.Server {
           isOnline: true,
           isEliminated: false,
           isUnconvertible: false,
+          notRole: null,
           joinedAt: Date.now(),
         },
       ],
@@ -239,6 +259,7 @@ export default class Server implements Party.Server {
       isOnline: true,
       isEliminated: false,
       isUnconvertible: false,
+      notRole: null,
       joinedAt: Date.now(),
     });
 
@@ -315,6 +336,7 @@ export default class Server implements Party.Server {
 
     this.lobbyState.status = "PLAYING";
     this.lobbyState.assignments = assignments;
+    this.lobbyState.isFloggingUsed = false;
     await this.saveLobbyState();
 
     // Broadcast the start with assignments
@@ -361,6 +383,7 @@ export default class Server implements Party.Server {
       isOnline: true,
       isEliminated: false,
       isUnconvertible: false,
+      notRole: null,
       joinedAt: Date.now(),
     });
 
@@ -403,11 +426,17 @@ export default class Server implements Party.Server {
       (conn) => this.connectionToPlayer.get(conn.id) === targetPlayerId,
     );
 
+    const searcherPlayer = this.lobbyState.players.find(
+      (p) => p.id === searcherId,
+    );
+    const searcherName = searcherPlayer ? searcherPlayer.name : "Unknown";
+
     if (targetConnection) {
       targetConnection.send(
         JSON.stringify({
           type: "CABIN_SEARCH_PROMPT",
           searcherId,
+          searcherName,
         }),
       );
     }
@@ -459,6 +488,126 @@ export default class Server implements Party.Server {
         searcherConnection.send(
           JSON.stringify({
             type: "CABIN_SEARCH_DENIED",
+            targetPlayerId,
+          }),
+        );
+      }
+    }
+  }
+
+  async handleFloggingRequest(
+    data: FloggingRequestMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState || !this.lobbyState.assignments) return;
+
+    const hostId = this.connectionToPlayer.get(sender.id);
+    if (!hostId) return;
+
+    const { targetPlayerId } = data;
+
+    if (this.lobbyState.isFloggingUsed) {
+      sender.send(
+        JSON.stringify({
+          type: "ERROR",
+          message: "Flogging has already been used this game.",
+        }),
+      );
+      return;
+    }
+
+    // Send confirmation request to target player
+    const targetConnection = Array.from(this.room.getConnections()).find(
+      (conn) => this.connectionToPlayer.get(conn.id) === targetPlayerId,
+    );
+
+    const hostPlayer = this.lobbyState.players.find((p) => p.id === hostId);
+    const hostName = hostPlayer ? hostPlayer.name : "Unknown";
+
+    if (targetConnection) {
+      targetConnection.send(
+        JSON.stringify({
+          type: "FLOGGING_CONFIRMATION_REQUEST",
+          hostId,
+          hostName,
+        }),
+      );
+    }
+  }
+
+  async handleFloggingConfirmationResponse(
+    data: FloggingConfirmationResponseMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState || !this.lobbyState.assignments) return;
+
+    const targetPlayerId = this.connectionToPlayer.get(sender.id);
+    if (!targetPlayerId) return;
+
+    const { hostId, confirmed } = data;
+
+    if (confirmed) {
+      const targetRole = this.lobbyState.assignments[targetPlayerId];
+      if (!targetRole) return;
+
+      // Determine the 3 cards: Red (Pirate), Blue (Sailor), Yellow/Green (Cult)
+      // The player keeps the one matching their role.
+      // The other two are shuffled and placed face down.
+      // Host picks one.
+
+      // So we need to find which options are available (i.e., NOT the player's role).
+      const allOptions: Role[] = ["PIRATE", "SAILOR", "CULT_LEADER"]; // Using CULT_LEADER to represent Cult faction
+      // Note: Cultist also maps to Cult faction.
+
+      let playerFaction: Role;
+      if (targetRole === "CULTIST" || targetRole === "CULT_LEADER") {
+        playerFaction = "CULT_LEADER";
+      } else {
+        playerFaction = targetRole;
+      }
+
+      const availableOptions = allOptions.filter((r) => r !== playerFaction);
+
+      // Randomly select one option
+      const revealedRole =
+        availableOptions[Math.floor(Math.random() * availableOptions.length)];
+
+      // Update player state immediately
+      const player = this.lobbyState.players.find(
+        (p) => p.id === targetPlayerId,
+      );
+      if (player) {
+        player.notRole = revealedRole;
+        player.isUnconvertible = true;
+        this.lobbyState.isFloggingUsed = true;
+        await this.saveLobbyState();
+        this.broadcastLobbyUpdate();
+
+        // Send reveal only to host
+        const hostConnection = Array.from(this.room.getConnections()).find(
+          (conn) => this.connectionToPlayer.get(conn.id) === hostId,
+        );
+
+        if (hostConnection) {
+          hostConnection.send(
+            JSON.stringify({
+              type: "FLOGGING_REVEAL",
+              targetPlayerId,
+              revealedRole,
+            }),
+          );
+        }
+      }
+    } else {
+      // Notify host of denial
+      const hostConnection = Array.from(this.room.getConnections()).find(
+        (conn) => this.connectionToPlayer.get(conn.id) === hostId,
+      );
+
+      if (hostConnection) {
+        hostConnection.send(
+          JSON.stringify({
+            type: "FLOGGING_DENIED",
             targetPlayerId,
           }),
         );

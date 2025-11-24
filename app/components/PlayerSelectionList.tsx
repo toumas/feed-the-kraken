@@ -3,18 +3,23 @@ import type { Player } from "../types";
 import { cn } from "../utils";
 import { Avatar } from "./Avatar";
 
-interface CabinSearchProps {
+interface PlayerSelectionListProps {
   players: Player[];
   myPlayerId: string;
   onConfirm: (targetPlayerId: string) => void;
-  onCancel: () => void;
+  onCancel?: () => void;
+  submitLabel?: string;
+  disabledLabel?: string;
 }
 
-export function CabinSearch({
+export function PlayerSelectionList({
   players,
   myPlayerId,
   onConfirm,
-}: CabinSearchProps) {
+  onCancel,
+  submitLabel = "Confirm",
+  disabledLabel = "Unavailable",
+}: PlayerSelectionListProps) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -31,9 +36,9 @@ export function CabinSearch({
       <div className="flex-1 overflow-y-auto space-y-2 pb-4">
         {availablePlayers.map((player) => {
           const isSelected = selectedPlayerId === player.id;
-          const isSearched = player.isUnconvertible; // Assuming unconvertible means searched for now, or add specific flag
+          const isDisabledAction = player.isUnconvertible;
           const isEliminated = player.isEliminated;
-          const isDisabled = isSearched || isEliminated;
+          const isDisabled = isDisabledAction || isEliminated;
 
           return (
             <label
@@ -71,8 +76,8 @@ export function CabinSearch({
                 >
                   {player.name}
                 </p>
-                {isSearched && (
-                  <p className="text-xs text-slate-500">Already searched</p>
+                {isDisabledAction && (
+                  <p className="text-xs text-slate-500">{disabledLabel}</p>
                 )}
                 {isEliminated && (
                   <p className="text-xs text-red-500">Eliminated</p>
@@ -95,8 +100,17 @@ export function CabinSearch({
             "bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-900/20 hover:shadow-cyan-900/40 hover:-translate-y-0.5",
           )}
         >
-          Confirm Search
+          {submitLabel}
         </button>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors border border-slate-700"
+          >
+            Cancel
+          </button>
+        )}
       </div>
     </form>
   );

@@ -3,8 +3,8 @@
 import { Anchor, Eye, Search, Skull } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "../components/Avatar";
-import { CabinSearch } from "../components/CabinSearch";
 import { GameHeader } from "../components/GameHeader";
+import { PlayerSelectionList } from "../components/PlayerSelectionList";
 import { RoleReveal } from "../components/RoleReveal";
 import { useGame } from "../context/GameContext";
 import type { Role } from "../types";
@@ -73,7 +73,7 @@ export default function CabinSearchPage() {
           icon={<Anchor className="w-5 h-5" />}
         />
         <div className="flex-1 p-6">
-          <CabinSearch
+          <PlayerSelectionList
             players={lobby.players}
             myPlayerId={myPlayerId}
             onConfirm={(targetId) => {
@@ -81,6 +81,8 @@ export default function CabinSearchPage() {
               // We stay on this page to show the pending state and result
             }}
             onCancel={() => router.push("/")}
+            submitLabel="Confirm Search"
+            disabledLabel="Already searched"
           />
         </div>
 

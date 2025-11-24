@@ -19,6 +19,11 @@ export default function GamePage() {
     handleCabinSearchResponse,
     clearCabinSearchResult,
     isCabinSearchPending,
+
+    floggingConfirmationPrompt,
+    handleFloggingConfirmationResponse,
+    floggingReveal,
+    clearFloggingReveal,
   } = useGame();
 
   useEffect(() => {
@@ -63,6 +68,10 @@ export default function GamePage() {
           onCabinSearchResponse={handleCabinSearchResponse}
           onClearCabinSearchResult={clearCabinSearchResult}
           isCabinSearchPending={isCabinSearchPending}
+          floggingConfirmationPrompt={floggingConfirmationPrompt}
+          onFloggingConfirmationResponse={handleFloggingConfirmationResponse}
+          floggingReveal={floggingReveal}
+          onClearFloggingReveal={clearFloggingReveal}
         />
       </main>
     </div>
