@@ -1,10 +1,10 @@
 "use client";
 
-import { Anchor, ArrowLeft, Eye, Search, Skull } from "lucide-react";
-import Link from "next/link";
+import { Anchor, Eye, Search, Skull } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "../components/Avatar";
 import { CabinSearch } from "../components/CabinSearch";
+import { GameHeader } from "../components/GameHeader";
 import { RoleReveal } from "../components/RoleReveal";
 import { useGame } from "../context/GameContext";
 import type { Role } from "../types";
@@ -68,23 +68,10 @@ export default function CabinSearchPage() {
       <div className="fixed inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] pointer-events-none mix-blend-overlay" />
 
       <main className="relative z-10 max-w-md mx-auto min-h-screen flex flex-col">
-        {/* Header */}
-        <header className="p-6 flex items-center justify-between border-b border-slate-800/50 bg-slate-900/30 backdrop-blur-sm">
-          <Link
-            href="/"
-            className="text-slate-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </Link>
-          <div className="flex items-center">
-            <Anchor className="w-5 h-5 text-cyan-500 mr-2" />
-            <h1 className="text-lg font-bold tracking-wider text-slate-100 uppercase">
-              Cabin Search
-            </h1>
-          </div>
-          <div className="w-6" /> {/* Spacer for centering */}
-        </header>
-
+        <GameHeader
+          title="Cabin Search"
+          icon={<Anchor className="w-5 h-5" />}
+        />
         <div className="flex-1 p-6">
           <CabinSearch
             players={lobby.players}
