@@ -73,17 +73,25 @@ export default function CabinSearchPage() {
           icon={<Anchor className="w-5 h-5" />}
         />
         <div className="flex-1 p-6">
-          <PlayerSelectionList
+          <PlayerSelectionList.Root
             players={lobby.players}
             myPlayerId={myPlayerId}
-            onConfirm={(targetId) => {
-              handleCabinSearch(targetId);
-              // We stay on this page to show the pending state and result
-            }}
-            onCancel={() => router.push("/")}
-            submitLabel="Confirm Search"
-            disabledLabel="Already searched"
-          />
+          >
+            <PlayerSelectionList.Content disabledLabel="Already searched" />
+            <PlayerSelectionList.Actions>
+              <PlayerSelectionList.Submit
+                onSubmit={(targetId) => {
+                  handleCabinSearch(targetId);
+                  // We stay on this page to show the pending state and result
+                }}
+              >
+                Confirm Search
+              </PlayerSelectionList.Submit>
+              <PlayerSelectionList.Cancel onCancel={() => router.push("/")}>
+                Cancel
+              </PlayerSelectionList.Cancel>
+            </PlayerSelectionList.Actions>
+          </PlayerSelectionList.Root>
         </div>
 
         {/* Pending State Overlay */}

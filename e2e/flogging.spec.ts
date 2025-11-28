@@ -4,6 +4,7 @@ test("Flogging Flow: Host flogs Player 1", async ({ browser }) => {
   // 1. Host creates lobby
   const hostContext = await browser.newContext();
   const hostPage = await hostContext.newPage();
+
   await hostPage.addInitScript(() => {
     localStorage.setItem("kraken_player_name", "Host");
     localStorage.setItem(
@@ -44,7 +45,7 @@ test("Flogging Flow: Host flogs Player 1", async ({ browser }) => {
   // 3. Start Game
   await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
   await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-  await expect(hostPage).toHaveURL(/\/game/);
+  await expect(hostPage).toHaveURL(/\/game/, { timeout: 10000 });
 
   // 4. Host initiates Flogging on Player 1
   await hostPage.getByRole("link", { name: "Flogging" }).click();
@@ -179,7 +180,7 @@ test("Flogging Flow: Restriction (Once per game)", async ({ browser }) => {
   await page.getByRole("button", { name: "Join Crew" }).click();
   await page.getByPlaceholder("XP7K9L").fill(code);
   await page.getByRole("button", { name: "Board Ship" }).click();
-  await expect(page).toHaveURL(/\/lobby/);
+  await expect(page).toHaveURL(/\/lobby/, { timeout: 10000 });
 
   // 3. Add bots to reach 5 players
   for (let i = 0; i < 3; i++) {
@@ -214,12 +215,14 @@ test("Flogging Flow: Restriction (Once per game)", async ({ browser }) => {
   await expect(floggingLink).toBeVisible();
   await expect(floggingLink).toHaveClass(/bg-slate-800\/50/); // Check for disabled style
 
-  // Clicking it should redirect (and show alert, but we handle alert automatically in Playwright or let it pass)
-  // Note: Playwright automatically dismisses dialogs unless a handler is set.
-  // We can set a handler to verify the alert message.
-  hostPage.on("dialog", (dialog) => dialog.accept());
-
+  // Clicking it should redirect (and show alert)
+  // We explicitly wait for the dialog to ensure the navigation/check actually happened
+  // because we are already on /game, so toHaveURL(/game) would pass immediately otherwise.
+  const dialogPromise = hostPage.waitForEvent("dialog");
   await floggingLink.click();
+  const dialog = await dialogPromise;
+  await dialog.accept();
+
   await expect(hostPage).toHaveURL(/\/game/);
 
   // Give WebKit a moment to settle

@@ -8,7 +8,7 @@ import {
   Skull,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar } from "../components/Avatar";
 import { RoleReveal } from "../components/RoleReveal";
 import type { LobbyState, Role } from "../types";
@@ -30,6 +30,16 @@ interface GameViewProps {
   onFloggingConfirmationResponse: (confirmed: boolean) => void;
   floggingReveal: { targetPlayerId: string; revealedRole: Role } | null;
   onClearFloggingReveal: () => void;
+
+  onStartConversion: () => void;
+  conversionStatus: {
+    initiatorId: string;
+    responses: Record<string, boolean>;
+    state: "PENDING" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+  } | null;
+  onRespondConversion: (accept: boolean) => void;
+
+  onResetGame: () => void;
 }
 
 export function GameView({
@@ -45,8 +55,22 @@ export function GameView({
   onFloggingConfirmationResponse,
   floggingReveal,
   onClearFloggingReveal,
+
+  onStartConversion,
+  conversionStatus,
+  onRespondConversion,
+  onResetGame,
 }: GameViewProps) {
   const [showEndSessionConfirm, setShowEndSessionConfirm] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isConversionDismissed, setIsConversionDismissed] = useState(false);
+
+  // Reset dismissal when a new conversion starts (state becomes PENDING)
+  useEffect(() => {
+    if (conversionStatus?.state === "PENDING") {
+      setIsConversionDismissed(false);
+    }
+  }, [conversionStatus?.state]);
 
   const getRoleDetails = (role: Role | null) => {
     switch (role) {
@@ -63,6 +87,13 @@ export function GameView({
           desc: "Convert others to your cause. You win if you are chosen to feed the Kraken.",
           icon: <Eye className="w-16 h-16 text-amber-500" />,
           color: "text-amber-500",
+        };
+      case "CULTIST":
+        return {
+          title: "Cultist",
+          desc: "Support the Cult Leader's cause.",
+          icon: <Eye className="w-16 h-16 text-green-500" />,
+          color: "text-green-500",
         };
       default:
         return {
@@ -152,7 +183,8 @@ export function GameView({
                     .filter(
                       (p) =>
                         p.id !== myPlayerId &&
-                        lobby.assignments?.[p.id] === "PIRATE",
+                        (lobby.originalRoles?.[p.id] === "PIRATE" ||
+                          lobby.assignments?.[p.id] === "PIRATE"),
                     )
                     .map((p) => (
                       <div
@@ -172,12 +204,40 @@ export function GameView({
                   {lobby.players.filter(
                     (p) =>
                       p.id !== myPlayerId &&
-                      lobby.assignments?.[p.id] === "PIRATE",
+                      (lobby.originalRoles?.[p.id] === "PIRATE" ||
+                        lobby.assignments?.[p.id] === "PIRATE"),
                   ).length === 0 && (
                     <p className="text-xs text-slate-500 italic">
                       No other pirates
                     </p>
                   )}
+                </div>
+              </div>
+            )}
+
+            {myRole === "CULTIST" && lobby.assignments && (
+              <div className="mt-6 pt-6 border-t border-slate-700 w-full">
+                <h3 className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
+                  Your Leader
+                </h3>
+                <div className="flex flex-wrap justify-center gap-3">
+                  {lobby.players
+                    .filter((p) => lobby.assignments?.[p.id] === "CULT_LEADER")
+                    .map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex flex-col items-center gap-1"
+                      >
+                        <Avatar
+                          url={p.photoUrl}
+                          size="sm"
+                          className="ring-2 ring-purple-900/50"
+                        />
+                        <span className="text-xs text-purple-200/70 font-medium max-w-[60px] truncate">
+                          {p.name}
+                        </span>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
@@ -273,14 +333,78 @@ export function GameView({
 
           <button
             type="button"
+            onClick={() => {
+              if ((lobby.conversionCount || 0) >= 3) {
+                window.alert(
+                  "The conversion ritual can only be performed 3 times per game.",
+                );
+              } else {
+                onStartConversion();
+              }
+            }}
+            className="w-full py-3 bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+          >
+            <Eye className="w-5 h-5" />
+            Conversion to Cult
+          </button>
+
+          <button
+            type="button"
             onClick={() => setShowEndSessionConfirm(true)}
             className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
           >
             <LogOut className="w-5 h-5" />
             End Session
           </button>
+
+          {me?.isHost && (
+            <button
+              type="button"
+              onClick={() => setShowResetConfirm(true)}
+              className="w-full py-3 bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-900/30 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 mt-4"
+            >
+              <AlertTriangle className="w-5 h-5" />
+              Reset Game
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Reset Game Confirmation Modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-slate-900 border border-red-900 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <AlertTriangle className="w-6 h-6 text-red-500" />
+              Reset Game?
+            </h2>
+            <p className="text-slate-300 mb-6">
+              This will revert the game to the start of the voyage. All actions
+              (Cabin Searches, Floggings, Conversions) will be undone. Roles
+              will remain the same.
+            </p>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onResetGame();
+                  setShowResetConfirm(false);
+                }}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Cabin Search Confirmation Modal (Target) */}
       {cabinSearchPrompt && (
@@ -429,6 +553,124 @@ export function GameView({
           </div>
         </div>
       )}
+
+      {/* Conversion Status Modal */}
+      {conversionStatus &&
+        (conversionStatus.state === "PENDING" ||
+          conversionStatus.state === "CANCELLED") &&
+        !isConversionDismissed && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="w-full max-w-md bg-slate-900 border border-amber-900/50 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <Eye className="w-8 h-8 text-amber-500" />
+                <h2 className="text-xl font-bold text-white">
+                  Conversion to Cult
+                </h2>
+              </div>
+
+              {conversionStatus.state === "CANCELLED" ? (
+                <div className="text-center space-y-4">
+                  <p className="text-red-400 font-bold text-lg">
+                    The ritual was interrupted!
+                  </p>
+                  <p className="text-slate-400">
+                    Someone refused the call. The conversion has failed.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setIsConversionDismissed(true)}
+                    className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-slate-300 mb-6">
+                    A ritual has begun. All players must accept to proceed.
+                  </p>
+
+                  <div className="space-y-2 mb-8 max-h-60 overflow-y-auto">
+                    {lobby.players
+                      .filter((p) => !p.isEliminated && p.isOnline)
+                      .map((p) => {
+                        const hasAccepted = conversionStatus.responses[p.id];
+                        return (
+                          <div
+                            key={p.id}
+                            className="flex items-center justify-between bg-slate-800/50 p-3 rounded-lg border border-slate-700"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Avatar url={p.photoUrl} size="sm" />
+                              <span className="text-slate-200 font-medium">
+                                {p.name}
+                              </span>
+                            </div>
+                            {hasAccepted ? (
+                              <span className="text-green-400 text-sm font-bold flex items-center gap-1">
+                                Accepted
+                              </span>
+                            ) : (
+                              <span className="text-slate-500 text-sm font-bold flex items-center gap-1">
+                                Pending...
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+
+                  {!conversionStatus.responses[myPlayerId] && (
+                    <div className="flex gap-4">
+                      <button
+                        type="button"
+                        onClick={() => onRespondConversion(false)}
+                        className="flex-1 py-3 bg-red-900/50 hover:bg-red-900 text-red-200 rounded-xl font-bold transition-colors"
+                      >
+                        Decline
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onRespondConversion(true)}
+                        className="flex-1 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold transition-colors"
+                      >
+                        Accept
+                      </button>
+                    </div>
+                  )}
+
+                  {conversionStatus.responses[myPlayerId] && (
+                    <div className="flex flex-col gap-3">
+                      <p className="text-center text-slate-500 italic">
+                        Waiting for others...
+                      </p>
+                      <div className="flex gap-4">
+                        <button
+                          type="button"
+                          onClick={() => onRespondConversion(false)}
+                          className="flex-1 py-3 bg-red-900/30 hover:bg-red-900/50 text-red-200 rounded-xl font-bold transition-colors border border-red-900/30"
+                        >
+                          Decline
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            window.alert(
+                              "You have already accepted the ritual.",
+                            )
+                          }
+                          className="flex-1 py-3 bg-amber-600/50 text-white/50 cursor-not-allowed rounded-xl font-bold border border-amber-600/20"
+                        >
+                          Accepted
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
     </div>
   );
 }

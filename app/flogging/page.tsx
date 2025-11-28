@@ -69,14 +69,22 @@ export default function FloggingPage() {
 
         <div className="flex-1 p-6 flex flex-col">
           <div className="flex-1 flex flex-col h-full">
-            <PlayerSelectionList
+            <PlayerSelectionList.Root
               players={lobby.players}
               myPlayerId={myPlayerId}
-              onConfirm={handlePlayerSelect}
-              onCancel={() => router.push("/game")}
-              submitLabel="Flog Player"
-              disabledLabel="Already revealed"
-            />
+            >
+              <PlayerSelectionList.Content disabledLabel="Already revealed" />
+              <PlayerSelectionList.Actions>
+                <PlayerSelectionList.Submit onSubmit={handlePlayerSelect}>
+                  Flog Player
+                </PlayerSelectionList.Submit>
+                <PlayerSelectionList.Cancel
+                  onCancel={() => router.push("/game")}
+                >
+                  Cancel
+                </PlayerSelectionList.Cancel>
+              </PlayerSelectionList.Actions>
+            </PlayerSelectionList.Root>
           </div>
         </div>
 

@@ -19,7 +19,25 @@ export type LobbyState = {
   players: Player[];
   status: "WAITING" | "PLAYING";
   assignments?: Record<string, Role>;
+  originalRoles?: Record<string, Role>;
   isFloggingUsed?: boolean;
+  conversionCount?: number;
+  conversionStatus?: {
+    initiatorId: string;
+    responses: Record<string, boolean>;
+    state: "PENDING" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+    round?: {
+      startTime: number;
+      duration: number;
+      playerQuestions: Record<string, number>; // playerId -> questionIndex
+      leaderChoice: string | null;
+      playerAnswers: Record<string, string>; // playerId -> answer
+      result?: {
+        convertedPlayerId: string | null;
+        correctAnswers: string[]; // list of playerIds
+      };
+    };
+  };
 };
 
 export type ConnectionStatus =
@@ -67,7 +85,23 @@ export type MessagePayload =
     }
   | { type: "FLOGGING_PROMPT"; targetPlayerId: string; options: Role[] }
   | { type: "FLOGGING_REVEAL"; targetPlayerId: string; revealedRole: Role }
-  | { type: "FLOGGING_DENIED"; targetPlayerId: string };
+  | { type: "FLOGGING_REVEAL"; targetPlayerId: string; revealedRole: Role }
+  | { type: "FLOGGING_DENIED"; targetPlayerId: string }
+  | { type: "START_CONVERSION"; initiatorId: string }
+  | { type: "RESPOND_CONVERSION"; playerId: string; accept: boolean }
+  | {
+      type: "SUBMIT_CONVERSION_ACTION";
+      playerId: string;
+      action: "PICK_PLAYER" | "ANSWER_QUIZ";
+      targetId?: string;
+      answer?: string;
+    }
+  | {
+      type: "CONVERSION_UPDATE";
+      status: LobbyState["conversionStatus"];
+    }
+  | { type: "CONVERSION_RESULT"; success: boolean }
+  | { type: "RESET_GAME" };
 
 // --- Constants ---
 export const MIN_PLAYERS = 5;

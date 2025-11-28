@@ -1,4 +1,6 @@
 import type * as Party from "partykit/server";
+import { MIN_PLAYERS, type Role } from "@/app/types";
+import { QUIZ_QUESTIONS } from "../app/data/quiz";
 
 export type Player = {
   id: string;
@@ -18,7 +20,35 @@ export type LobbyState = {
   players: Player[];
   status: "WAITING" | "PLAYING";
   assignments?: Record<string, Role>;
+  originalRoles: Record<string, Role>;
   isFloggingUsed?: boolean;
+  conversionCount?: number;
+  conversionStatus?: {
+    initiatorId: string;
+    responses: Record<string, boolean>;
+    state: "PENDING" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+    round?: {
+      startTime: number;
+      duration: number;
+      playerQuestions: Record<string, number>;
+      leaderChoice: string | null;
+      playerAnswers: Record<string, string>;
+      result?: {
+        convertedPlayerId: string | null;
+        correctAnswers: string[];
+      };
+    };
+  };
+  initialGameState?: {
+    assignments: Record<string, Role>;
+    originalRoles: Record<string, Role>;
+    players: {
+      id: string;
+      isEliminated: boolean;
+      isUnconvertible: boolean;
+      notRole: Role | null;
+    }[];
+  };
 };
 
 type CreateLobbyMessage = {
@@ -81,6 +111,25 @@ type FloggingConfirmationResponseMessage = {
   type: "FLOGGING_CONFIRMATION_RESPONSE";
   hostId: string;
   confirmed: boolean;
+};
+
+type StartConversionMessage = {
+  type: "START_CONVERSION";
+  initiatorId: string;
+};
+
+type RespondConversionMessage = {
+  type: "RESPOND_CONVERSION";
+  playerId: string;
+  accept: boolean;
+};
+
+type SubmitConversionActionMessage = {
+  type: "SUBMIT_CONVERSION_ACTION";
+  playerId: string;
+  action: "PICK_PLAYER" | "ANSWER_QUIZ";
+  targetId?: string;
+  answer?: string;
 };
 
 export default class Server implements Party.Server {
@@ -165,10 +214,70 @@ export default class Server implements Party.Server {
         case "FLOGGING_CONFIRMATION_RESPONSE":
           await this.handleFloggingConfirmationResponse(data, sender);
           break;
+        case "START_CONVERSION":
+          await this.handleStartConversion(data, sender);
+          break;
+        case "RESPOND_CONVERSION":
+          await this.handleRespondConversion(data, sender);
+          break;
+        case "SUBMIT_CONVERSION_ACTION":
+          await this.handleSubmitConversionAction(data, sender);
+          break;
+        case "RESET_GAME":
+          await this.handleResetGame(sender);
+          break;
       }
     } catch (error) {
       console.error("Error handling message:", error);
     }
+  }
+
+  async handleResetGame(sender: Party.Connection) {
+    if (!this.lobbyState || !this.lobbyState.initialGameState) return;
+
+    const playerId = this.connectionToPlayer.get(sender.id);
+    const player = this.lobbyState.players.find((p) => p.id === playerId);
+
+    // Only host can reset
+    if (!player?.isHost) return;
+
+    const snapshot = this.lobbyState.initialGameState;
+
+    // Restore Game State
+    this.lobbyState.assignments = { ...snapshot.assignments };
+    this.lobbyState.originalRoles = { ...snapshot.originalRoles };
+    this.lobbyState.status = "PLAYING";
+    this.lobbyState.isFloggingUsed = false;
+    this.lobbyState.conversionCount = 0;
+    this.lobbyState.conversionStatus = undefined;
+
+    // Restore Player States
+    this.lobbyState.players.forEach((p) => {
+      const initialP = snapshot.players.find((ip) => ip.id === p.id);
+      if (initialP) {
+        p.isEliminated = initialP.isEliminated;
+        p.isUnconvertible = initialP.isUnconvertible;
+        p.notRole = initialP.notRole;
+      } else {
+        // Player wasn't in the snapshot (joined late? shouldn't happen in locked game)
+        // Reset them to default safe state just in case
+        p.isEliminated = false;
+        p.isUnconvertible = false;
+        p.notRole = null;
+      }
+    });
+
+    await this.saveLobbyState();
+    this.broadcastLobbyUpdate();
+
+    // Re-broadcast game start to ensure clients have correct assignments if needed
+    // (Though LOBBY_UPDATE should handle it, explicit GAME_STARTED might be safer for some clients)
+    this.room.broadcast(
+      JSON.stringify({
+        type: "GAME_STARTED",
+        assignments: this.lobbyState.assignments,
+      }),
+    );
   }
 
   async handleCreateLobby(data: CreateLobbyMessage, sender: Party.Connection) {
@@ -319,7 +428,7 @@ export default class Server implements Party.Server {
     const { playerId } = data;
     const player = this.lobbyState.players.find((p) => p.id === playerId);
 
-    if (!player?.isHost || this.lobbyState.players.length < 5) return;
+    if (!player?.isHost || this.lobbyState.players.length < MIN_PLAYERS) return;
 
     // 1. Determine roles based on player count
     const playerCount = this.lobbyState.players.length;
@@ -336,7 +445,22 @@ export default class Server implements Party.Server {
 
     this.lobbyState.status = "PLAYING";
     this.lobbyState.assignments = assignments;
+    this.lobbyState.originalRoles = { ...assignments };
     this.lobbyState.isFloggingUsed = false;
+    this.lobbyState.conversionCount = 0;
+
+    // Capture initial game state for reset
+    this.lobbyState.initialGameState = {
+      assignments: { ...assignments },
+      originalRoles: { ...assignments },
+      players: this.lobbyState.players.map((p) => ({
+        id: p.id,
+        isEliminated: p.isEliminated,
+        isUnconvertible: p.isUnconvertible,
+        notRole: p.notRole,
+      })),
+    };
+
     await this.saveLobbyState();
 
     // Broadcast the start with assignments
@@ -615,6 +739,242 @@ export default class Server implements Party.Server {
     }
   }
 
+  async handleStartConversion(
+    data: StartConversionMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState) return;
+
+    const initiatorId = this.connectionToPlayer.get(sender.id);
+    if (!initiatorId || initiatorId !== data.initiatorId) return;
+
+    // Check if conversion is already active
+    if (
+      this.lobbyState.conversionStatus &&
+      this.lobbyState.conversionStatus.state === "PENDING"
+    ) {
+      return;
+    }
+
+    // Check conversion limit
+    if ((this.lobbyState.conversionCount || 0) >= 3) {
+      sender.send(
+        JSON.stringify({
+          type: "ERROR",
+          message:
+            "The conversion ritual can only be performed 3 times per game.",
+        }),
+      );
+      return;
+    }
+
+    // Initialize conversion state
+    this.lobbyState.conversionStatus = {
+      initiatorId,
+      responses: { [initiatorId]: true }, // Initiator implicitly accepts
+      state: "PENDING",
+    };
+
+    await this.saveLobbyState();
+    this.broadcastLobbyUpdate();
+  }
+
+  async handleRespondConversion(
+    data: RespondConversionMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState || !this.lobbyState.conversionStatus) return;
+
+    const playerId = this.connectionToPlayer.get(sender.id);
+    if (!playerId || playerId !== data.playerId) return;
+
+    if (this.lobbyState.conversionStatus.state !== "PENDING") return;
+
+    if (!data.accept) {
+      // If anyone declines, cancel the conversion
+      this.lobbyState.conversionStatus.state = "CANCELLED";
+      this.lobbyState.conversionStatus.responses[playerId] = false;
+      await this.saveLobbyState();
+      this.broadcastLobbyUpdate();
+      return;
+    }
+
+    // Mark player as accepted
+    this.lobbyState.conversionStatus.responses[playerId] = true;
+
+    // Check if all players have accepted
+    // We need to check if every player in the lobby (who is not eliminated) has accepted
+    const activePlayers = this.lobbyState.players.filter(
+      (p) => !p.isEliminated && p.isOnline,
+    );
+
+    const allAccepted = activePlayers.every(
+      (p) => this.lobbyState?.conversionStatus?.responses[p.id],
+    );
+
+    if (allAccepted) {
+      // Start the conversion round
+      this.lobbyState.conversionStatus.state = "ACTIVE";
+      this.lobbyState.conversionCount =
+        (this.lobbyState.conversionCount || 0) + 1;
+
+      // Assign questions (randomly 0-9)
+      const playerQuestions: Record<string, number> = {};
+      activePlayers.forEach((p) => {
+        playerQuestions[p.id] = Math.floor(Math.random() * 10);
+      });
+
+      this.lobbyState.conversionStatus.round = {
+        startTime: Date.now(),
+        duration: 15000, // 15 seconds
+        playerQuestions,
+        leaderChoice: null,
+        playerAnswers: {},
+      };
+
+      await this.saveLobbyState();
+      this.broadcastLobbyUpdate();
+
+      // Broadcast success result to trigger navigation to /conversion
+      this.room.broadcast(
+        JSON.stringify({
+          type: "CONVERSION_RESULT",
+          success: true,
+        }),
+      );
+
+      // Schedule round end
+      setTimeout(async () => {
+        await this.resolveConversionRound();
+      }, 15000);
+    } else {
+      await this.saveLobbyState();
+      this.broadcastLobbyUpdate();
+    }
+  }
+
+  // ... (existing imports if any, but I'm replacing a block that doesn't show them)
+
+  async handleSubmitConversionAction(
+    data: SubmitConversionActionMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState?.conversionStatus?.round) return;
+    if (this.lobbyState.conversionStatus.state !== "ACTIVE") return;
+
+    const playerId = this.connectionToPlayer.get(sender.id);
+    if (!playerId || playerId !== data.playerId) return;
+
+    const round = this.lobbyState.conversionStatus.round;
+
+    if (data.action === "PICK_PLAYER" && data.targetId) {
+      // Verify sender is Cult Leader
+      const role = this.lobbyState.assignments?.[playerId];
+      if (role === "CULT_LEADER") {
+        round.leaderChoice = data.targetId;
+      }
+    } else if (
+      data.action === "ANSWER_QUIZ" &&
+      typeof data.answer === "string"
+    ) {
+      round.playerAnswers[playerId] = data.answer;
+    }
+
+    await this.saveLobbyState();
+    this.broadcastLobbyUpdate();
+  }
+
+  async resolveConversionRound() {
+    if (!this.lobbyState?.conversionStatus?.round) return;
+    if (this.lobbyState.conversionStatus.state !== "ACTIVE") return;
+
+    const round = this.lobbyState.conversionStatus.round;
+
+    // 0. Handle missing inputs (Random Fallback)
+
+    // Fallback for Cult Leader choice
+    if (!round.leaderChoice) {
+      const initiatorId = this.lobbyState.conversionStatus.initiatorId;
+      const potentialTargets = this.lobbyState.players.filter(
+        (p) =>
+          p.id !== initiatorId &&
+          !p.isEliminated &&
+          !p.isUnconvertible &&
+          this.lobbyState?.assignments?.[p.id] !== "CULTIST" &&
+          this.lobbyState?.assignments?.[p.id] !== "CULT_LEADER",
+      );
+
+      if (potentialTargets.length > 0) {
+        const randomTarget =
+          potentialTargets[Math.floor(Math.random() * potentialTargets.length)];
+        round.leaderChoice = randomTarget.id;
+      }
+    }
+
+    // Fallback for Player Answers
+    const activePlayers = this.lobbyState.players.filter(
+      (p) => !p.isEliminated && p.isOnline,
+    );
+    activePlayers.forEach((p) => {
+      // Skip Cult Leader
+      if (this.lobbyState?.assignments?.[p.id] === "CULT_LEADER") return;
+
+      if (round.playerAnswers[p.id] === undefined) {
+        // Pick random answer from options
+        const qIdx = round.playerQuestions[p.id];
+        const options = QUIZ_QUESTIONS[qIdx].options;
+        const randomOption =
+          options[Math.floor(Math.random() * options.length)];
+        round.playerAnswers[p.id] = randomOption.id;
+      }
+    });
+
+    // 1. Determine correct answers
+    const correctAnswers: string[] = [];
+    Object.entries(round.playerAnswers).forEach(([pid, answer]) => {
+      const qIdx = round.playerQuestions[pid];
+      if (QUIZ_QUESTIONS[qIdx].correctAnswer === answer) {
+        correctAnswers.push(pid);
+      }
+    });
+
+    // 2. Handle Conversion
+    let convertedPlayerId: string | null = null;
+    if (round.leaderChoice) {
+      const target = this.lobbyState.players.find(
+        (p) => p.id === round.leaderChoice,
+      );
+      // Can only convert if not already Cult Leader and not unconvertible (maybe?)
+      // User requirements didn't specify unconvertible logic here, but usually unconvertible players can't be converted.
+      // "The player who the Cult Leader chose will also see a message that they have been converted"
+      if (
+        target &&
+        !target.isUnconvertible &&
+        this.lobbyState.assignments?.[target.id] !== "CULT_LEADER"
+      ) {
+        convertedPlayerId = target.id;
+        // Update role
+        if (this.lobbyState.assignments) {
+          this.lobbyState.assignments[target.id] = "CULTIST";
+        }
+      }
+    }
+
+    // 3. Update State
+    this.lobbyState.conversionStatus.state = "COMPLETED";
+    round.result = {
+      convertedPlayerId,
+      correctAnswers,
+    };
+
+    await this.saveLobbyState();
+    this.broadcastLobbyUpdate();
+  }
+
+  async onAlarm() {
+    await this.resolveConversionRound();
+  }
+
   async saveLobbyState() {
     if (this.lobbyState) {
       await this.room.storage.put("lobby", this.lobbyState);
@@ -636,8 +996,6 @@ export default class Server implements Party.Server {
 Server satisfies Party.Worker;
 
 // --- Helpers ---
-
-export type Role = "SAILOR" | "PIRATE" | "CULT_LEADER" | "CULTIST";
 
 export function getRolesForPlayerCount(count: number): Role[] {
   const roles: Role[] = [];
@@ -684,6 +1042,10 @@ export function getRolesForPlayerCount(count: number): Role[] {
       sailors = 5;
       pirates = 4;
       cultists = 1;
+      break;
+    case 3:
+      sailors = 0;
+      pirates = 2;
       break;
     default:
       // Fallback for unexpected counts (should be blocked by UI/logic)

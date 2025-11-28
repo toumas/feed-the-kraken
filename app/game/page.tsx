@@ -24,6 +24,10 @@ export default function GamePage() {
     handleFloggingConfirmationResponse,
     floggingReveal,
     clearFloggingReveal,
+
+    handleStartConversion,
+    handleRespondConversion,
+    handleResetGame,
   } = useGame();
 
   useEffect(() => {
@@ -33,6 +37,12 @@ export default function GamePage() {
       // router.push("/"); // Let loading state handle it or redirect if timeout
     }
   }, [lobby, router]);
+
+  useEffect(() => {
+    if (lobby?.conversionStatus?.state === "ACTIVE") {
+      router.push("/conversion");
+    }
+  }, [lobby?.conversionStatus?.state, router]);
 
   const handleLeave = () => {
     leaveLobby();
@@ -72,6 +82,10 @@ export default function GamePage() {
           onFloggingConfirmationResponse={handleFloggingConfirmationResponse}
           floggingReveal={floggingReveal}
           onClearFloggingReveal={clearFloggingReveal}
+          onStartConversion={handleStartConversion}
+          conversionStatus={lobby.conversionStatus || null}
+          onRespondConversion={handleRespondConversion}
+          onResetGame={handleResetGame}
         />
       </main>
     </div>

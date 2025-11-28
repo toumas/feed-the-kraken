@@ -50,6 +50,18 @@ export interface GameContextValue {
   floggingReveal: { targetPlayerId: string; revealedRole: Role } | null;
   clearFloggingReveal: () => void;
 
+  // Conversion Actions
+  handleStartConversion: () => void;
+  handleRespondConversion: (accept: boolean) => void;
+  submitConversionAction: (
+    action: "PICK_PLAYER" | "ANSWER_QUIZ",
+    targetId?: string,
+    answer?: string,
+  ) => void;
+
+  // Reset Game
+  handleResetGame: () => void;
+
   // Cabin Search State
   cabinSearchPrompt: { searcherId: string; searcherName: string } | null;
   cabinSearchResult: { targetPlayerId: string; role: Role } | null;
@@ -221,6 +233,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             case "FLOGGING_DENIED":
               setError("The player denied the flogging.");
               setTimeout(() => setError(null), 3000);
+              break;
+
+            case "CONVERSION_RESULT":
+              // Handled by lobby state update mostly, but could trigger toast here if needed
               break;
           }
         } catch (error) {
@@ -445,6 +461,56 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setFloggingReveal(null);
   };
 
+  // Conversion State
+
+  const handleStartConversion = () => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "START_CONVERSION",
+          initiatorId: myPlayerId,
+        }),
+      );
+    }
+  };
+
+  const handleRespondConversion = (accept: boolean) => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "RESPOND_CONVERSION",
+          playerId: myPlayerId,
+          accept,
+        }),
+      );
+    }
+  };
+
+  const sendMessage = (message: MessagePayload) => {
+    if (socket) {
+      socket.send(JSON.stringify(message));
+    }
+  };
+
+  const submitConversionAction = (
+    action: "PICK_PLAYER" | "ANSWER_QUIZ",
+    targetId?: string,
+    answer?: string,
+  ) => {
+    if (!myPlayerId) return;
+    sendMessage({
+      type: "SUBMIT_CONVERSION_ACTION",
+      playerId: myPlayerId,
+      action,
+      targetId,
+      answer,
+    });
+  };
+
+  const handleResetGame = () => {
+    sendMessage({ type: "RESET_GAME" });
+  };
+
   return (
     <GameContext.Provider
       value={{
@@ -463,20 +529,29 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         startGame,
         addBotPlayer,
         handleDenialOfCommand,
+
         handleCabinSearch,
         handleCabinSearchResponse,
         cabinSearchPrompt,
         cabinSearchResult,
-        isCabinSearchPending,
         clearCabinSearchResult,
+        isCabinSearchPending,
+
         handleFloggingRequest,
         handleFloggingConfirmationResponse,
         floggingConfirmationPrompt,
         floggingReveal,
         clearFloggingReveal,
+
+        handleStartConversion,
+        handleRespondConversion,
+        submitConversionAction,
+
+        handleResetGame,
+
         error,
         setError,
-        view: "", // Placeholder, not used in context logic directly
+        view: "", // Placeholder
       }}
     >
       {children}
