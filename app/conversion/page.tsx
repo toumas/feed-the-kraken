@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent, useState } from "react";
 import { Avatar } from "../components/Avatar";
+import { FeedbackCard } from "../components/FeedbackCard";
 import { PlayerSelectionList } from "../components/PlayerSelectionList";
+import { Quiz } from "../components/Quiz";
 import { useGame } from "../context/GameContext";
 import { QUIZ_QUESTIONS } from "../data/quiz";
 
@@ -104,35 +106,17 @@ export default function ConversionPage() {
 
           {/* Quiz Feedback for Non-Leaders */}
           {!isCultLeader && (
-            <div
-              className={`p-6 rounded-2xl border ${
-                isCorrect
-                  ? "bg-green-900/20 border-green-500/50"
-                  : "bg-red-900/20 border-red-500/50"
-              } text-center space-y-4`}
-            >
-              {isCorrect ? (
-                <>
-                  <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
-                  <h2 className="text-xl font-bold text-green-400">
-                    Correct Answer!
-                  </h2>
-                  <p className="text-green-200/80">
-                    You have proven your worth to the sea.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <XCircle className="w-12 h-12 text-red-500 mx-auto" />
-                  <h2 className="text-xl font-bold text-red-400">
-                    Wrong Answer
-                  </h2>
-                  <p className="text-red-200/80">
-                    The Kraken is displeased with your ignorance.
-                  </p>
-                </>
-              )}
-            </div>
+            <FeedbackCard.Root variant={isCorrect ? "success" : "error"}>
+              <FeedbackCard.Icon icon={isCorrect ? CheckCircle : XCircle} />
+              <FeedbackCard.Title>
+                {isCorrect ? "Correct Answer!" : "Wrong Answer"}
+              </FeedbackCard.Title>
+              <FeedbackCard.Description>
+                {isCorrect
+                  ? "You have proven your worth to the sea."
+                  : "The Kraken is displeased with your ignorance."}
+              </FeedbackCard.Description>
+            </FeedbackCard.Root>
           )}
 
           {/* Conversion Result */}
@@ -264,115 +248,42 @@ export default function ConversionPage() {
                     }
                   }}
                 >
-                  <PlayerSelectionList.Content disabledLabel="Already in Cult" />
+                  <PlayerSelectionList.Content disabledLabel="Unconvertible" />
                 </PlayerSelectionList.Root>
               </div>
             )}
           </div>
         ) : (
           // --- QUIZ VIEW ---
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-            <div className="text-center space-y-2">
-              <h2 className="text-lg font-bold text-white">Prove Your Worth</h2>
-              <p className="text-slate-400 text-sm">
-                Answer correctly to please the Kraken.
-              </p>
-            </div>
+          <Quiz.Root
+            selectedAnswerId={selectedAnswerId}
+            onSelect={(optionId) => {
+              setSelectedAnswerId(optionId);
+              submitConversionAction("ANSWER_QUIZ", undefined, optionId);
+            }}
+          >
+            <Quiz.Header
+              title="Prove Your Worth"
+              description="Answer correctly to please the Kraken."
+            />
 
             {round.playerQuestions[myPlayerId] !== undefined && (
               <div className="space-y-4">
-                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
-                  <p className="text-lg font-medium text-slate-200 text-center">
-                    {QUIZ_QUESTIONS[round.playerQuestions[myPlayerId]].question}
-                  </p>
-                </div>
-                {/* The timer logic should be in a useEffect hook, not directly in JSX */}
-                {/* Assuming this is meant to be part of a useEffect or similar logic */}
-                {/* This code snippet is syntactically incorrect if placed directly here */}
-                {/* I will place it as a comment to preserve the user's intent without breaking syntax */}
-                {/*
-             const timer = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            if (!isSubmitted && isCultLeader && selectedPlayerId) {
-              submitConversionAction("PICK_PLAYER", selectedPlayerId);
-              setIsSubmitted(true);
-            }
-            if (!isSubmitted && !isCultLeader && selectedAnswerId) {
-              submitConversionAction("ANSWER_QUIZ", undefined, selectedAnswerId);
-              setIsSubmitted(true);
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-                */}
-
-                <div className="space-y-3">
-                  <QuizOptions
-                    questionIndex={round.playerQuestions[myPlayerId]}
-                    selectedAnswerId={selectedAnswerId}
-                    onSelect={(optionId) => {
-                      setSelectedAnswerId(optionId);
-                      submitConversionAction(
-                        "ANSWER_QUIZ",
-                        undefined,
-                        optionId,
-                      );
-                    }}
-                  />
-                </div>
+                <Quiz.Question
+                  text={
+                    QUIZ_QUESTIONS[round.playerQuestions[myPlayerId]].question
+                  }
+                />
+                <Quiz.OptionsList
+                  options={
+                    QUIZ_QUESTIONS[round.playerQuestions[myPlayerId]].options
+                  }
+                />
               </div>
             )}
-          </div>
+          </Quiz.Root>
         )}
       </div>
     </div>
-  );
-}
-
-function QuizOptions({
-  questionIndex,
-  selectedAnswerId,
-  onSelect,
-}: {
-  questionIndex: number;
-  selectedAnswerId: string | null;
-  onSelect: (optionId: string) => void;
-}) {
-  const [shuffledOptions, setShuffledOptions] = useState<
-    { id: string; text: string }[]
-  >([]);
-
-  useEffect(() => {
-    const options = QUIZ_QUESTIONS[questionIndex].options;
-    // Shuffle options
-    setShuffledOptions([...options].sort(() => Math.random() - 0.5));
-  }, [questionIndex]);
-
-  if (shuffledOptions.length === 0) return null;
-
-  return (
-    <>
-      {shuffledOptions.map((option, idx) => (
-        <button
-          type="button"
-          key={option.id}
-          onClick={() => onSelect(option.id)}
-          className={`w-full p-4 rounded-xl border text-left transition-all ${
-            selectedAnswerId === option.id
-              ? "bg-cyan-900/40 border-cyan-500 ring-2 ring-cyan-500/50 text-cyan-100"
-              : "bg-slate-800/50 border-slate-700 hover:bg-slate-800 hover:border-slate-600 text-slate-300"
-          }`}
-        >
-          <span className="font-bold mr-2 text-slate-500">
-            {String.fromCharCode(65 + idx)}.
-          </span>
-          {option.text}
-        </button>
-      ))}
-    </>
   );
 }

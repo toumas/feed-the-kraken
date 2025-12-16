@@ -20,7 +20,7 @@ export type LobbyState = {
   players: Player[];
   status: "WAITING" | "PLAYING";
   assignments?: Record<string, Role>;
-  originalRoles: Record<string, Role>;
+  originalRoles?: Record<string, Role>;
   isFloggingUsed?: boolean;
   conversionCount?: number;
   conversionStatus?: {
@@ -37,6 +37,18 @@ export type LobbyState = {
         convertedPlayerId: string | null;
         correctAnswers: string[];
       };
+    };
+  };
+  cabinSearchStatus?: {
+    initiatorId: string;
+    claims: Record<string, "CAPTAIN" | "NAVIGATOR" | "LIEUTENANT" | "CREW">;
+    state: "SETUP" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+    cancellationReason?: string;
+    startTime?: number; // For the 15m timer
+    playerQuestions?: Record<string, number>; // playerId -> questionIndex
+    playerAnswers?: Record<string, string>; // playerId -> answer
+    result?: {
+      correctAnswers: string[]; // list of playerIds
     };
   };
   initialGameState?: {
@@ -132,6 +144,28 @@ type SubmitConversionActionMessage = {
   answer?: string;
 };
 
+type StartCultCabinSearchMessage = {
+  type: "START_CULT_CABIN_SEARCH";
+  initiatorId: string;
+};
+
+type ClaimCultCabinSearchRoleMessage = {
+  type: "CLAIM_CULT_CABIN_SEARCH_ROLE";
+  playerId: string;
+  role: "CAPTAIN" | "NAVIGATOR" | "LIEUTENANT" | "CREW";
+};
+
+type CancelCultCabinSearchMessage = {
+  type: "CANCEL_CULT_CABIN_SEARCH";
+  playerId: string;
+};
+
+type SubmitCultCabinSearchActionMessage = {
+  type: "SUBMIT_CULT_CABIN_SEARCH_ACTION";
+  playerId: string;
+  answer: string;
+};
+
 export default class Server implements Party.Server {
   constructor(readonly room: Party.Room) {}
 
@@ -222,6 +256,18 @@ export default class Server implements Party.Server {
           break;
         case "SUBMIT_CONVERSION_ACTION":
           await this.handleSubmitConversionAction(data, sender);
+          break;
+        case "START_CULT_CABIN_SEARCH":
+          await this.handleStartCabinSearch(data, sender);
+          break;
+        case "CLAIM_CULT_CABIN_SEARCH_ROLE":
+          await this.handleClaimCabinSearchRole(data, sender);
+          break;
+        case "CANCEL_CULT_CABIN_SEARCH":
+          await this.handleCancelCabinSearch(data, sender);
+          break;
+        case "SUBMIT_CULT_CABIN_SEARCH_ACTION":
+          await this.handleSubmitCabinSearchAction(data, sender);
           break;
         case "RESET_GAME":
           await this.handleResetGame(sender);
@@ -968,6 +1014,192 @@ export default class Server implements Party.Server {
     };
 
     await this.saveLobbyState();
+    this.broadcastLobbyUpdate();
+  }
+
+  async handleStartCabinSearch(
+    data: StartCultCabinSearchMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState) return;
+
+    const initiatorId = this.connectionToPlayer.get(sender.id);
+    if (!initiatorId || initiatorId !== data.initiatorId) return;
+
+    // Check if cabin search is already active
+    if (
+      this.lobbyState.cabinSearchStatus &&
+      this.lobbyState.cabinSearchStatus.state !== "COMPLETED" &&
+      this.lobbyState.cabinSearchStatus.state !== "CANCELLED"
+    ) {
+      return;
+    }
+
+    // Initialize cabin search state
+    this.lobbyState.cabinSearchStatus = {
+      initiatorId,
+      claims: {},
+      state: "SETUP",
+    };
+    await this.saveLobbyState();
+    this.broadcastLobbyUpdate();
+  }
+
+  async handleClaimCabinSearchRole(
+    data: ClaimCultCabinSearchRoleMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState || !this.lobbyState.cabinSearchStatus) return;
+    if (this.lobbyState.cabinSearchStatus.state !== "SETUP") return;
+
+    const playerId = this.connectionToPlayer.get(sender.id);
+    if (!playerId || playerId !== data.playerId) return;
+
+    const { role } = data;
+
+    // Check if role is already claimed by someone else (for unique roles)
+    if (role !== "CREW") {
+      const alreadyClaimed = Object.entries(
+        this.lobbyState.cabinSearchStatus.claims,
+      ).find(([pid, r]) => r === role && pid !== playerId);
+
+      if (alreadyClaimed) {
+        // Role already claimed, reject
+        return;
+      }
+    }
+
+    // Update player's claim
+    this.lobbyState.cabinSearchStatus.claims[playerId] = role;
+
+    // Check if all players have claimed
+    const activePlayers = this.lobbyState.players.filter(
+      (p) => !p.isEliminated && p.isOnline,
+    );
+
+    const allClaimed = activePlayers.every(
+      (p) => this.lobbyState?.cabinSearchStatus?.claims[p.id],
+    );
+
+    if (allClaimed) {
+      // Validate roles: Must have exactly 1 Captain, 1 Navigator, 1 Lieutenant
+      const claims = Object.values(this.lobbyState.cabinSearchStatus.claims);
+      const captainCount = claims.filter((r) => r === "CAPTAIN").length;
+      const navigatorCount = claims.filter((r) => r === "NAVIGATOR").length;
+      const lieutenantCount = claims.filter((r) => r === "LIEUTENANT").length;
+
+      if (captainCount !== 1 || navigatorCount !== 1 || lieutenantCount !== 1) {
+        // Invalid distribution, cancel immediately
+        this.lobbyState.cabinSearchStatus.state = "CANCELLED";
+        this.lobbyState.cabinSearchStatus.cancellationReason =
+          "Invalid role distribution: Must have exactly one Captain, one Navigator, and one Lieutenant.";
+      } else {
+        // Initialize questions and answers
+        const playerQuestions: Record<string, number> = {};
+        activePlayers.forEach((p) => {
+          playerQuestions[p.id] = Math.floor(
+            Math.random() * QUIZ_QUESTIONS.length,
+          );
+        });
+
+        this.lobbyState.cabinSearchStatus.playerQuestions = playerQuestions;
+        this.lobbyState.cabinSearchStatus.playerAnswers = {};
+
+        // Start the active phase
+        this.lobbyState.cabinSearchStatus.state = "ACTIVE";
+        this.lobbyState.cabinSearchStatus.startTime = Date.now();
+
+        // Schedule completion after 15 seconds (15000ms)
+        setTimeout(async () => {
+          await this.completeCabinSearch();
+        }, 15000); // 15 seconds
+      }
+
+      await this.saveLobbyState();
+      this.broadcastLobbyUpdate();
+    } else {
+      await this.saveLobbyState();
+      this.broadcastLobbyUpdate();
+    }
+  }
+
+  async handleCancelCabinSearch(
+    _data: CancelCultCabinSearchMessage,
+    _sender: Party.Connection,
+  ) {
+    if (!this.lobbyState || !this.lobbyState.cabinSearchStatus) return;
+
+    // Anyone can cancel during SETUP
+    if (this.lobbyState.cabinSearchStatus.state === "SETUP") {
+      this.lobbyState.cabinSearchStatus.state = "CANCELLED";
+      await this.saveLobbyState();
+      this.broadcastLobbyUpdate();
+    }
+  }
+
+  async completeCabinSearch() {
+    if (!this.lobbyState || !this.lobbyState.cabinSearchStatus) return;
+    if (this.lobbyState.cabinSearchStatus.state !== "ACTIVE") return;
+
+    const { playerQuestions, playerAnswers } =
+      this.lobbyState.cabinSearchStatus;
+
+    if (!playerQuestions || !playerAnswers) {
+      // Should not happen if initialized correctly
+      this.lobbyState.cabinSearchStatus.state = "COMPLETED";
+      await this.saveLobbyState();
+      this.broadcastLobbyUpdate();
+      return;
+    }
+
+    // Determine correct answers
+    const correctAnswers: string[] = [];
+    Object.entries(playerAnswers).forEach(([pid, answer]) => {
+      const qIdx = playerQuestions[pid];
+      if (
+        qIdx !== undefined &&
+        QUIZ_QUESTIONS[qIdx] &&
+        QUIZ_QUESTIONS[qIdx].correctAnswer === answer
+      ) {
+        correctAnswers.push(pid);
+      }
+    });
+
+    this.lobbyState.cabinSearchStatus.result = {
+      correctAnswers,
+    };
+
+    this.lobbyState.cabinSearchStatus.state = "COMPLETED";
+    await this.saveLobbyState();
+    this.broadcastLobbyUpdate();
+  }
+
+  async handleSubmitCabinSearchAction(
+    data: SubmitCultCabinSearchActionMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState || !this.lobbyState.cabinSearchStatus) return;
+    if (this.lobbyState.cabinSearchStatus.state !== "ACTIVE") return;
+
+    const playerId = this.connectionToPlayer.get(sender.id);
+    if (!playerId || playerId !== data.playerId) return;
+
+    // Verify player is part of the search (has a claim)
+    if (!this.lobbyState.cabinSearchStatus.claims[playerId]) return;
+
+    // Verify we have questions initialized
+    if (!this.lobbyState.cabinSearchStatus.playerQuestions) return;
+    if (!this.lobbyState.cabinSearchStatus.playerAnswers) {
+      this.lobbyState.cabinSearchStatus.playerAnswers = {};
+    }
+
+    // Store the answer
+    this.lobbyState.cabinSearchStatus.playerAnswers[playerId] = data.answer;
+
+    await this.saveLobbyState();
+    // We don't necessarily need to broadcast every answer for secrecy,
+    // but updating the lobby state allows the client to know their answer is recorded if they check.
+    // Given the UI doesn't show other people's answers usually, it's fine.
     this.broadcastLobbyUpdate();
   }
 

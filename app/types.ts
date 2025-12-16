@@ -38,6 +38,18 @@ export type LobbyState = {
       };
     };
   };
+  cabinSearchStatus?: {
+    initiatorId: string;
+    claims: Record<string, "CAPTAIN" | "NAVIGATOR" | "LIEUTENANT" | "CREW">;
+    state: "SETUP" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+    cancellationReason?: string;
+    startTime?: number; // For the 15m timer
+    playerQuestions?: Record<string, number>; // playerId -> questionIndex
+    playerAnswers?: Record<string, string>; // playerId -> answer
+    result?: {
+      correctAnswers: string[]; // list of playerIds
+    };
+  };
 };
 
 export type ConnectionStatus =
@@ -101,6 +113,18 @@ export type MessagePayload =
       status: LobbyState["conversionStatus"];
     }
   | { type: "CONVERSION_RESULT"; success: boolean }
+  | { type: "START_CULT_CABIN_SEARCH"; initiatorId: string }
+  | {
+      type: "CLAIM_CULT_CABIN_SEARCH_ROLE";
+      playerId: string;
+      role: "CAPTAIN" | "NAVIGATOR" | "LIEUTENANT" | "CREW";
+    }
+  | {
+      type: "SUBMIT_CULT_CABIN_SEARCH_ACTION";
+      playerId: string;
+      answer: string;
+    }
+  | { type: "CANCEL_CULT_CABIN_SEARCH"; playerId: string }
   | { type: "RESET_GAME" };
 
 // --- Constants ---

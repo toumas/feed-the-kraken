@@ -8,10 +8,11 @@ import {
   Skull,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Avatar } from "../components/Avatar";
 import { RoleReveal } from "../components/RoleReveal";
 import type { LobbyState, Role } from "../types";
+import { CancellationModal } from "./CancellationModal";
 
 interface GameViewProps {
   lobby: LobbyState;
@@ -38,6 +39,12 @@ interface GameViewProps {
     state: "PENDING" | "ACTIVE" | "COMPLETED" | "CANCELLED";
   } | null;
   onRespondConversion: (accept: boolean) => void;
+  isConversionDismissed: boolean;
+  onDismissConversion: () => void;
+
+  onStartCabinSearch: () => void;
+  isCabinSearchDismissed: boolean;
+  onDismissCabinSearch: () => void;
 
   onResetGame: () => void;
 }
@@ -59,18 +66,17 @@ export function GameView({
   onStartConversion,
   conversionStatus,
   onRespondConversion,
+  isConversionDismissed,
+  onDismissConversion,
+
+  onStartCabinSearch,
+  isCabinSearchDismissed,
+  onDismissCabinSearch,
+
   onResetGame,
 }: GameViewProps) {
   const [showEndSessionConfirm, setShowEndSessionConfirm] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [isConversionDismissed, setIsConversionDismissed] = useState(false);
-
-  // Reset dismissal when a new conversion starts (state becomes PENDING)
-  useEffect(() => {
-    if (conversionStatus?.state === "PENDING") {
-      setIsConversionDismissed(false);
-    }
-  }, [conversionStatus?.state]);
 
   const getRoleDetails = (role: Role | null) => {
     switch (role) {
@@ -311,6 +317,15 @@ export function GameView({
             Cabin Search
           </Link>
 
+          <button
+            type="button"
+            onClick={onStartCabinSearch}
+            className="w-full py-3 bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+          >
+            <Eye className="w-5 h-5" />
+            Cult Cabin Search
+          </button>
+
           <Link
             href="/denial"
             className="w-full py-3 bg-red-950/30 hover:bg-red-900/50 text-red-200 border border-red-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
@@ -369,6 +384,25 @@ export function GameView({
           )}
         </div>
       </div>
+
+      {/* Cult Cabin Search Cancellation Modal */}
+      {lobby.cabinSearchStatus?.state === "CANCELLED" &&
+        !isCabinSearchDismissed && (
+          <CancellationModal.Root
+            isOpen={true}
+            onDismiss={onDismissCabinSearch}
+          >
+            <CancellationModal.Header title="Cult Cabin Search" />
+            <CancellationModal.Body
+              message="The search was interrupted!"
+              reason={
+                lobby.cabinSearchStatus.cancellationReason ||
+                "The search has been cancelled."
+              }
+            />
+            <CancellationModal.Action onClick={onDismissCabinSearch} />
+          </CancellationModal.Root>
+        )}
 
       {/* Reset Game Confirmation Modal */}
       {showResetConfirm && (
@@ -569,21 +603,17 @@ export function GameView({
               </div>
 
               {conversionStatus.state === "CANCELLED" ? (
-                <div className="text-center space-y-4">
-                  <p className="text-red-400 font-bold text-lg">
-                    The ritual was interrupted!
-                  </p>
-                  <p className="text-slate-400">
-                    Someone refused the call. The conversion has failed.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setIsConversionDismissed(true)}
-                    className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
-                  >
-                    Close
-                  </button>
-                </div>
+                <CancellationModal.Root
+                  isOpen={true}
+                  onDismiss={onDismissConversion}
+                >
+                  <CancellationModal.Header title="Conversion to Cult" />
+                  <CancellationModal.Body
+                    message="The ritual was interrupted!"
+                    reason="Someone refused the call. The conversion has failed."
+                  />
+                  <CancellationModal.Action onClick={onDismissConversion} />
+                </CancellationModal.Root>
               ) : (
                 <>
                   <p className="text-slate-300 mb-6">

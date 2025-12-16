@@ -28,6 +28,12 @@ export default function GamePage() {
     handleStartConversion,
     handleRespondConversion,
     handleResetGame,
+
+    startCabinSearch,
+    isConversionDismissed,
+    setIsConversionDismissed,
+    isCabinSearchDismissed,
+    setIsCabinSearchDismissed,
   } = useGame();
 
   useEffect(() => {
@@ -43,6 +49,12 @@ export default function GamePage() {
       router.push("/conversion");
     }
   }, [lobby?.conversionStatus?.state, router]);
+
+  useEffect(() => {
+    if (lobby?.cabinSearchStatus?.state === "SETUP") {
+      router.push("/cult-cabin-search");
+    }
+  }, [lobby?.cabinSearchStatus?.state, router]);
 
   const handleLeave = () => {
     leaveLobby();
@@ -85,6 +97,13 @@ export default function GamePage() {
           onStartConversion={handleStartConversion}
           conversionStatus={lobby.conversionStatus || null}
           onRespondConversion={handleRespondConversion}
+          isConversionDismissed={isConversionDismissed}
+          onDismissConversion={() => setIsConversionDismissed(true)}
+          onStartCabinSearch={() => {
+            startCabinSearch();
+          }}
+          isCabinSearchDismissed={isCabinSearchDismissed}
+          onDismissCabinSearch={() => setIsCabinSearchDismissed(true)}
           onResetGame={handleResetGame}
         />
       </main>

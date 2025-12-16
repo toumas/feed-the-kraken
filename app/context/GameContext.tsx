@@ -58,6 +58,10 @@ export interface GameContextValue {
     targetId?: string,
     answer?: string,
   ) => void;
+  isConversionDismissed: boolean;
+  setIsConversionDismissed: (dismissed: boolean) => void;
+  isCabinSearchDismissed: boolean;
+  setIsCabinSearchDismissed: (dismissed: boolean) => void;
 
   // Reset Game
   handleResetGame: () => void;
@@ -67,6 +71,14 @@ export interface GameContextValue {
   cabinSearchResult: { targetPlayerId: string; role: Role } | null;
   isCabinSearchPending: boolean;
   clearCabinSearchResult: () => void;
+
+  // New Cult Cabin Search Actions
+  startCabinSearch: () => void;
+  claimCabinSearchRole: (
+    role: "CAPTAIN" | "NAVIGATOR" | "LIEUTENANT" | "CREW",
+  ) => void;
+  submitCabinSearchAction: (answer: string) => void;
+  cancelCabinSearch: () => void;
 
   // UI State
   error: string | null;
@@ -146,6 +158,57 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     targetPlayerId: string;
     revealedRole: Role;
   } | null>(null);
+  const [isConversionDismissed, setIsConversionDismissed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("kraken_conversion_dismissed") === "true";
+    }
+    return false;
+  });
+  const [isCabinSearchDismissed, setIsCabinSearchDismissed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("kraken_cabin_search_dismissed") === "true";
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "kraken_conversion_dismissed",
+        String(isConversionDismissed),
+      );
+    }
+  }, [isConversionDismissed]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "kraken_cabin_search_dismissed",
+        String(isCabinSearchDismissed),
+      );
+    }
+  }, [isCabinSearchDismissed]);
+
+  // Reset dismissed state when conversion starts
+  useEffect(() => {
+    if (
+      lobby?.conversionStatus?.state === "PENDING" ||
+      lobby?.conversionStatus?.state === "ACTIVE"
+    ) {
+      setIsConversionDismissed(false);
+    }
+  }, [lobby?.conversionStatus?.state]);
+
+  // Reset dismissal when a new cabin search starts (state becomes SETUP or ACTIVE)
+  useEffect(() => {
+    if (
+      lobby?.cabinSearchStatus?.state === "SETUP" ||
+      lobby?.cabinSearchStatus?.state === "ACTIVE"
+    ) {
+      setIsCabinSearchDismissed(false);
+    }
+  }, [lobby?.cabinSearchStatus?.state]);
+
   // --- Actions ---
 
   const connectToLobby = useCallback(
@@ -511,6 +574,55 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     sendMessage({ type: "RESET_GAME" });
   };
 
+  const startCabinSearch = () => {
+    console.log("GameContext: Sending start cabin search message...");
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "START_CULT_CABIN_SEARCH",
+          initiatorId: myPlayerId,
+        }),
+      );
+    }
+  };
+
+  const claimCabinSearchRole = (
+    role: "CAPTAIN" | "NAVIGATOR" | "LIEUTENANT" | "CREW",
+  ) => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "CLAIM_CULT_CABIN_SEARCH_ROLE",
+          playerId: myPlayerId,
+          role,
+        }),
+      );
+    }
+  };
+
+  const submitCabinSearchAction = (answer: string) => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "SUBMIT_CULT_CABIN_SEARCH_ACTION",
+          playerId: myPlayerId,
+          answer,
+        }),
+      );
+    }
+  };
+
+  const cancelCabinSearch = () => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "CANCEL_CULT_CABIN_SEARCH",
+          playerId: myPlayerId,
+        }),
+      );
+    }
+  };
+
   return (
     <GameContext.Provider
       value={{
@@ -546,8 +658,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         handleStartConversion,
         handleRespondConversion,
         submitConversionAction,
+        isConversionDismissed,
+        setIsConversionDismissed,
+        isCabinSearchDismissed,
+        setIsCabinSearchDismissed,
 
         handleResetGame,
+
+        startCabinSearch,
+        claimCabinSearchRole,
+        submitCabinSearchAction,
+        cancelCabinSearch,
 
         error,
         setError,
