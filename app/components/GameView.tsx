@@ -270,22 +270,36 @@ export function GameView({
             <div className="space-y-3">
               {lobby.players
                 .filter((p) => p.notRole)
-                .map((p) => (
-                  <div
-                    key={p.id}
-                    className="flex items-center gap-3 bg-slate-800/50 p-2 rounded-lg border border-slate-700"
-                  >
-                    <Avatar url={p.photoUrl} size="sm" />
-                    <div>
-                      <p className="text-sm font-bold text-slate-200">
-                        {p.name}
-                      </p>
-                      <p className="text-xs font-bold text-amber-400">
-                        NOT {p.notRole?.replace("_", " ")}
-                      </p>
+                .map((p) => {
+                  const getRoleColor = (role: string | null) => {
+                    switch (role) {
+                      case "PIRATE":
+                        return "text-red-400";
+                      case "CULT_LEADER":
+                        return "text-amber-400";
+                      case "CULTIST":
+                        return "text-green-400";
+                      default:
+                        return "text-cyan-400";
+                    }
+                  };
+                  return (
+                    <div
+                      key={p.id}
+                      className="flex items-center gap-3 bg-slate-800/50 p-2 rounded-lg border border-slate-700"
+                    >
+                      <Avatar url={p.photoUrl} size="sm" />
+                      <div>
+                        <p className="text-sm font-bold text-slate-200">
+                          {p.name}
+                        </p>
+                        <p className={`text-xs font-bold ${getRoleColor(p.notRole)}`}>
+                          NOT {p.notRole?.replace("_", " ")}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           </div>
         )}
@@ -293,27 +307,58 @@ export function GameView({
         <h3 className="text-sm text-slate-500 uppercase mb-4 font-bold">
           Crew Status
         </h3>
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex -space-x-2">
-            {lobby.players.slice(0, 5).map((p) => (
-              <Avatar
-                key={p.id}
-                url={p.photoUrl}
-                size="sm"
-                className="ring-2 ring-slate-900"
-              />
-            ))}
-            {lobby.players.length > 5 && (
-              <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-400 ring-2 ring-slate-900">
-                +{lobby.players.length - 5}
+        <div className="mb-6">
+          <div className="grid grid-cols-3 gap-3">
+            {lobby.players.map((p) => (
+              <div key={p.id} className="flex flex-col items-center gap-1">
+                <div className="relative">
+                  <Avatar
+                    url={p.photoUrl}
+                    size="sm"
+                    className={
+                      p.isEliminated
+                        ? "ring-2 ring-slate-600 opacity-50 grayscale"
+                        : p.isUnconvertible
+                          ? "ring-2 ring-purple-500"
+                          : "ring-2 ring-slate-700"
+                    }
+                  />
+                  {p.isEliminated && (
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-600 rounded-full flex items-center justify-center">
+                      <Skull className="w-2.5 h-2.5 text-white" />
+                    </div>
+                  )}
+                  {!p.isEliminated && p.isUnconvertible && (
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
+                      <Search className="w-2.5 h-2.5 text-white" />
+                    </div>
+                  )}
+                </div>
+                <span
+                  className={`text-xs font-medium truncate max-w-[70px] text-center ${p.isEliminated ? "text-slate-600 line-through" : "text-slate-400"}`}
+                >
+                  {p.name}
+                </span>
+                {p.isEliminated && (
+                  <span className="text-[10px] text-slate-500 font-bold uppercase">
+                    Eliminated
+                  </span>
+                )}
+                {!p.isEliminated && p.isUnconvertible && (
+                  <span className="text-[10px] text-purple-400 font-bold uppercase">
+                    Unconvertible
+                  </span>
+                )}
               </div>
-            )}
+            ))}
           </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-white">
-              {lobby.players.length}
+          <div className="flex items-center justify-end mt-3 pt-3 border-t border-slate-800">
+            <p className="text-sm text-slate-400">
+              <span className="text-lg font-bold text-white mr-1">
+                {lobby.players.length}
+              </span>
+              Sailors
             </p>
-            <p className="text-xs text-slate-500 uppercase">Sailors</p>
           </div>
         </div>
 
