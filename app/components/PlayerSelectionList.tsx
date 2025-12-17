@@ -2,12 +2,15 @@ import { createContext, type ReactNode, useContext, useState } from "react";
 import type { Player } from "../types";
 import { cn } from "../utils";
 import { Avatar } from "./Avatar";
+import { InlineError } from "./InlineError";
 
 type PlayerSelectionContextType = {
   selectedId: string | null;
   setSelectedId: (id: string | null) => void;
   players: Player[];
   myPlayerId: string;
+  error: string | null;
+  setError: (message: string | null) => void;
 };
 
 const PlayerSelectionContext = createContext<PlayerSelectionContextType | null>(
@@ -42,9 +45,11 @@ function Root({
   const [selectedId, setSelectedId] = useState<string | null>(
     initialSelectedId || null,
   );
+  const [error, setError] = useState<string | null>(null);
 
   const handleSelect = (id: string | null) => {
     setSelectedId(id);
+    setError(null); // Clear error when selection changes
     onSelect?.(id);
   };
 
@@ -55,6 +60,8 @@ function Root({
         setSelectedId: handleSelect,
         players,
         myPlayerId,
+        error,
+        setError,
       }}
     >
       <div className="flex flex-col h-full">{children}</div>
@@ -144,22 +151,34 @@ interface SubmitProps {
 }
 
 function Submit({ children, onSubmit }: SubmitProps) {
-  const { selectedId } = usePlayerSelection();
+  const { selectedId, error, setError } = usePlayerSelection();
+
+  const handleClick = () => {
+    if (!selectedId) {
+      setError("Please select a player first.");
+      return;
+    }
+    onSubmit(selectedId);
+  };
 
   return (
-    <button
-      type="button"
-      onClick={() => selectedId && onSubmit(selectedId)}
-      disabled={!selectedId}
-      className={cn(
-        "w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg",
-        "bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-900/20 hover:shadow-cyan-900/40 hover:-translate-y-0.5",
-        !selectedId &&
-          "opacity-50 cursor-not-allowed transform-none shadow-none",
+    <div className="space-y-2">
+      {error && (
+        <InlineError message={error} onDismiss={() => setError(null)} />
       )}
-    >
-      {children}
-    </button>
+      <button
+        type="button"
+        onClick={handleClick}
+        className={cn(
+          "w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg",
+          "bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-900/20 hover:shadow-cyan-900/40 hover:-translate-y-0.5",
+          !selectedId &&
+            "opacity-50 cursor-not-allowed transform-none shadow-none",
+        )}
+      >
+        {children}
+      </button>
+    </div>
   );
 }
 

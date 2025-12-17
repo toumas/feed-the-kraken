@@ -26,7 +26,9 @@ test.describe("Visual Regression Tests", () => {
     await page.goto("/");
 
     // Wait for page to fully load
-    await expect(page.getByRole("button", { name: "Create Voyage" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Create Voyage" }),
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "Join Crew" })).toBeVisible();
 
     await expect(page).toHaveScreenshot("home-page.png", {
@@ -39,7 +41,9 @@ test.describe("Visual Regression Tests", () => {
 
     // Wait for form elements to load
     await expect(page.getByPlaceholder("XP7K9L")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Board Ship" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Board Ship" }),
+    ).toBeVisible();
 
     await expect(page).toHaveScreenshot("join-page.png", {
       fullPage: true,
@@ -55,7 +59,9 @@ test.describe("Visual Regression Tests", () => {
     await page.goto("/identify");
 
     // Wait for profile editor to load
-    await expect(page.getByPlaceholder("Enter your pirate name...")).toBeVisible();
+    await expect(
+      page.getByPlaceholder("Enter your pirate name..."),
+    ).toBeVisible();
 
     await expect(page).toHaveScreenshot("identify-page.png", {
       fullPage: true,
@@ -316,7 +322,9 @@ test.describe("Action Flow Visual Tests", () => {
     await expect(hostPage).toHaveURL(/\/flogging/);
 
     // Wait for player list to load
-    await expect(hostPage.getByRole("button", { name: "Flog Player" })).toBeVisible();
+    await expect(
+      hostPage.getByRole("button", { name: "Flog Player" }),
+    ).toBeVisible();
 
     await expect(hostPage).toHaveScreenshot("flogging-player-selection.png", {
       fullPage: true,
@@ -359,13 +367,18 @@ test.describe("Action Flow Visual Tests", () => {
     await expect(hostPage).toHaveURL(/\/cabin-search/);
 
     // Wait for player list to load
-    await expect(hostPage.getByRole("button", { name: "Confirm Search" })).toBeVisible();
+    await expect(
+      hostPage.getByRole("button", { name: "Confirm Search" }),
+    ).toBeVisible();
 
-    await expect(hostPage).toHaveScreenshot("cabin-search-player-selection.png", {
-      fullPage: true,
-      // Mask player names which may vary
-      maxDiffPixelRatio: 0.02,
-    });
+    await expect(hostPage).toHaveScreenshot(
+      "cabin-search-player-selection.png",
+      {
+        fullPage: true,
+        // Mask player names which may vary
+        maxDiffPixelRatio: 0.02,
+      },
+    );
 
     await hostContext.close();
   });
@@ -402,7 +415,9 @@ test.describe("Action Flow Visual Tests", () => {
     await expect(hostPage).toHaveURL(/\/denial/);
 
     // Wait for confirmation UI to load
-    await expect(hostPage.getByRole("button", { name: "Yes, I Deny Command" })).toBeVisible();
+    await expect(
+      hostPage.getByRole("button", { name: "Yes, I Deny Command" }),
+    ).toBeVisible();
 
     await expect(hostPage).toHaveScreenshot("denial-confirmation.png", {
       fullPage: true,
@@ -439,7 +454,9 @@ test.describe("Action Flow Visual Tests", () => {
     await expect(hostPage).toHaveURL(/\/game/);
 
     // Wait for game page with action buttons
-    await expect(hostPage.getByRole("link", { name: /Flogging/ })).toBeVisible();
+    await expect(
+      hostPage.getByRole("link", { name: /Flogging/ }),
+    ).toBeVisible();
 
     await expect(hostPage).toHaveScreenshot("game-action-buttons.png", {
       fullPage: true,

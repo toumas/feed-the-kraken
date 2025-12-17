@@ -1,8 +1,9 @@
 "use client";
-import { AlertCircle, Anchor, X } from "lucide-react";
+import { Anchor } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { HomeView } from "./components/HomeView";
+import { InlineError } from "./components/InlineError";
 import { useGame } from "./context/GameContext";
 
 export default function KrakenCompanion() {
@@ -58,16 +59,8 @@ export default function KrakenCompanion() {
 
         {/* Error Toast */}
         {error && (
-          <div className="mx-4 mt-4 p-3 bg-red-950/90 border border-red-500/50 text-red-200 rounded-lg flex items-start animate-in slide-in-from-top-2">
-            <AlertCircle className="w-5 h-5 mr-2 shrink-0 text-red-500 mt-0.5" />
-            <p className="text-sm">{error}</p>
-            <button
-              onClick={() => setError(null)}
-              type="button"
-              className="ml-auto"
-            >
-              <X className="w-4 h-4" />
-            </button>
+          <div className="mx-4 mt-4">
+            <InlineError message={error} onDismiss={() => setError(null)} />
           </div>
         )}
 

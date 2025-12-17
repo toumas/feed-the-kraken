@@ -9,6 +9,7 @@ import {
 import { cn } from "../utils";
 import { Avatar } from "./Avatar";
 import { EditableProfile } from "./EditableProfile";
+import { InlineError } from "./InlineError";
 import { ProfileEditor } from "./ProfileEditor";
 
 interface LobbyViewProps {
@@ -36,11 +37,20 @@ export function LobbyView({
   const canStart = playerCount >= MIN_PLAYERS && playerCount <= MAX_PLAYERS;
 
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const copyCode = () => {
     navigator.clipboard.writeText(lobby.code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleStart = () => {
+    if (!canStart) {
+      setError(`Need at least ${MIN_PLAYERS} sailors to depart!`);
+      return;
+    }
+    onStart();
   };
 
   return (
@@ -216,12 +226,18 @@ export function LobbyView({
           </p>
         )}
 
+        {error && (
+          <InlineError message={error} onDismiss={() => setError(null)} />
+        )}
+
         {isHost ? (
           <button
-            onClick={onStart}
-            disabled={!canStart}
+            onClick={handleStart}
             type="button"
-            className="w-full py-4 bg-linear-to-r from-cyan-600 to-blue-600 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 text-white rounded-xl font-bold text-xl shadow-lg shadow-cyan-900/20 flex items-center justify-center gap-3 transition-all"
+            className={cn(
+              "w-full py-4 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-bold text-xl shadow-lg shadow-cyan-900/20 flex items-center justify-center gap-3 transition-all",
+              !canStart && "from-slate-800 to-slate-800 text-slate-500",
+            )}
           >
             <Play className={cn("w-6 h-6", canStart && "animate-pulse")} />
             Start Voyage

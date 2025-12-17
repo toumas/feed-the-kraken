@@ -1,11 +1,12 @@
 "use client";
 
-import { AlertCircle, CheckCircle, Clock, Eye, X, XCircle } from "lucide-react";
+import { CheckCircle, Clock, Eye, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Avatar } from "../components/Avatar";
 import { FeedbackCard } from "../components/FeedbackCard";
+import { InlineError } from "../components/InlineError";
 import { Quiz } from "../components/Quiz";
 import { useGame } from "../context/GameContext";
 import { QUIZ_QUESTIONS } from "../data/quiz";
@@ -132,16 +133,11 @@ export default function CultCabinSearchPage() {
                 Select Your Role
               </h2>
               {error && (
-                <div className="p-3 bg-red-950/90 border border-red-500/50 text-red-200 rounded-lg flex items-start animate-in slide-in-from-top-2 mb-4">
-                  <AlertCircle className="w-5 h-5 mr-2 shrink-0 text-red-500 mt-0.5" />
-                  <p className="text-sm">{error}</p>
-                  <button
-                    onClick={() => setError(null)}
-                    type="button"
-                    className="ml-auto"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                <div className="mb-4">
+                  <InlineError
+                    message={error}
+                    onDismiss={() => setError(null)}
+                  />
                 </div>
               )}
               <div className="space-y-3">
@@ -412,7 +408,6 @@ function RoleButton({
     <button
       type="button"
       onClick={onSelect}
-      disabled={isDisabled}
       className={`w-full p-4 rounded-xl border text-left transition-all ${
         isSelected
           ? "bg-amber-900/40 border-amber-500 ring-2 ring-amber-500/50 text-amber-100"

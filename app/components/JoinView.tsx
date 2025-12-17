@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { cn } from "../utils";
+import { InlineError } from "./InlineError";
 
 interface JoinViewProps {
   onJoin: (code: string) => void;
@@ -7,10 +9,16 @@ interface JoinViewProps {
 
 export function JoinView({ onJoin, onBack }: JoinViewProps) {
   const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (code.trim().length > 0) onJoin(code);
+    if (code.length < 4) {
+      setError("Please enter a valid ship code (at least 4 characters).");
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+    onJoin(code);
   };
 
   return (
@@ -30,14 +38,22 @@ export function JoinView({ onJoin, onBack }: JoinViewProps) {
             type="text"
             maxLength={6}
             value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onChange={(e) => {
+              setCode(e.target.value.toUpperCase());
+              setError(null); // Clear error when typing
+            }}
             placeholder="XP7K9L"
             className="w-full bg-slate-900 border-2 border-slate-700 focus:border-cyan-500 rounded-xl px-4 py-5 text-center text-3xl font-mono tracking-[0.5em] uppercase text-white placeholder:text-slate-700 outline-none transition-colors"
           />
+          {error && (
+            <InlineError message={error} onDismiss={() => setError(null)} />
+          )}
           <button
             type="submit"
-            disabled={code.length < 4}
-            className="w-full py-4 bg-cyan-600 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-xl font-bold text-lg transition-all"
+            className={cn(
+              "w-full py-4 bg-cyan-600 text-white rounded-xl font-bold text-lg transition-all",
+              code.length < 4 && "bg-slate-800 text-slate-600",
+            )}
           >
             Board Ship
           </button>

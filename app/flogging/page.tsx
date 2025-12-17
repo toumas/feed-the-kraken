@@ -4,6 +4,7 @@ import { Gavel } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { GameHeader } from "../components/GameHeader";
+import { InlineError } from "../components/InlineError";
 import { PlayerSelectionList } from "../components/PlayerSelectionList";
 import { useGame } from "../context/GameContext";
 
@@ -61,9 +62,8 @@ export default function FloggingPage() {
 
         {/* Error Toast */}
         {error && (
-          <div className="mx-6 mt-4 p-3 bg-red-950/90 border border-red-500/50 text-red-200 rounded-lg flex items-start animate-in slide-in-from-top-2">
-            <div className="mr-2 shrink-0 text-red-500 mt-0.5">⚠️</div>
-            <p className="text-sm">{error}</p>
+          <div className="mx-6 mt-4">
+            <InlineError message={error} onDismiss={() => {}} />
           </div>
         )}
 
