@@ -375,7 +375,7 @@ export default function CultCabinSearchPage() {
               </FeedbackCard.Title>
               <FeedbackCard.Description>
                 {isCorrect
-                  ? "You have proven your worth to the sea."
+                  ? "You have proven your worth to the Great Old One."
                   : "The Kraken is displeased with your ignorance."}
               </FeedbackCard.Description>
             </FeedbackCard.Root>

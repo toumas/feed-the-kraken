@@ -34,6 +34,10 @@ export default function GamePage() {
     setIsConversionDismissed,
     isCabinSearchDismissed,
     setIsCabinSearchDismissed,
+
+    startGunsStash,
+    isGunsStashDismissed,
+    setIsGunsStashDismissed,
   } = useGame();
 
   useEffect(() => {
@@ -54,7 +58,19 @@ export default function GamePage() {
     if (lobby?.cabinSearchStatus?.state === "SETUP") {
       router.push("/cult-cabin-search");
     }
+    if (lobby?.cabinSearchStatus?.state === "SETUP") {
+      router.push("/cult-cabin-search");
+    }
   }, [lobby?.cabinSearchStatus?.state, router]);
+
+  useEffect(() => {
+    if (
+      lobby?.gunsStashStatus?.state === "WAITING_FOR_PLAYERS" ||
+      lobby?.gunsStashStatus?.state === "DISTRIBUTION"
+    ) {
+      router.push("/cult-guns-stash");
+    }
+  }, [lobby?.gunsStashStatus?.state, router]);
 
   const handleLeave = () => {
     leaveLobby();
@@ -104,6 +120,9 @@ export default function GamePage() {
           }}
           isCabinSearchDismissed={isCabinSearchDismissed}
           onDismissCabinSearch={() => setIsCabinSearchDismissed(true)}
+          onStartGunsStash={startGunsStash}
+          isGunsStashDismissed={isGunsStashDismissed}
+          onDismissGunsStash={() => setIsGunsStashDismissed(true)}
           onResetGame={handleResetGame}
         />
       </main>

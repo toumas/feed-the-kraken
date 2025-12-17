@@ -80,6 +80,15 @@ export interface GameContextValue {
   submitCabinSearchAction: (answer: string) => void;
   cancelCabinSearch: () => void;
 
+  // Cult's Guns Stash Actions
+  startGunsStash: () => void;
+  confirmGunsStashReady: () => void;
+  submitGunsStashDistribution: (distribution: Record<string, number>) => void;
+  submitGunsStashAction: (answer: string) => void;
+  cancelGunsStash: () => void;
+  isGunsStashDismissed: boolean;
+  setIsGunsStashDismissed: (dismissed: boolean) => void;
+
   // UI State
   error: string | null;
   setError: (error: string | null) => void;
@@ -170,6 +179,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
     return false;
   });
+  const [isGunsStashDismissed, setIsGunsStashDismissed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("kraken_guns_stash_dismissed") === "true";
+    }
+    return false;
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -208,6 +223,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setIsCabinSearchDismissed(false);
     }
   }, [lobby?.cabinSearchStatus?.state]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "kraken_guns_stash_dismissed",
+        String(isGunsStashDismissed),
+      );
+    }
+  }, [isGunsStashDismissed]);
+
+  // Reset dismissal when a new guns stash starts
+  useEffect(() => {
+    if (
+      lobby?.gunsStashStatus?.state === "WAITING_FOR_PLAYERS" ||
+      lobby?.gunsStashStatus?.state === "DISTRIBUTION"
+    ) {
+      setIsGunsStashDismissed(false);
+    }
+  }, [lobby?.gunsStashStatus?.state]);
 
   // --- Actions ---
 
@@ -623,6 +657,65 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const startGunsStash = () => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "START_CULT_GUNS_STASH",
+          initiatorId: myPlayerId,
+        }),
+      );
+    }
+  };
+
+  const confirmGunsStashReady = () => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "CONFIRM_CULT_GUNS_STASH_READY",
+          playerId: myPlayerId,
+        }),
+      );
+    }
+  };
+
+  const submitGunsStashDistribution = (
+    distribution: Record<string, number>,
+  ) => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "SUBMIT_CULT_GUNS_STASH_DISTRIBUTION",
+          playerId: myPlayerId,
+          distribution,
+        }),
+      );
+    }
+  };
+
+  const cancelGunsStash = () => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "CANCEL_CULT_GUNS_STASH",
+          playerId: myPlayerId,
+        }),
+      );
+    }
+  };
+
+  const submitGunsStashAction = (answer: string) => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "SUBMIT_CULT_GUNS_STASH_ACTION",
+          playerId: myPlayerId,
+          answer,
+        }),
+      );
+    }
+  };
+
   return (
     <GameContext.Provider
       value={{
@@ -669,6 +762,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         claimCabinSearchRole,
         submitCabinSearchAction,
         cancelCabinSearch,
+
+        startGunsStash,
+        confirmGunsStashReady,
+        submitGunsStashDistribution,
+        submitGunsStashAction,
+        cancelGunsStash,
+        isGunsStashDismissed,
+        setIsGunsStashDismissed,
 
         error,
         setError,

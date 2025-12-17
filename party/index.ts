@@ -61,6 +61,19 @@ export type LobbyState = {
       notRole: Role | null;
     }[];
   };
+  gunsStashStatus?: {
+    initiatorId: string;
+    state: "WAITING_FOR_PLAYERS" | "DISTRIBUTION" | "COMPLETED" | "CANCELLED";
+    readyPlayers: string[];
+    startTime?: number;
+    distribution?: Record<string, number>;
+    playerQuestions?: Record<string, number>;
+    playerAnswers?: Record<string, string>;
+    results?: {
+      correctAnswers: string[];
+    };
+    cancellationReason?: string;
+  };
 };
 
 type CreateLobbyMessage = {
@@ -164,6 +177,33 @@ type SubmitCultCabinSearchActionMessage = {
   type: "SUBMIT_CULT_CABIN_SEARCH_ACTION";
   playerId: string;
   answer: string;
+};
+
+type StartCultGunsStashMessage = {
+  type: "START_CULT_GUNS_STASH";
+  initiatorId: string;
+};
+
+type ConfirmCultGunsStashReadyMessage = {
+  type: "CONFIRM_CULT_GUNS_STASH_READY";
+  playerId: string;
+};
+
+type SubmitCultGunsStashDistributionMessage = {
+  type: "SUBMIT_CULT_GUNS_STASH_DISTRIBUTION";
+  playerId: string;
+  distribution: Record<string, number>;
+};
+
+type SubmitCultGunsStashActionMessage = {
+  type: "SUBMIT_CULT_GUNS_STASH_ACTION";
+  playerId: string;
+  answer: string;
+};
+
+type CancelCultGunsStashMessage = {
+  type: "CANCEL_CULT_GUNS_STASH";
+  playerId: string;
 };
 
 export default class Server implements Party.Server {
@@ -271,6 +311,21 @@ export default class Server implements Party.Server {
           break;
         case "RESET_GAME":
           await this.handleResetGame(sender);
+          break;
+        case "START_CULT_GUNS_STASH":
+          await this.handleStartGunsStash(data, sender);
+          break;
+        case "CONFIRM_CULT_GUNS_STASH_READY":
+          await this.handleConfirmGunsStashReady(data, sender);
+          break;
+        case "SUBMIT_CULT_GUNS_STASH_DISTRIBUTION":
+          await this.handleSubmitGunsStashDistribution(data, sender);
+          break;
+        case "SUBMIT_CULT_GUNS_STASH_ACTION":
+          await this.handleSubmitGunsStashAction(data, sender);
+          break;
+        case "CANCEL_CULT_GUNS_STASH":
+          await this.handleCancelGunsStash(data, sender);
           break;
       }
     } catch (error) {
@@ -1201,6 +1256,241 @@ export default class Server implements Party.Server {
     // but updating the lobby state allows the client to know their answer is recorded if they check.
     // Given the UI doesn't show other people's answers usually, it's fine.
     this.broadcastLobbyUpdate();
+  }
+
+  async handleStartGunsStash(
+    data: StartCultGunsStashMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState) return;
+
+    const initiatorId = this.connectionToPlayer.get(sender.id);
+    if (!initiatorId || initiatorId !== data.initiatorId) return;
+
+    // Check if any exclusive action is already active
+    if (
+      (this.lobbyState.cabinSearchStatus &&
+        this.lobbyState.cabinSearchStatus.state !== "COMPLETED" &&
+        this.lobbyState.cabinSearchStatus.state !== "CANCELLED") ||
+      (this.lobbyState.conversionStatus &&
+        this.lobbyState.conversionStatus.state !== "COMPLETED" &&
+        this.lobbyState.conversionStatus.state !== "CANCELLED") ||
+      (this.lobbyState.gunsStashStatus &&
+        this.lobbyState.gunsStashStatus.state !== "COMPLETED" &&
+        this.lobbyState.gunsStashStatus.state !== "CANCELLED")
+    ) {
+      return;
+    }
+
+    // Verify initiator is Cult Leader - REMOVED per requirement (Anyone can start)
+    // if (this.lobbyState.assignments?.[initiatorId] !== "CULT_LEADER") return;
+
+    // Initialize guns stash state
+    this.lobbyState.gunsStashStatus = {
+      initiatorId,
+      state: "WAITING_FOR_PLAYERS",
+      readyPlayers: [initiatorId], // Initiator is automatically ready (Eyes Closed)
+    };
+    await this.saveLobbyState();
+    this.broadcastLobbyUpdate();
+  }
+
+  async handleConfirmGunsStashReady(
+    data: ConfirmCultGunsStashReadyMessage,
+    sender: Party.Connection,
+  ) {
+    if (
+      !this.lobbyState ||
+      !this.lobbyState.gunsStashStatus ||
+      this.lobbyState.gunsStashStatus.state !== "WAITING_FOR_PLAYERS"
+    )
+      return;
+
+    const playerId = this.connectionToPlayer.get(sender.id);
+    if (!playerId || playerId !== data.playerId) return;
+
+    // Add to ready players if not already there
+    if (!this.lobbyState.gunsStashStatus.readyPlayers.includes(playerId)) {
+      this.lobbyState.gunsStashStatus.readyPlayers.push(playerId);
+    }
+
+    // Check if ALL active players are ready
+    const activePlayers = this.lobbyState.players.filter(
+      (p) => !p.isEliminated && p.isOnline,
+    );
+    const allReady = activePlayers.every((p) =>
+      this.lobbyState?.gunsStashStatus?.readyPlayers.includes(p.id),
+    );
+
+    if (allReady) {
+      // Assign questions to all players except initiator (who is typically leader in original flow, but here anyone can start)
+      // Actually, initiator might be leader, or anyone.
+      // Requirements: Leader distributes. Others answer quiz.
+      // But ANYONE can start the action.
+      // If a non-leader starts it, who distributes?
+      // Wait, original requirement: "Any player can start Guns Stash".
+      // But distinct roles: "Cult Leader distributes".
+      // If I start it and I am NOT Cult Leader, what happens?
+      // The code says: "Cult Leader distributes".
+      // So if I start it, I just set it up. The Cult Leader (wherever they are) gets the distribution UI.
+      // So everyone else (including me if I'm not leader) gets Quiz.
+      // Exception: If *I* am the Cult Leader, I distribute.
+
+      const playerQuestions: Record<string, number> = {};
+      const activePlayers = this.lobbyState.players.filter(
+        (p) => !p.isEliminated && p.isOnline,
+      );
+
+      // We need to know who the Cult Leader is to exclude them from quiz?
+      // Or just assign questions to everyone, and UI decides to show Distribution instead of Quiz for Leader.
+      // Easier to assign to everyone.
+      activePlayers.forEach((p) => {
+        playerQuestions[p.id] = Math.floor(
+          Math.random() * QUIZ_QUESTIONS.length,
+        );
+      });
+
+      this.lobbyState.gunsStashStatus.state = "DISTRIBUTION";
+      this.lobbyState.gunsStashStatus.startTime = Date.now();
+      this.lobbyState.gunsStashStatus.playerQuestions = playerQuestions;
+      this.lobbyState.gunsStashStatus.playerAnswers = {};
+
+      // Schedule completion after 15 seconds
+      setTimeout(async () => {
+        await this.completeGunsStash();
+      }, 15000);
+    }
+
+    await this.saveLobbyState();
+    this.broadcastLobbyUpdate();
+  }
+
+  async completeGunsStash() {
+    if (
+      !this.lobbyState ||
+      !this.lobbyState.gunsStashStatus ||
+      this.lobbyState.gunsStashStatus.state !== "DISTRIBUTION"
+    )
+      return;
+
+    // Auto-complete: Distribute remaining guns randomly
+    const activePlayers = this.lobbyState.players.filter(
+      (p) => !p.isEliminated && p.isOnline,
+    );
+
+    if (activePlayers.length > 0) {
+      const currentDistribution =
+        this.lobbyState.gunsStashStatus.distribution || {};
+      let currentTotal = Object.values(currentDistribution).reduce(
+        (sum, count) => sum + count,
+        0,
+      );
+
+      // Clone to avoid mutating state directly during calculation
+      const finalDistribution = { ...currentDistribution };
+
+      // Fill remaining guns until we have 3
+      while (currentTotal < 3) {
+        const randomPlayer =
+          activePlayers[Math.floor(Math.random() * activePlayers.length)];
+        finalDistribution[randomPlayer.id] =
+          (finalDistribution[randomPlayer.id] || 0) + 1;
+        currentTotal++;
+      }
+
+      this.lobbyState.gunsStashStatus.distribution = finalDistribution;
+    }
+
+    // Calculate Quiz Results
+    const questions = this.lobbyState.gunsStashStatus.playerQuestions || {};
+    const answers = this.lobbyState.gunsStashStatus.playerAnswers || {};
+    const correctAnswers: string[] = [];
+
+    Object.keys(answers).forEach((playerId) => {
+      const qIndex = questions[playerId];
+      const answerId = answers[playerId];
+      if (
+        qIndex !== undefined &&
+        QUIZ_QUESTIONS[qIndex].correctAnswer === answerId
+      ) {
+        correctAnswers.push(playerId);
+      }
+    });
+
+    this.lobbyState.gunsStashStatus.results = { correctAnswers };
+    this.lobbyState.gunsStashStatus.state = "COMPLETED";
+    await this.saveLobbyState();
+    this.broadcastLobbyUpdate();
+  }
+
+  async handleSubmitGunsStashAction(
+    data: SubmitCultGunsStashActionMessage,
+    sender: Party.Connection,
+  ) {
+    if (
+      !this.lobbyState ||
+      !this.lobbyState.gunsStashStatus ||
+      this.lobbyState.gunsStashStatus.state !== "DISTRIBUTION"
+    )
+      return;
+
+    const playerId = this.connectionToPlayer.get(sender.id);
+    if (!playerId || playerId !== data.playerId) return;
+
+    if (!this.lobbyState.gunsStashStatus.playerAnswers) {
+      this.lobbyState.gunsStashStatus.playerAnswers = {};
+    }
+
+    this.lobbyState.gunsStashStatus.playerAnswers[playerId] = data.answer;
+    await this.saveLobbyState();
+    this.broadcastLobbyUpdate();
+  }
+
+  async handleSubmitGunsStashDistribution(
+    data: SubmitCultGunsStashDistributionMessage,
+    sender: Party.Connection,
+  ) {
+    if (
+      !this.lobbyState ||
+      !this.lobbyState.gunsStashStatus ||
+      this.lobbyState.gunsStashStatus.state !== "DISTRIBUTION"
+    )
+      return;
+
+    const playerId = this.connectionToPlayer.get(sender.id);
+    if (!playerId || playerId !== data.playerId) return;
+
+    // Validation: Total guns must be <= 3 (Draft mode)
+    const totalGuns = Object.values(data.distribution).reduce(
+      (sum, count) => sum + count,
+      0,
+    );
+
+    if (totalGuns > 3) return;
+
+    // Just update the draft distribution, DO NOT COMPLETE
+    this.lobbyState.gunsStashStatus.distribution = data.distribution;
+
+    await this.saveLobbyState();
+    // Broadcast to update everyone (or just leader? everyone is fine, they can't see it anyway)
+    // Actually other players shouldn't see it. But the UI hides it.
+    this.broadcastLobbyUpdate();
+  }
+
+  async handleCancelGunsStash(
+    _data: CancelCultGunsStashMessage,
+    _sender: Party.Connection,
+  ) {
+    if (!this.lobbyState || !this.lobbyState.gunsStashStatus) return;
+
+    // Allow cancelling in WAITING_FOR_PLAYERS phase
+    if (this.lobbyState.gunsStashStatus.state === "WAITING_FOR_PLAYERS") {
+      this.lobbyState.gunsStashStatus.state = "CANCELLED";
+      this.lobbyState.gunsStashStatus.cancellationReason =
+        "The action was cancelled.";
+      await this.saveLobbyState();
+      this.broadcastLobbyUpdate();
+    }
   }
 
   async onAlarm() {

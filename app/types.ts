@@ -50,6 +50,19 @@ export type LobbyState = {
       correctAnswers: string[]; // list of playerIds
     };
   };
+  gunsStashStatus?: {
+    initiatorId: string;
+    state: "WAITING_FOR_PLAYERS" | "DISTRIBUTION" | "COMPLETED" | "CANCELLED";
+    readyPlayers: string[]; // List of playerIds who have Pressed "Ready"
+    startTime?: number; // For the timer during distribution
+    distribution?: Record<string, number>; // playerId -> number of guns given
+    playerQuestions?: Record<string, number>; // playerId -> questionIndex
+    playerAnswers?: Record<string, string>; // playerId -> answer
+    results?: {
+      correctAnswers: string[]; // list of playerIds
+    };
+    cancellationReason?: string;
+  };
 };
 
 export type ConnectionStatus =
@@ -125,6 +138,14 @@ export type MessagePayload =
       answer: string;
     }
   | { type: "CANCEL_CULT_CABIN_SEARCH"; playerId: string }
+  | { type: "START_CULT_GUNS_STASH"; initiatorId: string }
+  | { type: "CONFIRM_CULT_GUNS_STASH_READY"; playerId: string }
+  | {
+      type: "SUBMIT_CULT_GUNS_STASH_DISTRIBUTION";
+      playerId: string;
+      distribution: Record<string, number>;
+    }
+  | { type: "CANCEL_CULT_GUNS_STASH"; playerId: string }
   | { type: "RESET_GAME" };
 
 // --- Constants ---

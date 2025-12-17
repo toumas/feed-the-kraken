@@ -6,6 +6,7 @@ import {
   LogOut,
   Search,
   Skull,
+  Target,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -46,6 +47,10 @@ interface GameViewProps {
   isCabinSearchDismissed: boolean;
   onDismissCabinSearch: () => void;
 
+  onStartGunsStash: () => void;
+  isGunsStashDismissed: boolean;
+  onDismissGunsStash: () => void;
+
   onResetGame: () => void;
 }
 
@@ -72,6 +77,10 @@ export function GameView({
   onStartCabinSearch,
   isCabinSearchDismissed,
   onDismissCabinSearch,
+
+  onStartGunsStash,
+  isGunsStashDismissed,
+  onDismissGunsStash,
 
   onResetGame,
 }: GameViewProps) {
@@ -326,6 +335,15 @@ export function GameView({
             Cult Cabin Search
           </button>
 
+          <button
+            type="button"
+            onClick={onStartGunsStash}
+            className="w-full py-3 bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+          >
+            <Target className="w-5 h-5" />
+            Cult's Guns Stash
+          </button>
+
           <Link
             href="/denial"
             className="w-full py-3 bg-red-950/30 hover:bg-red-900/50 text-red-200 border border-red-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
@@ -401,6 +419,22 @@ export function GameView({
               }
             />
             <CancellationModal.Action onClick={onDismissCabinSearch} />
+          </CancellationModal.Root>
+        )}
+
+      {/* Guns Stash Cancellation Modal */}
+      {lobby.gunsStashStatus?.state === "CANCELLED" &&
+        !isGunsStashDismissed && (
+          <CancellationModal.Root isOpen={true} onDismiss={onDismissGunsStash}>
+            <CancellationModal.Header title="Cult's Guns Stash" />
+            <CancellationModal.Body
+              message="The ritual was interrupted!"
+              reason={
+                lobby.gunsStashStatus.cancellationReason ||
+                "The action has been cancelled."
+              }
+            />
+            <CancellationModal.Action onClick={onDismissGunsStash} />
           </CancellationModal.Root>
         )}
 
