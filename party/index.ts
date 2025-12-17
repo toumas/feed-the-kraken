@@ -74,6 +74,10 @@ export type LobbyState = {
     };
     cancellationReason?: string;
   };
+  feedTheKrakenResult?: {
+    targetPlayerId: string;
+    cultVictory: boolean;
+  };
 };
 
 type CreateLobbyMessage = {
@@ -206,6 +210,17 @@ type CancelCultGunsStashMessage = {
   playerId: string;
 };
 
+type FeedTheKrakenRequestMessage = {
+  type: "FEED_THE_KRAKEN_REQUEST";
+  targetPlayerId: string;
+};
+
+type FeedTheKrakenResponseMessage = {
+  type: "FEED_THE_KRAKEN_RESPONSE";
+  captainId: string;
+  confirmed: boolean;
+};
+
 export default class Server implements Party.Server {
   constructor(readonly room: Party.Room) {}
 
@@ -326,6 +341,12 @@ export default class Server implements Party.Server {
           break;
         case "CANCEL_CULT_GUNS_STASH":
           await this.handleCancelGunsStash(data, sender);
+          break;
+        case "FEED_THE_KRAKEN_REQUEST":
+          await this.handleFeedTheKrakenRequest(data, sender);
+          break;
+        case "FEED_THE_KRAKEN_RESPONSE":
+          await this.handleFeedTheKrakenResponse(data, sender);
           break;
       }
     } catch (error) {
@@ -1490,6 +1511,107 @@ export default class Server implements Party.Server {
         "The action was cancelled.";
       await this.saveLobbyState();
       this.broadcastLobbyUpdate();
+    }
+  }
+
+  async handleFeedTheKrakenRequest(
+    data: FeedTheKrakenRequestMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState || !this.lobbyState.assignments) return;
+
+    const captainId = this.connectionToPlayer.get(sender.id);
+    if (!captainId) return;
+
+    const { targetPlayerId } = data;
+
+    // Captain cannot feed themselves
+    if (captainId === targetPlayerId) {
+      sender.send(
+        JSON.stringify({
+          type: "ERROR",
+          message: "The captain cannot feed themselves to the Kraken.",
+        }),
+      );
+      return;
+    }
+
+    // Find target's connection and send prompt
+    const targetConnection = Array.from(this.room.getConnections()).find(
+      (conn) => this.connectionToPlayer.get(conn.id) === targetPlayerId,
+    );
+
+    const captainPlayer = this.lobbyState.players.find(
+      (p) => p.id === captainId,
+    );
+    const captainName = captainPlayer ? captainPlayer.name : "Unknown";
+
+    if (targetConnection) {
+      targetConnection.send(
+        JSON.stringify({
+          type: "FEED_THE_KRAKEN_PROMPT",
+          captainId,
+          captainName,
+        }),
+      );
+    }
+  }
+
+  async handleFeedTheKrakenResponse(
+    data: FeedTheKrakenResponseMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState || !this.lobbyState.assignments) return;
+
+    const targetPlayerId = this.connectionToPlayer.get(sender.id);
+    if (!targetPlayerId) return;
+
+    const { captainId, confirmed } = data;
+
+    if (confirmed) {
+      const targetPlayer = this.lobbyState.players.find(
+        (p) => p.id === targetPlayerId,
+      );
+      if (targetPlayer) {
+        // Mark player as eliminated
+        targetPlayer.isEliminated = true;
+
+        // Check if target was Cult Leader - cult victory!
+        const targetRole = this.lobbyState.assignments[targetPlayerId];
+        const cultVictory = targetRole === "CULT_LEADER";
+
+        // Set the result for UI display
+        this.lobbyState.feedTheKrakenResult = {
+          targetPlayerId,
+          cultVictory,
+        };
+
+        await this.saveLobbyState();
+        this.broadcastLobbyUpdate();
+
+        // Broadcast result to everyone (including victim and captain)
+        this.room.broadcast(
+          JSON.stringify({
+            type: "FEED_THE_KRAKEN_RESULT",
+            targetPlayerId,
+            cultVictory,
+          }),
+        );
+      }
+    } else {
+      // Notify captain of denial
+      const captainConnection = Array.from(this.room.getConnections()).find(
+        (conn) => this.connectionToPlayer.get(conn.id) === captainId,
+      );
+
+      if (captainConnection) {
+        captainConnection.send(
+          JSON.stringify({
+            type: "FEED_THE_KRAKEN_DENIED",
+            targetPlayerId,
+          }),
+        );
+      }
     }
   }
 

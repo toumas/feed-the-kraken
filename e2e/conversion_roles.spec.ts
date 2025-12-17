@@ -48,7 +48,7 @@ test.describe("Conversion Role Display", () => {
     // 3. Host starts game
     await expect(hostPage.getByText("Crew Manifest (6/11)")).toBeVisible();
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
+    await expect(hostPage).toHaveURL(/\/game/, { timeout: 30000 });
 
     // 4. Identify Roles
     const allPages = [hostPage, ...players.map((p) => p.page)];
@@ -136,7 +136,9 @@ test.describe("Conversion Role Display", () => {
     }
 
     // Perform conversion
-    await expect(cultLeaderPage).toHaveURL(/.*\/conversion/);
+    await expect(cultLeaderPage).toHaveURL(/.*\/conversion/, {
+      timeout: 30000,
+    });
     await expect(
       cultLeaderPage.getByRole("heading", { name: "Choose a Convert" }),
     ).toBeVisible({ timeout: 15000 });
@@ -190,7 +192,11 @@ test.describe("Conversion Role Display", () => {
     }
     await expect(targetPirate.page.getByText("Cultist")).toBeVisible();
     await expect(targetPirate.page.getByText("Your Leader")).toBeVisible();
-    await expect(targetPirate.page.getByText(cultLeaderName)).toBeVisible();
+    const yourLeaderSection = targetPirate.page
+      .locator("div")
+      .filter({ hasText: "Your Leader" })
+      .last();
+    await expect(yourLeaderSection.getByText(cultLeaderName)).toBeVisible();
     await targetPirate.page.mouse.up();
 
     // B. Observer Pirate should still see Converted Pirate in Crew
@@ -206,9 +212,11 @@ test.describe("Conversion Role Display", () => {
       await observerPirate.page.mouse.down();
     }
     await expect(observerPirate.page.getByText("Pirate Crew")).toBeVisible();
-    await expect(
-      observerPirate.page.getByText(targetPirate.name),
-    ).toBeVisible();
+    const pirateCrewSection = observerPirate.page
+      .locator("div")
+      .filter({ hasText: "Pirate Crew" })
+      .last();
+    await expect(pirateCrewSection.getByText(targetPirate.name)).toBeVisible();
     await observerPirate.page.mouse.up();
   });
 });

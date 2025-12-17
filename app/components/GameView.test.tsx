@@ -47,6 +47,18 @@ describe("GameView", () => {
     onStartConversion: vi.fn(),
     conversionStatus: null,
     onRespondConversion: vi.fn(),
+    isConversionDismissed: false,
+    onDismissConversion: vi.fn(),
+    onStartCabinSearch: vi.fn(),
+    isCabinSearchDismissed: false,
+    onDismissCabinSearch: vi.fn(),
+    onStartGunsStash: vi.fn(),
+    isGunsStashDismissed: false,
+    onDismissGunsStash: vi.fn(),
+    feedTheKrakenPrompt: null,
+    onFeedTheKrakenResponse: vi.fn(),
+    feedTheKrakenResult: null,
+    onClearFeedTheKrakenResult: vi.fn(),
     onResetGame: vi.fn(),
   };
 
@@ -381,10 +393,17 @@ describe("GameView", () => {
     expect(screen.getByText("Pirate Crew")).toBeDefined();
 
     // Converted pirate should still appear in the crew list
-    expect(screen.getByText("Pirate 2 (Converted)")).toBeDefined();
+    // Converted pirate should still appear in the crew list
+    // Returns multiple elements (Crew Status list and Pirate Crew list)
+    expect(screen.getAllByText("Pirate 2 (Converted)").length).toBeGreaterThan(
+      0,
+    );
 
-    // Sailor should NOT appear in the crew list
-    expect(screen.queryByText("Sailor 1")).toBeNull();
+    // Sailor should NOT appear in the Pirate Crew list (but appears in global list)
+    const pirateCrewSection = screen.getByText("Pirate Crew").parentElement;
+    if (pirateCrewSection) {
+      expect(pirateCrewSection.textContent).not.toContain("Sailor 1");
+    }
   });
 
   it("shows Cultist role for converted player", () => {
@@ -485,7 +504,24 @@ describe("GameView", () => {
     expect(screen.getByText("Pirate Crew")).toBeDefined();
 
     // Converted sailor should NOT appear in the crew list
-    expect(screen.queryByText("Sailor 1 (Converted)")).toBeNull();
+    // It might appear in Crew Status list, but NOT in Pirate Crew section
+    // Let's scope the check to the Pirate Crew section
+    const pirateCrewSection = screen.getByText("Pirate Crew").parentElement;
+    expect(pirateCrewSection).toBeDefined();
+    if (pirateCrewSection) {
+      // Use within() to scope the query if using @testing-library/react within helper
+      // or just query the section container text content
+      // Since we don't have 'within' imported, let's use text content check or refined query
+      // Simpler approach: check if the text exists specifically inside this hierarchy
+      // But queryByText on full screen finds multiples if it exists elsewhere (e.g. Crew Status)
+      // Actually, if it's not in the list, it shouldn't be found in this section.
+      // However queryByText("Sailor 1 (Converted)") might find it in the Crew Status section now!
+      // So we must be careful.
+      // Let's verify "Sailor 1 (Converted)" is NOT in the pirate list container.
+      expect(pirateCrewSection.textContent).not.toContain(
+        "Sailor 1 (Converted)",
+      );
+    }
 
     // Should show "No other pirates" message
     expect(screen.getByText("No other pirates")).toBeDefined();
@@ -544,6 +580,9 @@ describe("GameView", () => {
     expect(screen.getByText("Your Leader")).toBeDefined();
 
     // Should show the leader's name
-    expect(screen.getByText("The Leader")).toBeDefined();
+    // "The Leader" appears in: 1. Your Leader section, 2. Crew Status list
+    // So distinct getByText fails. We expect it to be present at least once.
+    const leaderNameElements = screen.getAllByText("The Leader");
+    expect(leaderNameElements.length).toBeGreaterThan(0);
   });
 });

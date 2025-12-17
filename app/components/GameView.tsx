@@ -51,6 +51,12 @@ interface GameViewProps {
   isGunsStashDismissed: boolean;
   onDismissGunsStash: () => void;
 
+  // Feed the Kraken
+  feedTheKrakenPrompt: { captainId: string; captainName: string } | null;
+  onFeedTheKrakenResponse: (confirmed: boolean) => void;
+  feedTheKrakenResult: { targetPlayerId: string; cultVictory: boolean } | null;
+  onClearFeedTheKrakenResult: () => void;
+
   onResetGame: () => void;
 }
 
@@ -81,6 +87,11 @@ export function GameView({
   onStartGunsStash,
   isGunsStashDismissed,
   onDismissGunsStash,
+
+  feedTheKrakenPrompt,
+  onFeedTheKrakenResponse,
+  feedTheKrakenResult,
+  onClearFeedTheKrakenResult,
 
   onResetGame,
 }: GameViewProps) {
@@ -293,7 +304,9 @@ export function GameView({
                         <p className="text-sm font-bold text-slate-200">
                           {p.name}
                         </p>
-                        <p className={`text-xs font-bold ${getRoleColor(p.notRole)}`}>
+                        <p
+                          className={`text-xs font-bold ${getRoleColor(p.notRole)}`}
+                        >
                           NOT {p.notRole?.replace("_", " ")}
                         </p>
                       </div>
@@ -425,6 +438,14 @@ export function GameView({
             <Eye className="w-5 h-5" />
             Conversion to Cult
           </button>
+
+          <Link
+            href="/feed-the-kraken"
+            className="w-full py-3 bg-red-950/30 hover:bg-red-900/50 text-red-200 border border-red-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+          >
+            <Skull className="w-5 h-5" />
+            Feed the Kraken
+          </Link>
 
           <button
             type="button"
@@ -780,6 +801,100 @@ export function GameView({
             </div>
           </div>
         )}
+
+      {/* Feed the Kraken Confirmation Modal (Target) */}
+      {feedTheKrakenPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-slate-900 border border-red-900/50 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300 mx-4">
+            <div className="flex items-center gap-3 mb-6">
+              <Skull className="w-8 h-8 text-red-500" />
+              <h2 className="text-xl font-bold text-white">Feed the Kraken</h2>
+            </div>
+            <p className="text-slate-300 mb-6">
+              <span className="font-bold text-white">
+                {feedTheKrakenPrompt.captainName}
+              </span>{" "}
+              has chosen to feed you to the Kraken. Do you accept your fate?
+            </p>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => onFeedTheKrakenResponse(false)}
+                className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl font-bold transition-colors"
+              >
+                Deny
+              </button>
+              <button
+                type="button"
+                onClick={() => onFeedTheKrakenResponse(true)}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors"
+              >
+                Accept Fate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feed the Kraken Result Modal */}
+      {feedTheKrakenResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md animate-in fade-in duration-500">
+          <div className="w-full max-w-md p-6 flex flex-col items-center mx-4">
+            {feedTheKrakenResult.cultVictory ? (
+              <>
+                <div className="w-24 h-24 bg-amber-500/20 rounded-full flex items-center justify-center mb-6 border-4 border-amber-500/50 animate-pulse">
+                  <Eye className="w-12 h-12 text-amber-500" />
+                </div>
+                <h2 className="text-3xl font-bold text-amber-400 mb-4 text-center">
+                  CULT WINS!
+                </h2>
+                <p className="text-slate-300 text-center mb-8">
+                  The Cult Leader was fed to the Kraken!
+                  <br />
+                  The Cult Leader and all Cultists immediately win the game.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="w-24 h-24 bg-red-500/20 rounded-full flex items-center justify-center mb-6 border-4 border-red-500/50">
+                  <Skull className="w-12 h-12 text-red-500" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-4 text-center">
+                  Fed to the Kraken
+                </h2>
+                <div className="flex items-center gap-3 mb-6">
+                  <Avatar
+                    url={
+                      lobby.players.find(
+                        (p) => p.id === feedTheKrakenResult.targetPlayerId,
+                      )?.photoUrl || null
+                    }
+                    size="lg"
+                    className="ring-4 ring-red-500/50"
+                  />
+                  <div>
+                    <p className="text-lg font-bold text-white">
+                      {
+                        lobby.players.find(
+                          (p) => p.id === feedTheKrakenResult.targetPlayerId,
+                        )?.name
+                      }
+                    </p>
+                    <p className="text-sm text-red-400">Has been eliminated</p>
+                  </div>
+                </div>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={onClearFeedTheKrakenResult}
+              className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

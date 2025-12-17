@@ -40,6 +40,8 @@ describe("Server", () => {
           isReady: true,
           isOnline: true,
           isEliminated: false,
+          isUnconvertible: false,
+          notRole: null,
           joinedAt: Date.now(),
         },
       ],
@@ -53,7 +55,7 @@ describe("Server", () => {
     );
 
     // Verify state change
-    expect(server.lobbyState.players[0].isEliminated).toBe(true);
+    expect(server.lobbyState?.players[0].isEliminated).toBe(true);
 
     // Verify broadcast
     expect(mockRoom.broadcast).toHaveBeenCalledWith(

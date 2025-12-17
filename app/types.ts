@@ -63,6 +63,10 @@ export type LobbyState = {
     };
     cancellationReason?: string;
   };
+  feedTheKrakenResult?: {
+    targetPlayerId: string;
+    cultVictory: boolean;
+  };
 };
 
 export type ConnectionStatus =
@@ -146,7 +150,24 @@ export type MessagePayload =
       distribution: Record<string, number>;
     }
   | { type: "CANCEL_CULT_GUNS_STASH"; playerId: string }
-  | { type: "RESET_GAME" };
+  | { type: "RESET_GAME" }
+  | { type: "FEED_THE_KRAKEN_REQUEST"; targetPlayerId: string }
+  | {
+      type: "FEED_THE_KRAKEN_PROMPT";
+      captainId: string;
+      captainName: string;
+    }
+  | {
+      type: "FEED_THE_KRAKEN_RESPONSE";
+      captainId: string;
+      confirmed: boolean;
+    }
+  | { type: "FEED_THE_KRAKEN_DENIED"; targetPlayerId: string }
+  | {
+      type: "FEED_THE_KRAKEN_RESULT";
+      targetPlayerId: string;
+      cultVictory: boolean;
+    };
 
 // --- Constants ---
 export const MIN_PLAYERS = 5;

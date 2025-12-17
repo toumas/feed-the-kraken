@@ -89,6 +89,14 @@ export interface GameContextValue {
   isGunsStashDismissed: boolean;
   setIsGunsStashDismissed: (dismissed: boolean) => void;
 
+  // Feed the Kraken Actions
+  handleFeedTheKrakenRequest: (targetPlayerId: string) => void;
+  handleFeedTheKrakenResponse: (confirmed: boolean) => void;
+  feedTheKrakenPrompt: { captainId: string; captainName: string } | null;
+  feedTheKrakenResult: { targetPlayerId: string; cultVictory: boolean } | null;
+  isFeedTheKrakenPending: boolean;
+  clearFeedTheKrakenResult: () => void;
+
   // UI State
   error: string | null;
   setError: (error: string | null) => void;
@@ -243,6 +251,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   }, [lobby?.gunsStashStatus?.state]);
 
+  // Feed the Kraken State
+  const [feedTheKrakenPrompt, setFeedTheKrakenPrompt] = useState<{
+    captainId: string;
+    captainName: string;
+  } | null>(null);
+  const [feedTheKrakenResult, setFeedTheKrakenResult] = useState<{
+    targetPlayerId: string;
+    cultVictory: boolean;
+  } | null>(null);
+  const [isFeedTheKrakenPending, setIsFeedTheKrakenPending] = useState(false);
+
   // --- Actions ---
 
   const connectToLobby = useCallback(
@@ -334,6 +353,26 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
             case "CONVERSION_RESULT":
               // Handled by lobby state update mostly, but could trigger toast here if needed
+              break;
+
+            // Feed the Kraken messages
+            case "FEED_THE_KRAKEN_PROMPT":
+              setFeedTheKrakenPrompt({
+                captainId: data.captainId,
+                captainName: data.captainName,
+              });
+              break;
+            case "FEED_THE_KRAKEN_RESULT":
+              setFeedTheKrakenResult({
+                targetPlayerId: data.targetPlayerId,
+                cultVictory: data.cultVictory,
+              });
+              setIsFeedTheKrakenPending(false);
+              break;
+            case "FEED_THE_KRAKEN_DENIED":
+              setIsFeedTheKrakenPending(false);
+              setError("The player refused to be fed to the Kraken.");
+              setTimeout(() => setError(null), 3000);
               break;
           }
         } catch (error) {
@@ -716,6 +755,41 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Feed the Kraken Actions
+  const handleFeedTheKrakenRequest = (targetPlayerId: string) => {
+    if (socket) {
+      setIsFeedTheKrakenPending(true);
+      socket.send(
+        JSON.stringify({
+          type: "FEED_THE_KRAKEN_REQUEST",
+          targetPlayerId,
+        }),
+      );
+    }
+  };
+
+  const handleFeedTheKrakenResponse = (confirmed: boolean) => {
+    if (socket && feedTheKrakenPrompt) {
+      socket.send(
+        JSON.stringify({
+          type: "FEED_THE_KRAKEN_RESPONSE",
+          captainId: feedTheKrakenPrompt.captainId,
+          confirmed,
+        }),
+      );
+      setFeedTheKrakenPrompt(null);
+    }
+  };
+
+  const clearFeedTheKrakenResult = () => {
+    setFeedTheKrakenResult(null);
+    // Also clear from lobby state
+    if (socket) {
+      // Note: We might need a server message to clear this, or handle it locally
+      // For now, just clear the local state
+    }
+  };
+
   return (
     <GameContext.Provider
       value={{
@@ -770,6 +844,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         cancelGunsStash,
         isGunsStashDismissed,
         setIsGunsStashDismissed,
+
+        handleFeedTheKrakenRequest,
+        handleFeedTheKrakenResponse,
+        feedTheKrakenPrompt,
+        feedTheKrakenResult,
+        isFeedTheKrakenPending,
+        clearFeedTheKrakenResult,
 
         error,
         setError,

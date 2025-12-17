@@ -38,6 +38,11 @@ export default function GamePage() {
     startGunsStash,
     isGunsStashDismissed,
     setIsGunsStashDismissed,
+
+    handleFeedTheKrakenResponse,
+    feedTheKrakenPrompt,
+    feedTheKrakenResult,
+    clearFeedTheKrakenResult,
   } = useGame();
 
   useEffect(() => {
@@ -123,6 +128,10 @@ export default function GamePage() {
           onStartGunsStash={startGunsStash}
           isGunsStashDismissed={isGunsStashDismissed}
           onDismissGunsStash={() => setIsGunsStashDismissed(true)}
+          feedTheKrakenPrompt={feedTheKrakenPrompt}
+          onFeedTheKrakenResponse={handleFeedTheKrakenResponse}
+          feedTheKrakenResult={feedTheKrakenResult}
+          onClearFeedTheKrakenResult={clearFeedTheKrakenResult}
           onResetGame={handleResetGame}
         />
       </main>
