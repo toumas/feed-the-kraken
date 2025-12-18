@@ -4,10 +4,9 @@ import { InlineError } from "./InlineError";
 
 interface JoinViewProps {
   onJoin: (code: string) => void;
-  onBack: () => void;
 }
 
-export function JoinView({ onJoin, onBack }: JoinViewProps) {
+export function JoinView({ onJoin }: JoinViewProps) {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -23,14 +22,6 @@ export function JoinView({ onJoin, onBack }: JoinViewProps) {
 
   return (
     <div className="flex-1 flex flex-col animate-in slide-in-from-right">
-      <button
-        onClick={onBack}
-        type="button"
-        className="text-slate-400 hover:text-white flex items-center self-start mb-8 py-2"
-      >
-        ← Back to shore
-      </button>
-
       <div className="flex-1 flex flex-col justify-center max-w-xs mx-auto w-full">
         <h2 className="text-2xl font-bold mb-6 text-center">Enter Ship Code</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
