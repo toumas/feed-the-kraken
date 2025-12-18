@@ -97,6 +97,12 @@ export interface GameContextValue {
   isFeedTheKrakenPending: boolean;
   clearFeedTheKrakenResult: () => void;
 
+  // Off with the Tongue Actions
+  handleOffWithTongueRequest: (targetPlayerId: string) => void;
+  handleOffWithTongueResponse: (confirmed: boolean) => void;
+  offWithTonguePrompt: { captainId: string; captainName: string } | null;
+  isOffWithTonguePending: boolean;
+
   // UI State
   error: string | null;
   setError: (error: string | null) => void;
@@ -262,6 +268,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   } | null>(null);
   const [isFeedTheKrakenPending, setIsFeedTheKrakenPending] = useState(false);
 
+  // Off with the Tongue State
+  const [offWithTonguePrompt, setOffWithTonguePrompt] = useState<{
+    captainId: string;
+    captainName: string;
+  } | null>(null);
+  const [isOffWithTonguePending, setIsOffWithTonguePending] = useState(false);
+
   // --- Actions ---
 
   const connectToLobby = useCallback(
@@ -372,6 +385,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             case "FEED_THE_KRAKEN_DENIED":
               setIsFeedTheKrakenPending(false);
               setError("The player refused to be fed to the Kraken.");
+              setTimeout(() => setError(null), 3000);
+              break;
+
+            // Off with the Tongue messages
+            case "OFF_WITH_TONGUE_PROMPT":
+              setOffWithTonguePrompt({
+                captainId: data.captainId,
+                captainName: data.captainName,
+              });
+              break;
+            case "OFF_WITH_TONGUE_RESULT":
+              setIsOffWithTonguePending(false);
+              break;
+            case "OFF_WITH_TONGUE_DENIED":
+              setIsOffWithTonguePending(false);
+              setError("The player refused to be silenced.");
               setTimeout(() => setError(null), 3000);
               break;
           }
@@ -790,6 +819,32 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Off with the Tongue Actions
+  const handleOffWithTongueRequest = (targetPlayerId: string) => {
+    if (socket) {
+      setIsOffWithTonguePending(true);
+      socket.send(
+        JSON.stringify({
+          type: "OFF_WITH_TONGUE_REQUEST",
+          targetPlayerId,
+        }),
+      );
+    }
+  };
+
+  const handleOffWithTongueResponse = (confirmed: boolean) => {
+    if (socket && offWithTonguePrompt) {
+      socket.send(
+        JSON.stringify({
+          type: "OFF_WITH_TONGUE_RESPONSE",
+          captainId: offWithTonguePrompt.captainId,
+          confirmed,
+        }),
+      );
+      setOffWithTonguePrompt(null);
+    }
+  };
+
   return (
     <GameContext.Provider
       value={{
@@ -851,6 +906,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         feedTheKrakenResult,
         isFeedTheKrakenPending,
         clearFeedTheKrakenResult,
+
+        handleOffWithTongueRequest,
+        handleOffWithTongueResponse,
+        offWithTonguePrompt,
+        isOffWithTonguePending,
 
         error,
         setError,

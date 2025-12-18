@@ -13,6 +13,7 @@ export type Player = {
   isUnconvertible: boolean;
   notRole: Role | null;
   joinedAt: number;
+  hasTongue: boolean;
 };
 
 export type LobbyState = {
@@ -221,6 +222,17 @@ type FeedTheKrakenResponseMessage = {
   confirmed: boolean;
 };
 
+type OffWithTongueRequestMessage = {
+  type: "OFF_WITH_TONGUE_REQUEST";
+  targetPlayerId: string;
+};
+
+type OffWithTongueResponseMessage = {
+  type: "OFF_WITH_TONGUE_RESPONSE";
+  captainId: string;
+  confirmed: boolean;
+};
+
 export default class Server implements Party.Server {
   constructor(readonly room: Party.Room) {}
 
@@ -348,6 +360,12 @@ export default class Server implements Party.Server {
         case "FEED_THE_KRAKEN_RESPONSE":
           await this.handleFeedTheKrakenResponse(data, sender);
           break;
+        case "OFF_WITH_TONGUE_REQUEST":
+          await this.handleOffWithTongueRequest(data, sender);
+          break;
+        case "OFF_WITH_TONGUE_RESPONSE":
+          await this.handleOffWithTongueResponse(data, sender);
+          break;
       }
     } catch (error) {
       console.error("Error handling message:", error);
@@ -380,12 +398,14 @@ export default class Server implements Party.Server {
         p.isEliminated = initialP.isEliminated;
         p.isUnconvertible = initialP.isUnconvertible;
         p.notRole = initialP.notRole;
+        p.hasTongue = true; // Reset silenced state
       } else {
         // Player wasn't in the snapshot (joined late? shouldn't happen in locked game)
         // Reset them to default safe state just in case
         p.isEliminated = false;
         p.isUnconvertible = false;
         p.notRole = null;
+        p.hasTongue = true;
       }
     });
 
@@ -431,6 +451,7 @@ export default class Server implements Party.Server {
           isUnconvertible: false,
           notRole: null,
           joinedAt: Date.now(),
+          hasTongue: true,
         },
       ],
       status: "WAITING",
@@ -492,6 +513,7 @@ export default class Server implements Party.Server {
       isUnconvertible: false,
       notRole: null,
       joinedAt: Date.now(),
+      hasTongue: true,
     });
 
     this.connectionToPlayer.set(sender.id, playerId);
@@ -631,6 +653,7 @@ export default class Server implements Party.Server {
       isUnconvertible: false,
       notRole: null,
       joinedAt: Date.now(),
+      hasTongue: true,
     });
 
     await this.saveLobbyState();
@@ -1133,6 +1156,20 @@ export default class Server implements Party.Server {
 
     const { role } = data;
 
+    // Players who have lost their tongue cannot claim Captain
+    if (role === "CAPTAIN") {
+      const player = this.lobbyState.players.find((p) => p.id === playerId);
+      if (player && player.hasTongue === false) {
+        sender.send(
+          JSON.stringify({
+            type: "ERROR",
+            message: "You cannot claim Captain because you have been silenced.",
+          }),
+        );
+        return;
+      }
+    }
+
     // Check if role is already claimed by someone else (for unique roles)
     if (role !== "CREW") {
       const alreadyClaimed = Object.entries(
@@ -1608,6 +1645,116 @@ export default class Server implements Party.Server {
         captainConnection.send(
           JSON.stringify({
             type: "FEED_THE_KRAKEN_DENIED",
+            targetPlayerId,
+          }),
+        );
+      }
+    }
+  }
+
+  async handleOffWithTongueRequest(
+    data: OffWithTongueRequestMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState) return;
+
+    const captainId = this.connectionToPlayer.get(sender.id);
+    if (!captainId) return;
+
+    const { targetPlayerId } = data;
+
+    // Captain cannot target themselves
+    if (captainId === targetPlayerId) {
+      sender.send(
+        JSON.stringify({
+          type: "ERROR",
+          message: "You cannot give the token to yourself.",
+        }),
+      );
+      return;
+    }
+
+    // Check if target still has their tongue
+    const targetPlayer = this.lobbyState.players.find(
+      (p) => p.id === targetPlayerId,
+    );
+    if (!targetPlayer || !targetPlayer.hasTongue) {
+      sender.send(
+        JSON.stringify({
+          type: "ERROR",
+          message: "This player has already lost their tongue.",
+        }),
+      );
+      return;
+    }
+
+    // Find target's connection and send prompt
+    const targetConnection = Array.from(this.room.getConnections()).find(
+      (conn) => this.connectionToPlayer.get(conn.id) === targetPlayerId,
+    );
+
+    const captainPlayer = this.lobbyState.players.find(
+      (p) => p.id === captainId,
+    );
+    const captainName = captainPlayer ? captainPlayer.name : "Unknown";
+
+    if (targetConnection) {
+      targetConnection.send(
+        JSON.stringify({
+          type: "OFF_WITH_TONGUE_PROMPT",
+          captainId,
+          captainName,
+        }),
+      );
+    }
+  }
+
+  async handleOffWithTongueResponse(
+    data: OffWithTongueResponseMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState) return;
+
+    const targetPlayerId = this.connectionToPlayer.get(sender.id);
+    if (!targetPlayerId) return;
+
+    const { captainId, confirmed } = data;
+
+    if (confirmed) {
+      const targetPlayer = this.lobbyState.players.find(
+        (p) => p.id === targetPlayerId,
+      );
+      if (targetPlayer) {
+        // Mark player as having lost their tongue
+        targetPlayer.hasTongue = false;
+
+        await this.saveLobbyState();
+        this.broadcastLobbyUpdate();
+
+        // Notify captain of success
+        const captainConnection = Array.from(this.room.getConnections()).find(
+          (conn) => this.connectionToPlayer.get(conn.id) === captainId,
+        );
+
+        if (captainConnection) {
+          captainConnection.send(
+            JSON.stringify({
+              type: "OFF_WITH_TONGUE_RESULT",
+              targetPlayerId,
+            }),
+          );
+        }
+      }
+    } else {
+      // Notify captain of denial
+      const captainConnection = Array.from(this.room.getConnections()).find(
+        (conn) => this.connectionToPlayer.get(conn.id) === captainId,
+      );
+
+      if (captainConnection) {
+        captainConnection.send(
+          JSON.stringify({
+            type: "OFF_WITH_TONGUE_DENIED",
             targetPlayerId,
           }),
         );

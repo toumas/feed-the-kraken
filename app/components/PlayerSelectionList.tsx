@@ -71,9 +71,13 @@ function Root({
 
 interface ContentProps {
   disabledLabel?: string;
+  isPlayerDisabled?: (player: Player) => boolean;
 }
 
-function Content({ disabledLabel = "Unavailable" }: ContentProps) {
+function Content({
+  disabledLabel = "Unavailable",
+  isPlayerDisabled,
+}: ContentProps) {
   const { players, myPlayerId, selectedId, setSelectedId } =
     usePlayerSelection();
   const availablePlayers = players.filter((p) => p.id !== myPlayerId);
@@ -82,7 +86,8 @@ function Content({ disabledLabel = "Unavailable" }: ContentProps) {
     <div className="flex-1 overflow-y-auto space-y-2 pb-4">
       {availablePlayers.map((player) => {
         const isSelected = selectedId === player.id;
-        const isDisabledAction = player.isUnconvertible;
+        const isDisabledAction =
+          isPlayerDisabled?.(player) ?? player.isUnconvertible;
         const isEliminated = player.isEliminated;
         const isDisabled = isDisabledAction || isEliminated;
 

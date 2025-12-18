@@ -12,6 +12,7 @@ export type Player = {
   isUnconvertible: boolean;
   notRole: Role | null;
   joinedAt: number;
+  hasTongue: boolean; // true by default, false when silenced by "off with the tongue" action
 };
 
 export type LobbyState = {
@@ -167,7 +168,20 @@ export type MessagePayload =
       type: "FEED_THE_KRAKEN_RESULT";
       targetPlayerId: string;
       cultVictory: boolean;
-    };
+    }
+  | { type: "OFF_WITH_TONGUE_REQUEST"; targetPlayerId: string }
+  | {
+      type: "OFF_WITH_TONGUE_PROMPT";
+      captainId: string;
+      captainName: string;
+    }
+  | {
+      type: "OFF_WITH_TONGUE_RESPONSE";
+      captainId: string;
+      confirmed: boolean;
+    }
+  | { type: "OFF_WITH_TONGUE_RESULT"; targetPlayerId: string }
+  | { type: "OFF_WITH_TONGUE_DENIED"; targetPlayerId: string };
 
 // --- Constants ---
 export const MIN_PLAYERS = 5;

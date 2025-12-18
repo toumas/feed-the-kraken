@@ -4,6 +4,7 @@ import {
   Eye,
   Gavel,
   LogOut,
+  Scissors,
   Search,
   Skull,
   Target,
@@ -57,6 +58,10 @@ interface GameViewProps {
   feedTheKrakenResult: { targetPlayerId: string; cultVictory: boolean } | null;
   onClearFeedTheKrakenResult: () => void;
 
+  // Off with the Tongue
+  offWithTonguePrompt: { captainId: string; captainName: string } | null;
+  onOffWithTongueResponse: (confirmed: boolean) => void;
+
   onResetGame: () => void;
 }
 
@@ -92,6 +97,9 @@ export function GameView({
   onFeedTheKrakenResponse,
   feedTheKrakenResult,
   onClearFeedTheKrakenResult,
+
+  offWithTonguePrompt,
+  onOffWithTongueResponse,
 
   onResetGame,
 }: GameViewProps) {
@@ -333,7 +341,9 @@ export function GameView({
                         ? "ring-2 ring-slate-600 opacity-50 grayscale"
                         : p.isUnconvertible
                           ? "ring-2 ring-purple-500"
-                          : "ring-2 ring-slate-700"
+                          : p.hasTongue === false
+                            ? "ring-2 ring-amber-500"
+                            : "ring-2 ring-slate-700"
                     }
                   />
                   {p.isEliminated && (
@@ -346,6 +356,13 @@ export function GameView({
                       <Search className="w-2.5 h-2.5 text-white" />
                     </div>
                   )}
+                  {!p.isEliminated &&
+                    !p.isUnconvertible &&
+                    p.hasTongue === false && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+                        <Scissors className="w-2.5 h-2.5 text-white" />
+                      </div>
+                    )}
                 </div>
                 <span
                   className={`text-xs font-medium truncate max-w-[70px] text-center ${p.isEliminated ? "text-slate-600 line-through" : "text-slate-400"}`}
@@ -362,6 +379,13 @@ export function GameView({
                     Unconvertible
                   </span>
                 )}
+                {!p.isEliminated &&
+                  !p.isUnconvertible &&
+                  p.hasTongue === false && (
+                    <span className="text-[10px] text-amber-400 font-bold uppercase">
+                      Silenced
+                    </span>
+                  )}
               </div>
             ))}
           </div>
@@ -445,6 +469,14 @@ export function GameView({
           >
             <Skull className="w-5 h-5" />
             Feed the Kraken
+          </Link>
+
+          <Link
+            href="/off-with-tongue"
+            className="w-full py-3 bg-amber-900/30 hover:bg-amber-900/50 text-amber-200 border border-amber-800/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+          >
+            <Scissors className="w-5 h-5" />
+            Off with the Tongue
           </Link>
 
           <button
@@ -892,6 +924,46 @@ export function GameView({
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Off with the Tongue Confirmation Modal (Target) */}
+      {offWithTonguePrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-slate-900 border border-amber-900/50 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300 mx-4">
+            <div className="flex items-center gap-3 mb-6">
+              <Scissors className="w-8 h-8 text-amber-500" />
+              <h2 className="text-xl font-bold text-white">
+                Off with the Tongue
+              </h2>
+            </div>
+            <p className="text-slate-300 mb-4">
+              <span className="font-bold text-white">
+                {offWithTonguePrompt.captainName}
+              </span>{" "}
+              wants to silence you.
+            </p>
+            <p className="text-sm text-slate-400 mb-6">
+              If you accept, you can no longer articulate words (but can make
+              sounds and gesticulate) and can no longer become captain.
+            </p>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => onOffWithTongueResponse(false)}
+                className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl font-bold transition-colors"
+              >
+                Deny
+              </button>
+              <button
+                type="button"
+                onClick={() => onOffWithTongueResponse(true)}
+                className="flex-1 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold transition-colors"
+              >
+                Accept
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -43,6 +43,9 @@ export default function GamePage() {
     feedTheKrakenPrompt,
     feedTheKrakenResult,
     clearFeedTheKrakenResult,
+
+    offWithTonguePrompt,
+    handleOffWithTongueResponse,
   } = useGame();
 
   useEffect(() => {
@@ -132,6 +135,8 @@ export default function GamePage() {
           onFeedTheKrakenResponse={handleFeedTheKrakenResponse}
           feedTheKrakenResult={feedTheKrakenResult}
           onClearFeedTheKrakenResult={clearFeedTheKrakenResult}
+          offWithTonguePrompt={offWithTonguePrompt}
+          onOffWithTongueResponse={handleOffWithTongueResponse}
           onResetGame={handleResetGame}
         />
       </main>
