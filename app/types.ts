@@ -19,6 +19,13 @@ export type LobbyState = {
   code: string;
   players: Player[];
   status: "WAITING" | "PLAYING";
+  roleDistributionMode?: "automatic" | "manual"; // Defaults to "automatic"
+  roleSelectionStatus?: {
+    state: "SELECTING" | "COMPLETED" | "CANCELLED";
+    availableRoles: Role[]; // Pool of roles remaining to pick from
+    selections: Record<string, { role: Role; confirmed: boolean }>;
+    cancellationReason?: string;
+  };
   assignments?: Record<string, Role>;
   originalRoles?: Record<string, Role>;
   isFloggingUsed?: boolean;
@@ -152,6 +159,7 @@ export type MessagePayload =
     }
   | { type: "CANCEL_CULT_GUNS_STASH"; playerId: string }
   | { type: "RESET_GAME" }
+  | { type: "BACK_TO_LOBBY" }
   | { type: "FEED_THE_KRAKEN_REQUEST"; targetPlayerId: string }
   | {
       type: "FEED_THE_KRAKEN_PROMPT";
@@ -181,7 +189,11 @@ export type MessagePayload =
       confirmed: boolean;
     }
   | { type: "OFF_WITH_TONGUE_RESULT"; targetPlayerId: string }
-  | { type: "OFF_WITH_TONGUE_DENIED"; targetPlayerId: string };
+  | { type: "OFF_WITH_TONGUE_DENIED"; targetPlayerId: string }
+  | { type: "SET_ROLE_DISTRIBUTION_MODE"; mode: "automatic" | "manual" }
+  | { type: "SELECT_ROLE"; playerId: string; role: Role }
+  | { type: "CONFIRM_ROLE"; playerId: string }
+  | { type: "CANCEL_ROLE_SELECTION"; playerId: string };
 
 // --- Constants ---
 export const MIN_PLAYERS = 5;

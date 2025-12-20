@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "../utils";
 import { InlineError } from "./InlineError";
 
@@ -9,6 +9,11 @@ interface JoinViewProps {
 export function JoinView({ onJoin }: JoinViewProps) {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +31,7 @@ export function JoinView({ onJoin }: JoinViewProps) {
         <h2 className="text-2xl font-bold mb-6 text-center">Enter Ship Code</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <input
+            ref={inputRef}
             type="text"
             maxLength={6}
             value={code}

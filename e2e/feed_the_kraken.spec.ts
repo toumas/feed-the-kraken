@@ -1,28 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-
-// Helper to check role
-// Copied from conversion.spec.ts
-const checkRole = async (page: Page) => {
-  const revealBtn = page.locator("button").filter({ hasText: "Role Hidden" });
-  // Wait for button to be attached
-  // Use a catch here in case the button is not found (e.g. if game state is different)
-  try {
-    await revealBtn.waitFor({ state: "attached", timeout: 2000 });
-  } catch {
-    return false; // Can't find button, assume not leader or just error
-  }
-
-  // Dispatch mousedown to reveal
-  await revealBtn.dispatchEvent("mousedown");
-
-  // Check for Cult Leader text
-  const isLeader = await page.getByText("Cult Leader").isVisible();
-
-  // Release mouse
-  await revealBtn.dispatchEvent("mouseup");
-
-  return isLeader;
-};
+import { checkRoleVisible } from "./helpers";
 
 test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   // 1. Host creates lobby
@@ -91,7 +68,7 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   await expect(hostPage).toHaveURL(/\/game/);
 
   // Check if Player 1 is the Cult Leader
-  const isCultLeader = await checkRole(page);
+  const isCultLeader = await checkRoleVisible(page);
   console.log(`Player 1 is Cult Leader: ${isCultLeader}`);
 
   // 5. Host initiates Feed the Kraken on Player 1
@@ -205,7 +182,7 @@ test("Feed the Kraken Flow: Player 1 denies", async ({ browser }) => {
   await expect(page).toHaveURL(/\/game/);
 
   // Check role for sync
-  await checkRole(page);
+  await checkRoleVisible(page);
 
   // 5. Host initiates Feed the Kraken
   await hostPage.getByRole("link", { name: "Feed the Kraken" }).click();

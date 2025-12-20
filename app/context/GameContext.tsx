@@ -65,6 +65,7 @@ export interface GameContextValue {
 
   // Reset Game
   handleResetGame: () => void;
+  handleBackToLobby: () => void;
 
   // Cabin Search State
   cabinSearchPrompt: { searcherId: string; searcherName: string } | null;
@@ -102,6 +103,12 @@ export interface GameContextValue {
   handleOffWithTongueResponse: (confirmed: boolean) => void;
   offWithTonguePrompt: { captainId: string; captainName: string } | null;
   isOffWithTonguePending: boolean;
+
+  // Role Selection Actions (for manual mode)
+  setRoleDistributionMode: (mode: "automatic" | "manual") => void;
+  selectRole: (role: Role) => void;
+  confirmRole: () => void;
+  cancelRoleSelection: () => void;
 
   // UI State
   error: string | null;
@@ -311,8 +318,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       newSocket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          console.log("GameContext: Received message:", data.type, data);
           switch (data.type) {
             case "LOBBY_UPDATE":
+              console.log(
+                "GameContext: Received LOBBY_UPDATE, status:",
+                data.lobby.status,
+              );
               setLobby(data.lobby);
               if (data.lobby?.status === "PLAYING") {
                 if (data.lobby.assignments?.[myPlayerId]) {
@@ -676,6 +688,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     sendMessage({ type: "RESET_GAME" });
   };
 
+  const handleBackToLobby = () => {
+    console.log("GameContext: Sending BACK_TO_LOBBY message");
+    sendMessage({ type: "BACK_TO_LOBBY" });
+  };
+
   const startCabinSearch = () => {
     console.log("GameContext: Sending start cabin search message...");
     if (socket) {
@@ -845,6 +862,52 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Role Selection Actions (for manual mode)
+  const setRoleDistributionMode = (mode: "automatic" | "manual") => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "SET_ROLE_DISTRIBUTION_MODE",
+          mode,
+        }),
+      );
+    }
+  };
+
+  const selectRole = (role: Role) => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "SELECT_ROLE",
+          playerId: myPlayerId,
+          role,
+        }),
+      );
+    }
+  };
+
+  const confirmRole = () => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "CONFIRM_ROLE",
+          playerId: myPlayerId,
+        }),
+      );
+    }
+  };
+
+  const cancelRoleSelection = () => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "CANCEL_ROLE_SELECTION",
+          playerId: myPlayerId,
+        }),
+      );
+    }
+  };
+
   return (
     <GameContext.Provider
       value={{
@@ -886,6 +949,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         setIsCabinSearchDismissed,
 
         handleResetGame,
+        handleBackToLobby,
 
         startCabinSearch,
         claimCabinSearchRole,
@@ -911,6 +975,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         handleOffWithTongueResponse,
         offWithTonguePrompt,
         isOffWithTonguePending,
+
+        setRoleDistributionMode,
+        selectRole,
+        confirmRole,
+        cancelRoleSelection,
 
         error,
         setError,

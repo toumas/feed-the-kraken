@@ -44,6 +44,7 @@ describe("Server - Conversion Flow", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: 0,
+          hasTongue: true,
         },
         {
           id: "p2",
@@ -56,6 +57,7 @@ describe("Server - Conversion Flow", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: 0,
+          hasTongue: true,
         },
         {
           id: "p3",
@@ -68,6 +70,7 @@ describe("Server - Conversion Flow", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: 0,
+          hasTongue: true,
         },
       ],
       status: "PLAYING",

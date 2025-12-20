@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getRolesForPlayerCount } from "./index";
+import { getRolesForPlayerCount } from "../app/utils/role-utils";
 
 describe("getRolesForPlayerCount", () => {
   it("should return correct roles for 5 players", () => {

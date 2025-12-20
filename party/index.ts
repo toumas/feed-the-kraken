@@ -1,5 +1,10 @@
 import type * as Party from "partykit/server";
 import { MIN_PLAYERS, type Role } from "@/app/types";
+import {
+  getRolesForPlayerCount,
+  isValidComposition,
+  getPossibleRolesForPlayerCount,
+} from "@/app/utils/role-utils";
 import { QUIZ_QUESTIONS } from "../app/data/quiz";
 
 export type Player = {
@@ -20,6 +25,13 @@ export type LobbyState = {
   code: string;
   players: Player[];
   status: "WAITING" | "PLAYING";
+  roleDistributionMode?: "automatic" | "manual"; // Defaults to "automatic"
+  roleSelectionStatus?: {
+    state: "SELECTING" | "COMPLETED" | "CANCELLED";
+    availableRoles: Role[]; // Pool of roles remaining to pick from
+    selections: Record<string, { role: Role; confirmed: boolean }>;
+    cancellationReason?: string;
+  };
   assignments?: Record<string, Role>;
   originalRoles?: Record<string, Role>;
   isFloggingUsed?: boolean;
@@ -233,6 +245,27 @@ type OffWithTongueResponseMessage = {
   confirmed: boolean;
 };
 
+type SetRoleDistributionModeMessage = {
+  type: "SET_ROLE_DISTRIBUTION_MODE";
+  mode: "automatic" | "manual";
+};
+
+type SelectRoleMessage = {
+  type: "SELECT_ROLE";
+  playerId: string;
+  role: Role;
+};
+
+type ConfirmRoleMessage = {
+  type: "CONFIRM_ROLE";
+  playerId: string;
+};
+
+type CancelRoleSelectionMessage = {
+  type: "CANCEL_ROLE_SELECTION";
+  playerId: string;
+};
+
 export default class Server implements Party.Server {
   constructor(readonly room: Party.Room) {}
 
@@ -339,6 +372,9 @@ export default class Server implements Party.Server {
         case "RESET_GAME":
           await this.handleResetGame(sender);
           break;
+        case "BACK_TO_LOBBY":
+          await this.handleBackToLobby(sender);
+          break;
         case "START_CULT_GUNS_STASH":
           await this.handleStartGunsStash(data, sender);
           break;
@@ -365,6 +401,18 @@ export default class Server implements Party.Server {
           break;
         case "OFF_WITH_TONGUE_RESPONSE":
           await this.handleOffWithTongueResponse(data, sender);
+          break;
+        case "SET_ROLE_DISTRIBUTION_MODE":
+          await this.handleSetRoleDistributionMode(data, sender);
+          break;
+        case "SELECT_ROLE":
+          await this.handleSelectRole(data, sender);
+          break;
+        case "CONFIRM_ROLE":
+          await this.handleConfirmRole(data, sender);
+          break;
+        case "CANCEL_ROLE_SELECTION":
+          await this.handleCancelRoleSelection(data, sender);
           break;
       }
     } catch (error) {
@@ -420,6 +468,50 @@ export default class Server implements Party.Server {
         assignments: this.lobbyState.assignments,
       }),
     );
+  }
+
+  async handleBackToLobby(sender: Party.Connection) {
+    if (!this.lobbyState) return;
+
+    const playerId = this.connectionToPlayer.get(sender.id);
+    const player = this.lobbyState.players.find((p) => p.id === playerId);
+
+    console.log(
+      `Server: Received BACK_TO_LOBBY from ${sender.id} (player: ${player?.name}, isHost: ${player?.isHost})`,
+    );
+
+    // Only host can reset back to lobby
+    if (!player?.isHost) {
+      console.log(`Server: BACK_TO_LOBBY rejected, not host`);
+      return;
+    }
+
+    console.log(`Server: Resetting lobby ${this.lobbyState.code} to WAITING`);
+
+    // Reset Lobby State completely back to WAITING
+    this.lobbyState.status = "WAITING";
+    this.lobbyState.assignments = undefined;
+    this.lobbyState.originalRoles = undefined;
+    this.lobbyState.roleSelectionStatus = undefined;
+    this.lobbyState.isFloggingUsed = undefined;
+    this.lobbyState.conversionCount = undefined;
+    this.lobbyState.conversionStatus = undefined;
+    this.lobbyState.cabinSearchStatus = undefined;
+    this.lobbyState.gunsStashStatus = undefined;
+    this.lobbyState.feedTheKrakenResult = undefined;
+    this.lobbyState.initialGameState = undefined;
+
+    // Reset all player attributes
+    this.lobbyState.players.forEach((p) => {
+      p.isReady = false;
+      p.isEliminated = false;
+      p.isUnconvertible = false;
+      p.notRole = null;
+      p.hasTongue = true;
+    });
+
+    await this.saveLobbyState();
+    this.broadcastLobbyUpdate();
   }
 
   async handleCreateLobby(data: CreateLobbyMessage, sender: Party.Connection) {
@@ -574,14 +666,29 @@ export default class Server implements Party.Server {
 
     if (!player?.isHost || this.lobbyState.players.length < MIN_PLAYERS) return;
 
-    // 1. Determine roles based on player count
+    // Determine roles based on player count
     const playerCount = this.lobbyState.players.length;
     const roles = getRolesForPlayerCount(playerCount);
 
-    // 2. Shuffle roles
-    const shuffledRoles = roles.sort(() => Math.random() - 0.5);
+    // Check role distribution mode
+    const mode = this.lobbyState.roleDistributionMode || "automatic";
 
-    // 3. Assign roles to players map for easy lookup (optional, but good for server authority if we wanted to store it)
+    if (mode === "manual") {
+      // Manual mode: Initialize role selection state
+      this.lobbyState.status = "PLAYING";
+      this.lobbyState.roleSelectionStatus = {
+        state: "SELECTING",
+        availableRoles: [...roles], // Copy the roles array
+        selections: {},
+      };
+
+      await this.saveLobbyState();
+      this.broadcastLobbyUpdate();
+      return;
+    }
+
+    // Automatic mode: Shuffle and assign roles
+    const shuffledRoles = roles.sort(() => Math.random() - 0.5);
     const assignments: Record<string, Role> = {};
     this.lobbyState.players.forEach((p, index) => {
       assignments[p.id] = shuffledRoles[index];
@@ -614,6 +721,232 @@ export default class Server implements Party.Server {
         assignments,
       }),
     );
+    this.broadcastLobbyUpdate();
+  }
+
+  async handleSetRoleDistributionMode(
+    data: SetRoleDistributionModeMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState) return;
+
+    // Only host can change mode
+    const playerId = this.connectionToPlayer.get(sender.id);
+    const player = this.lobbyState.players.find((p) => p.id === playerId);
+
+    if (!player?.isHost) {
+      sender.send(
+        JSON.stringify({
+          type: "ERROR",
+          message: "Only the host can change role distribution mode.",
+        }),
+      );
+      return;
+    }
+
+    // Can only change mode in WAITING state
+    if (this.lobbyState.status !== "WAITING") {
+      sender.send(
+        JSON.stringify({
+          type: "ERROR",
+          message: "Cannot change mode after the game has started.",
+        }),
+      );
+      return;
+    }
+
+    this.lobbyState.roleDistributionMode = data.mode;
+    await this.saveLobbyState();
+    this.broadcastLobbyUpdate();
+  }
+
+  async handleSelectRole(data: SelectRoleMessage, sender: Party.Connection) {
+    if (!this.lobbyState || !this.lobbyState.roleSelectionStatus) return;
+
+    const { playerId, role } = data;
+
+    // Verify it's the correct player
+    const connPlayerId = this.connectionToPlayer.get(sender.id);
+    if (connPlayerId !== playerId) return;
+
+    const status = this.lobbyState.roleSelectionStatus;
+
+    // Can only select during SELECTING state
+    if (status.state !== "SELECTING") {
+      sender.send(
+        JSON.stringify({
+          type: "ERROR",
+          message: "Role selection has already completed.",
+        }),
+      );
+      return;
+    }
+
+    // Check if player already confirmed their selection
+    if (status.selections[playerId]?.confirmed) {
+      sender.send(
+        JSON.stringify({
+          type: "ERROR",
+          message: "You have already confirmed your role selection.",
+        }),
+      );
+      return;
+    }
+
+    // Check if role is possible for this player count
+    const possibleRoles = getPossibleRolesForPlayerCount(
+      this.lobbyState.players.length,
+    );
+    if (!possibleRoles.includes(role)) {
+      sender.send(
+        JSON.stringify({
+          type: "ERROR",
+          message: "This role is not available for this player count.",
+        }),
+      );
+      return;
+    }
+
+    // Assign to player (unconfirmed)
+    status.selections[playerId] = { role, confirmed: false };
+
+    await this.saveLobbyState();
+    this.broadcastLobbyUpdate();
+  }
+
+  async handleConfirmRole(data: ConfirmRoleMessage, sender: Party.Connection) {
+    if (!this.lobbyState || !this.lobbyState.roleSelectionStatus) return;
+
+    const { playerId } = data;
+
+    // Verify it's the correct player
+    const connPlayerId = this.connectionToPlayer.get(sender.id);
+    if (connPlayerId !== playerId) return;
+
+    const status = this.lobbyState.roleSelectionStatus;
+
+    // Can only confirm during SELECTING state
+    if (status.state !== "SELECTING") {
+      sender.send(
+        JSON.stringify({
+          type: "ERROR",
+          message: "Role selection has already completed.",
+        }),
+      );
+      return;
+    }
+
+    // Check if player has made a selection
+    if (!status.selections[playerId]) {
+      sender.send(
+        JSON.stringify({
+          type: "ERROR",
+          message: "Please select a role first.",
+        }),
+      );
+      return;
+    }
+
+    // Check if already confirmed
+    if (status.selections[playerId].confirmed) {
+      return; // Already confirmed, ignore
+    }
+
+    // Confirm the selection
+    status.selections[playerId].confirmed = true;
+
+    // Check if all human players have confirmed
+    const allPlayersConfirmed = this.lobbyState.players.every(
+      (p) => status.selections[p.id]?.confirmed,
+    );
+
+    if (allPlayersConfirmed) {
+      const playerCount = this.lobbyState.players.length;
+
+      // Final validation
+      const selectedRoles = Object.values(status.selections).map((s) => s.role);
+
+      if (isValidComposition(selectedRoles, playerCount)) {
+        // Transition to COMPLETED and finalize assignments
+        status.state = "COMPLETED";
+
+        // Build assignments from selections
+        const assignments: Record<string, Role> = {};
+        for (const [pId, selection] of Object.entries(status.selections)) {
+          assignments[pId] = selection.role;
+        }
+
+        this.lobbyState.assignments = assignments;
+        this.lobbyState.originalRoles = { ...assignments };
+        this.lobbyState.isFloggingUsed = false;
+        this.lobbyState.conversionCount = 0;
+
+        // Capture initial game state for reset
+        this.lobbyState.initialGameState = {
+          assignments: { ...assignments },
+          originalRoles: { ...assignments },
+          players: this.lobbyState.players.map((p) => ({
+            id: p.id,
+            isEliminated: p.isEliminated,
+            isUnconvertible: p.isUnconvertible,
+            notRole: p.notRole,
+          })),
+        };
+
+        await this.saveLobbyState();
+
+        // Broadcast the start with assignments
+        this.room.broadcast(
+          JSON.stringify({
+            type: "GAME_STARTED",
+            assignments,
+          }),
+        );
+      } else if (allPlayersConfirmed) {
+        // Invalid composition: Cancel and go back to lobby
+        status.state = "CANCELLED";
+        status.cancellationReason =
+          "Invalid team composition for this player count. All players returned to lobby.";
+        this.lobbyState.status = "WAITING";
+
+        await this.saveLobbyState();
+      } else {
+        // If not all confirmed (maybe logic error), just wait
+        await this.saveLobbyState();
+      }
+    } else {
+      // Just save and broadcast the selection update
+      await this.saveLobbyState();
+    }
+
+    this.broadcastLobbyUpdate();
+  }
+
+  async handleCancelRoleSelection(
+    data: CancelRoleSelectionMessage,
+    sender: Party.Connection,
+  ) {
+    if (!this.lobbyState || !this.lobbyState.roleSelectionStatus) return;
+
+    const { playerId } = data;
+
+    // Verify it's a valid player
+    const connPlayerId = this.connectionToPlayer.get(sender.id);
+    if (connPlayerId !== playerId) return;
+
+    const player = this.lobbyState.players.find((p) => p.id === playerId);
+    if (!player) return;
+
+    // Can only cancel during SELECTING state
+    if (this.lobbyState.roleSelectionStatus.state !== "SELECTING") return;
+
+    // Cancel the role selection and return to WAITING
+    this.lobbyState.roleSelectionStatus.state = "CANCELLED";
+    this.lobbyState.roleSelectionStatus.cancellationReason = `${player.name} cancelled role selection.`;
+    this.lobbyState.status = "WAITING";
+
+    // Clear role selection status after delay to let clients read it
+    await this.saveLobbyState();
     this.broadcastLobbyUpdate();
   }
 
@@ -1788,66 +2121,4 @@ Server satisfies Party.Worker;
 
 // --- Helpers ---
 
-export function getRolesForPlayerCount(count: number): Role[] {
-  const roles: Role[] = [];
-
-  // Always 1 Cult Leader
-  roles.push("CULT_LEADER");
-
-  let sailors = 0;
-  let pirates = 0;
-  let cultists = 0;
-
-  switch (count) {
-    case 5:
-      // 5 players: 3 Sailors, 1 Pirate OR 2 Sailors, 2 Pirates
-      if (Math.random() < 0.5) {
-        sailors = 3;
-        pirates = 1;
-      } else {
-        sailors = 2;
-        pirates = 2;
-      }
-      break;
-    case 6:
-      sailors = 3;
-      pirates = 2;
-      break;
-    case 7:
-      sailors = 4;
-      pirates = 2;
-      break;
-    case 8:
-      sailors = 4;
-      pirates = 3;
-      break;
-    case 9:
-      sailors = 5;
-      pirates = 3;
-      break;
-    case 10:
-      sailors = 5;
-      pirates = 4;
-      break;
-    case 11:
-      sailors = 5;
-      pirates = 4;
-      cultists = 1;
-      break;
-    case 3:
-      sailors = 0;
-      pirates = 2;
-      break;
-    default:
-      // Fallback for unexpected counts (should be blocked by UI/logic)
-      // Just fill with sailors to avoid crash
-      sailors = count - 1;
-      break;
-  }
-
-  for (let i = 0; i < sailors; i++) roles.push("SAILOR");
-  for (let i = 0; i < pirates; i++) roles.push("PIRATE");
-  for (let i = 0; i < cultists; i++) roles.push("CULTIST");
-
-  return roles;
-}
+// Role distribution logic moved to app/utils/role-utils.ts

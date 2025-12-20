@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { InlineError } from "../components/InlineError";
 import { LobbyView } from "../components/LobbyView";
 import { useGame } from "../context/GameContext";
 
@@ -14,15 +15,35 @@ export default function LobbyPage() {
     leaveLobby,
     startGame,
     addBotPlayer,
+    setRoleDistributionMode,
     connectionStatus,
   } = useGame();
 
+  const [cancellationMessage, setCancellationMessage] = useState<string | null>(
+    null,
+  );
+
   useEffect(() => {
-    // If game starts, go to game page
+    // If game starts, go to appropriate page based on mode
     if (lobby?.status === "PLAYING") {
-      router.push("/game");
+      // If in manual role selection mode, go to role selection page
+      if (lobby.roleSelectionStatus?.state === "SELECTING") {
+        router.push("/role-selection");
+      } else {
+        router.push("/game");
+      }
     }
-  }, [lobby?.status, router]);
+  }, [lobby?.status, lobby?.roleSelectionStatus?.state, router]);
+
+  // Show cancellation message when role selection is cancelled
+  useEffect(() => {
+    if (
+      lobby?.roleSelectionStatus?.state === "CANCELLED" &&
+      lobby.roleSelectionStatus.cancellationReason
+    ) {
+      setCancellationMessage(lobby.roleSelectionStatus.cancellationReason);
+    }
+  }, [lobby?.roleSelectionStatus]);
 
   const handleLeave = () => {
     leaveLobby();
@@ -63,6 +84,15 @@ export default function LobbyPage() {
       <div className="fixed inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] pointer-events-none mix-blend-overlay" />
 
       <main className="relative z-10 max-w-md mx-auto w-full flex-1 flex flex-col p-4">
+        {/* Cancellation Message */}
+        {cancellationMessage && (
+          <div className="mb-4">
+            <InlineError
+              message={cancellationMessage}
+              onDismiss={() => setCancellationMessage(null)}
+            />
+          </div>
+        )}
         <LobbyView
           lobby={lobby}
           myPlayerId={myPlayerId}
@@ -70,6 +100,7 @@ export default function LobbyPage() {
           onLeave={handleLeave}
           onStart={startGame}
           onAddBot={addBotPlayer}
+          onSetRoleDistributionMode={setRoleDistributionMode}
           connectionStatus={connectionStatus}
         />
       </main>

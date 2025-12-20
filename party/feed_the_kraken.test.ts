@@ -48,6 +48,7 @@ describe("Feed the Kraken Server Logic", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: Date.now(),
+          hasTongue: true,
         },
         {
           id: "p2",
@@ -60,6 +61,7 @@ describe("Feed the Kraken Server Logic", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: Date.now(),
+          hasTongue: true,
         },
         {
           id: "p3",
@@ -72,6 +74,7 @@ describe("Feed the Kraken Server Logic", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: Date.now(),
+          hasTongue: true,
         },
       ],
       assignments: {

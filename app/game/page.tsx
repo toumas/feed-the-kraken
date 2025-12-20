@@ -28,6 +28,7 @@ export default function GamePage() {
     handleStartConversion,
     handleRespondConversion,
     handleResetGame,
+    handleBackToLobby,
 
     startCabinSearch,
     isConversionDismissed,
@@ -55,6 +56,13 @@ export default function GamePage() {
       // router.push("/"); // Let loading state handle it or redirect if timeout
     }
   }, [lobby, router]);
+
+  // Redirect to role selection if in manual mode selecting state
+  useEffect(() => {
+    if (lobby?.roleSelectionStatus?.state === "SELECTING") {
+      router.push("/role-selection");
+    }
+  }, [lobby?.roleSelectionStatus?.state, router]);
 
   useEffect(() => {
     if (lobby?.conversionStatus?.state === "ACTIVE") {
@@ -138,6 +146,7 @@ export default function GamePage() {
           offWithTonguePrompt={offWithTonguePrompt}
           onOffWithTongueResponse={handleOffWithTongueResponse}
           onResetGame={handleResetGame}
+          onBackToLobby={handleBackToLobby}
         />
       </main>
     </div>

@@ -63,6 +63,7 @@ interface GameViewProps {
   onOffWithTongueResponse: (confirmed: boolean) => void;
 
   onResetGame: () => void;
+  onBackToLobby: () => void;
 }
 
 export function GameView({
@@ -102,9 +103,11 @@ export function GameView({
   onOffWithTongueResponse,
 
   onResetGame,
+  onBackToLobby,
 }: GameViewProps) {
   const [showEndSessionConfirm, setShowEndSessionConfirm] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showBackToLobbyConfirm, setShowBackToLobbyConfirm] = useState(false);
 
   const getRoleDetails = (role: Role | null) => {
     switch (role) {
@@ -249,32 +252,37 @@ export function GameView({
               </div>
             )}
 
-            {myRole === "CULTIST" && lobby.assignments && (
-              <div className="mt-6 pt-6 border-t border-slate-700 w-full">
-                <h3 className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
-                  Your Leader
-                </h3>
-                <div className="flex flex-wrap justify-center gap-3">
-                  {lobby.players
-                    .filter((p) => lobby.assignments?.[p.id] === "CULT_LEADER")
-                    .map((p) => (
-                      <div
-                        key={p.id}
-                        className="flex flex-col items-center gap-1"
-                      >
-                        <Avatar
-                          url={p.photoUrl}
-                          size="sm"
-                          className="ring-2 ring-purple-900/50"
-                        />
-                        <span className="text-xs text-purple-200/70 font-medium max-w-[60px] truncate">
-                          {p.name}
-                        </span>
-                      </div>
-                    ))}
+            {myRole === "CULTIST" &&
+              lobby.assignments &&
+              lobby.originalRoles &&
+              lobby.originalRoles[myPlayerId] !== "CULTIST" && (
+                <div className="mt-6 pt-6 border-t border-slate-700 w-full">
+                  <h3 className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
+                    Your Leader
+                  </h3>
+                  <div className="flex flex-wrap justify-center gap-3">
+                    {lobby.players
+                      .filter(
+                        (p) => lobby.assignments?.[p.id] === "CULT_LEADER",
+                      )
+                      .map((p) => (
+                        <div
+                          key={p.id}
+                          className="flex flex-col items-center gap-1"
+                        >
+                          <Avatar
+                            url={p.photoUrl}
+                            size="sm"
+                            className="ring-2 ring-purple-900/50"
+                          />
+                          <span className="text-xs text-purple-200/70 font-medium max-w-[60px] truncate">
+                            {p.name}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </RoleReveal.Revealed>
         </RoleReveal.Canvas>
       </RoleReveal.Root>
@@ -489,14 +497,25 @@ export function GameView({
           </button>
 
           {me?.isHost && (
-            <button
-              type="button"
-              onClick={() => setShowResetConfirm(true)}
-              className="w-full py-3 bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-900/30 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 mt-4"
-            >
-              <AlertTriangle className="w-5 h-5" />
-              Reset Game
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(true)}
+                className="w-full py-3 bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-900/30 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 mt-4"
+              >
+                <AlertTriangle className="w-5 h-5" />
+                Reset Game
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowBackToLobbyConfirm(true)}
+                className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+              >
+                <Target className="w-5 h-5" />
+                Back to Lobby
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -566,6 +585,41 @@ export function GameView({
                 className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors"
               >
                 Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Back to Lobby Confirmation Modal */}
+      {showBackToLobbyConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <Target className="w-6 h-6 text-cyan-500" />
+              Back to Lobby?
+            </h2>
+            <p className="text-slate-300 mb-6">
+              This will completely reset the game state and return everyone to
+              the lobby. Roles will be cleared and the voyage will end.
+            </p>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setShowBackToLobbyConfirm(false)}
+                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onBackToLobby();
+                  setShowBackToLobbyConfirm(false);
+                }}
+                className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold transition-colors"
+              >
+                Back to Lobby
               </button>
             </div>
           </div>

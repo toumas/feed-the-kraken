@@ -1,4 +1,11 @@
-import { Anchor, CheckCircle2, Copy, Play, UserPlus } from "lucide-react";
+import {
+  Anchor,
+  CheckCircle2,
+  Copy,
+  Play,
+  Settings,
+  UserPlus,
+} from "lucide-react";
 import { useState } from "react";
 import {
   type ConnectionStatus,
@@ -19,6 +26,7 @@ interface LobbyViewProps {
   onLeave: () => void;
   onStart: () => void;
   onAddBot: () => void;
+  onSetRoleDistributionMode: (mode: "automatic" | "manual") => void;
   connectionStatus: ConnectionStatus;
 }
 
@@ -29,6 +37,7 @@ export function LobbyView({
   onLeave,
   onStart,
   onAddBot,
+  onSetRoleDistributionMode,
   connectionStatus,
 }: LobbyViewProps) {
   const myPlayer = lobby.players.find((p) => p.id === myPlayerId);
@@ -147,6 +156,51 @@ export function LobbyView({
           </EditableProfile.Display>
         </EditableProfile>
       </div>
+
+      {/* Role Distribution Mode (Host Only) */}
+      {isHost && (
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Settings className="w-4 h-4 text-slate-400" />
+              <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                Role Assignment
+              </span>
+            </div>
+            <div className="flex bg-slate-800 rounded-lg p-1">
+              <button
+                type="button"
+                onClick={() => onSetRoleDistributionMode("automatic")}
+                className={cn(
+                  "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
+                  (lobby.roleDistributionMode || "automatic") === "automatic"
+                    ? "bg-cyan-600 text-white shadow-md"
+                    : "text-slate-400 hover:text-slate-200",
+                )}
+              >
+                Automatic
+              </button>
+              <button
+                type="button"
+                onClick={() => onSetRoleDistributionMode("manual")}
+                className={cn(
+                  "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
+                  lobby.roleDistributionMode === "manual"
+                    ? "bg-cyan-600 text-white shadow-md"
+                    : "text-slate-400 hover:text-slate-200",
+                )}
+              >
+                Manual
+              </button>
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 mt-2">
+            {(lobby.roleDistributionMode || "automatic") === "automatic"
+              ? "Roles will be randomly assigned when the game starts."
+              : "Each player will choose their own role when the game starts."}
+          </p>
+        </div>
+      )}
 
       {/* Player Grid */}
       <div className="flex-1">

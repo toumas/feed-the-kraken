@@ -33,8 +33,8 @@ export default function CabinSearchPage() {
         return {
           title: "Cult Leader",
           desc: "Convert others to your cause. You win if you are chosen to feed the Kraken.",
-          icon: <Eye className="w-16 h-16 text-purple-500" />,
-          color: "text-purple-500",
+          icon: <Eye className="w-16 h-16 text-amber-500" />,
+          color: "text-amber-500",
         };
       default:
         return {

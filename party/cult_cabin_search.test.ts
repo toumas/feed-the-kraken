@@ -39,6 +39,7 @@ describe("Server - Cabin Search Flow", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: 0,
+          hasTongue: true,
         },
         {
           id: "p2",
@@ -51,6 +52,7 @@ describe("Server - Cabin Search Flow", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: 0,
+          hasTongue: true,
         },
         {
           id: "p3",
@@ -63,6 +65,7 @@ describe("Server - Cabin Search Flow", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: 0,
+          hasTongue: true,
         },
         {
           id: "p4",
@@ -75,6 +78,7 @@ describe("Server - Cabin Search Flow", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: 0,
+          hasTongue: true,
         },
       ],
       status: "PLAYING",

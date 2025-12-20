@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { identifyRole, checkRoleVisible, withRoleRevealed } from "./helpers";
 
 test.describe("Conversion Role Display", () => {
   test.setTimeout(120000); // Longer timeout for 6 players and conversion
@@ -58,53 +59,8 @@ test.describe("Conversion Role Display", () => {
     let cultLeaderName = "";
     const pirates: { page: Page; name: string }[] = [];
 
-    const getRole = async (page: Page) => {
-      const revealBtn = page
-        .locator("button")
-        .filter({ hasText: "Role Hidden" });
-      await revealBtn.waitFor({ state: "attached" });
-
-      // Move mouse to button and press down
-      const box = await revealBtn.boundingBox();
-      if (box) {
-        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-        await page.mouse.down();
-      }
-
-      // Wait for any role text to appear
-      await expect(
-        page
-          .getByRole("heading", { name: "Cult Leader", exact: true })
-          .or(page.getByRole("heading", { name: "Pirate", exact: true }))
-          .or(page.getByRole("heading", { name: "Loyal Sailor", exact: true })),
-      ).toBeVisible({ timeout: 5000 });
-
-      let role = "UNKNOWN";
-      if (
-        await page
-          .getByRole("heading", { name: "Cult Leader", exact: true })
-          .isVisible()
-      )
-        role = "CULT_LEADER";
-      else if (
-        await page
-          .getByRole("heading", { name: "Pirate", exact: true })
-          .isVisible()
-      )
-        role = "PIRATE";
-      else if (
-        await page
-          .getByRole("heading", { name: "Loyal Sailor", exact: true })
-          .isVisible()
-      )
-        role = "SAILOR";
-
-      await page.mouse.up();
-      return role;
-    };
-
     for (let i = 0; i < allPages.length; i++) {
-      const role = await getRole(allPages[i]);
+      const role = await identifyRole(allPages[i]);
       if (role === "CULT_LEADER") {
         cultLeaderPage = allPages[i];
         cultLeaderName = allNames[i];
@@ -179,44 +135,27 @@ test.describe("Conversion Role Display", () => {
 
     // A. Converted Pirate should see "Cultist" and "Your Leader"
     // A. Converted Pirate should see "Cultist" and "Your Leader"
-    const revealBtnTarget = targetPirate.page
-      .locator("button")
-      .filter({ hasText: "Role Hidden" });
-    const boxTarget = await revealBtnTarget.boundingBox();
-    if (boxTarget) {
-      await targetPirate.page.mouse.move(
-        boxTarget.x + boxTarget.width / 2,
-        boxTarget.y + boxTarget.height / 2,
-      );
-      await targetPirate.page.mouse.down();
-    }
-    await expect(targetPirate.page.getByText("Cultist")).toBeVisible();
-    await expect(targetPirate.page.getByText("Your Leader")).toBeVisible();
-    const yourLeaderSection = targetPirate.page
-      .locator("div")
-      .filter({ hasText: "Your Leader" })
-      .last();
-    await expect(yourLeaderSection.getByText(cultLeaderName)).toBeVisible();
-    await targetPirate.page.mouse.up();
+    // A. Converted Pirate should see "Cultist" and "Your Leader"
+    await withRoleRevealed(targetPirate.page, async () => {
+      await expect(targetPirate.page.getByText("Cultist")).toBeVisible();
+      await expect(targetPirate.page.getByText("Your Leader")).toBeVisible();
+      const yourLeaderSection = targetPirate.page
+        .locator("div")
+        .filter({ hasText: "Your Leader" })
+        .last();
+      await expect(yourLeaderSection.getByText(cultLeaderName)).toBeVisible();
+    });
 
     // B. Observer Pirate should still see Converted Pirate in Crew
-    const revealBtnObserver = observerPirate.page
-      .locator("button")
-      .filter({ hasText: "Role Hidden" });
-    const boxObserver = await revealBtnObserver.boundingBox();
-    if (boxObserver) {
-      await observerPirate.page.mouse.move(
-        boxObserver.x + boxObserver.width / 2,
-        boxObserver.y + boxObserver.height / 2,
-      );
-      await observerPirate.page.mouse.down();
-    }
-    await expect(observerPirate.page.getByText("Pirate Crew")).toBeVisible();
-    const pirateCrewSection = observerPirate.page
-      .locator("div")
-      .filter({ hasText: "Pirate Crew" })
-      .last();
-    await expect(pirateCrewSection.getByText(targetPirate.name)).toBeVisible();
-    await observerPirate.page.mouse.up();
+    await withRoleRevealed(observerPirate.page, async () => {
+      await expect(observerPirate.page.getByText("Pirate Crew")).toBeVisible();
+      const pirateCrewSection = observerPirate.page
+        .locator("div")
+        .filter({ hasText: "Pirate Crew" })
+        .last();
+      await expect(
+        pirateCrewSection.getByText(targetPirate.name),
+      ).toBeVisible();
+    });
   });
 });

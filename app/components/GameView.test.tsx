@@ -23,6 +23,7 @@ describe("GameView", () => {
         isUnconvertible: false,
         notRole: null,
         joinedAt: Date.now(),
+        hasTongue: true,
       },
     ],
     status: "PLAYING",
@@ -59,7 +60,10 @@ describe("GameView", () => {
     onFeedTheKrakenResponse: vi.fn(),
     feedTheKrakenResult: null,
     onClearFeedTheKrakenResult: vi.fn(),
+    offWithTonguePrompt: null,
+    onOffWithTongueResponse: vi.fn(),
     onResetGame: vi.fn(),
+    onBackToLobby: vi.fn(),
   };
 
   it("renders role information", () => {
@@ -207,6 +211,7 @@ describe("GameView", () => {
               isUnconvertible: false,
               notRole: null,
               joinedAt: Date.now(),
+              hasTongue: true,
             },
           ],
           status: "PLAYING",
@@ -341,6 +346,7 @@ describe("GameView", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: Date.now(),
+          hasTongue: true,
         },
         {
           id: "pirate2",
@@ -353,6 +359,7 @@ describe("GameView", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: Date.now(),
+          hasTongue: true,
         },
         {
           id: "sailor1",
@@ -365,6 +372,7 @@ describe("GameView", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: Date.now(),
+          hasTongue: true,
         },
       ],
       status: "PLAYING",
@@ -421,6 +429,7 @@ describe("GameView", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: Date.now(),
+          hasTongue: true,
         },
       ],
       status: "PLAYING",
@@ -466,6 +475,7 @@ describe("GameView", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: Date.now(),
+          hasTongue: true,
         },
         {
           id: "sailor1",
@@ -478,6 +488,7 @@ describe("GameView", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: Date.now(),
+          hasTongue: true,
         },
       ],
       status: "PLAYING",
@@ -527,13 +538,13 @@ describe("GameView", () => {
     expect(screen.getByText("No other pirates")).toBeDefined();
   });
 
-  it("shows Cult Leader to Cultist player", () => {
+  it("converted cultist sees Cult Leader", () => {
     const lobbyWithCultLeader: LobbyState = {
       ...mockLobby,
       players: [
         {
           id: "cultist1",
-          name: "Cultist Player",
+          name: "Converted Sailor",
           photoUrl: null,
           isHost: false,
           isReady: true,
@@ -542,6 +553,7 @@ describe("GameView", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: Date.now(),
+          hasTongue: true,
         },
         {
           id: "leader1",
@@ -554,6 +566,7 @@ describe("GameView", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: Date.now(),
+          hasTongue: true,
         },
       ],
       status: "PLAYING",
@@ -562,7 +575,7 @@ describe("GameView", () => {
         leader1: "CULT_LEADER",
       },
       originalRoles: {
-        cultist1: "SAILOR",
+        cultist1: "SAILOR", // Was originally a sailor, then converted
         leader1: "CULT_LEADER",
       },
     };
@@ -580,9 +593,137 @@ describe("GameView", () => {
     expect(screen.getByText("Your Leader")).toBeDefined();
 
     // Should show the leader's name
-    // "The Leader" appears in: 1. Your Leader section, 2. Crew Status list
-    // So distinct getByText fails. We expect it to be present at least once.
     const leaderNameElements = screen.getAllByText("The Leader");
     expect(leaderNameElements.length).toBeGreaterThan(0);
+  });
+
+  it("original cultist does NOT see Cult Leader", () => {
+    const lobbyWithOriginalCultist: LobbyState = {
+      ...mockLobby,
+      players: [
+        {
+          id: "cultist1",
+          name: "Original Cultist",
+          photoUrl: null,
+          isHost: false,
+          isReady: true,
+          isOnline: true,
+          isEliminated: false,
+          isUnconvertible: false,
+          notRole: null,
+          joinedAt: Date.now(),
+          hasTongue: true,
+        },
+        {
+          id: "leader1",
+          name: "The Leader",
+          photoUrl: null,
+          isHost: false,
+          isReady: true,
+          isOnline: true,
+          isEliminated: false,
+          isUnconvertible: false,
+          notRole: null,
+          joinedAt: Date.now(),
+          hasTongue: true,
+        },
+      ],
+      status: "PLAYING",
+      assignments: {
+        cultist1: "CULTIST",
+        leader1: "CULT_LEADER",
+      },
+      originalRoles: {
+        cultist1: "CULTIST", // Was originally dealt CULTIST role (11-player game)
+        leader1: "CULT_LEADER",
+      },
+    };
+
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={lobbyWithOriginalCultist}
+        myRole="CULTIST"
+        myPlayerId="cultist1"
+      />,
+    );
+
+    // Should NOT show "Your Leader" section
+    expect(screen.queryByText("Your Leader")).toBeNull();
+  });
+
+  it("converted cultist sees Cult Leader but not other cult members", () => {
+    const lobbyWithMultipleCultists: LobbyState = {
+      ...mockLobby,
+      players: [
+        {
+          id: "converted1",
+          name: "Converted Sailor",
+          photoUrl: null,
+          isHost: false,
+          isReady: true,
+          isOnline: true,
+          isEliminated: false,
+          isUnconvertible: false,
+          notRole: null,
+          joinedAt: Date.now(),
+          hasTongue: true,
+        },
+        {
+          id: "leader1",
+          name: "The Leader",
+          photoUrl: null,
+          isHost: false,
+          isReady: true,
+          isOnline: true,
+          isEliminated: false,
+          isUnconvertible: false,
+          notRole: null,
+          joinedAt: Date.now(),
+          hasTongue: true,
+        },
+        {
+          id: "originalCultist",
+          name: "Original Cultist",
+          photoUrl: null,
+          isHost: false,
+          isReady: true,
+          isOnline: true,
+          isEliminated: false,
+          isUnconvertible: false,
+          notRole: null,
+          joinedAt: Date.now(),
+          hasTongue: true,
+        },
+      ],
+      status: "PLAYING",
+      assignments: {
+        converted1: "CULTIST",
+        leader1: "CULT_LEADER",
+        originalCultist: "CULTIST",
+      },
+      originalRoles: {
+        converted1: "SAILOR", // Was converted
+        leader1: "CULT_LEADER",
+        originalCultist: "CULTIST", // Was originally dealt CULTIST
+      },
+    };
+
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={lobbyWithMultipleCultists}
+        myRole="CULTIST"
+        myPlayerId="converted1"
+      />,
+    );
+
+    // Should show "Your Leader" section with the leader
+    expect(screen.getByText("Your Leader")).toBeDefined();
+    expect(screen.getAllByText("The Leader").length).toBeGreaterThan(0);
+
+    // Should NOT show other cultists in the "Your Leader" section
+    const yourLeaderSection = screen.getByText("Your Leader").parentElement;
+    expect(yourLeaderSection?.textContent).not.toContain("Original Cultist");
   });
 });

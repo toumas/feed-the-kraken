@@ -43,6 +43,7 @@ describe("Server", () => {
           isUnconvertible: false,
           notRole: null,
           joinedAt: Date.now(),
+          hasTongue: true,
         },
       ],
       status: "PLAYING",
