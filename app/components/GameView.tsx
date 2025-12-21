@@ -15,6 +15,7 @@ import { Avatar } from "../components/Avatar";
 import { RoleReveal } from "../components/RoleReveal";
 import type { LobbyState, Role } from "../types";
 import { cn } from "../utils";
+import { getRoleColor } from "../utils/role-utils";
 import { CancellationModal } from "./CancellationModal";
 
 interface GameViewProps {
@@ -111,34 +112,35 @@ export function GameView({
   const [showBackToLobbyConfirm, setShowBackToLobbyConfirm] = useState(false);
 
   const getRoleDetails = (role: Role | null) => {
+    const color = getRoleColor(role);
     switch (role) {
       case "PIRATE":
         return {
           title: "Pirate",
           desc: "Sabotage the journey! Feed the Kraken or kill the Captain.",
-          icon: <Skull className="w-16 h-16 text-red-500" />,
-          color: "text-red-500",
+          icon: <Skull className={`w-16 h-16 ${color}`} />,
+          color,
         };
       case "CULT_LEADER":
         return {
           title: "Cult Leader",
           desc: "Convert others to your cause. You win if you are chosen to feed the Kraken.",
-          icon: <Eye className="w-16 h-16 text-amber-500" />,
-          color: "text-amber-500",
+          icon: <Eye className={`w-16 h-16 ${color}`} />,
+          color,
         };
       case "CULTIST":
         return {
           title: "Cultist",
           desc: "Support the Cult Leader's cause.",
-          icon: <Eye className="w-16 h-16 text-green-500" />,
-          color: "text-green-500",
+          icon: <Eye className={`w-16 h-16 ${color}`} />,
+          color,
         };
       default:
         return {
           title: "Loyal Sailor",
           desc: "Steer the ship safely to port. Trust no one!",
-          icon: <Anchor className="w-16 h-16 text-cyan-500" />,
-          color: "text-cyan-500",
+          icon: <Anchor className={`w-16 h-16 ${color}`} />,
+          color,
         };
     }
   };
@@ -299,18 +301,6 @@ export function GameView({
               {lobby.players
                 .filter((p) => p.notRole)
                 .map((p) => {
-                  const getRoleColor = (role: string | null) => {
-                    switch (role) {
-                      case "PIRATE":
-                        return "text-red-400";
-                      case "CULT_LEADER":
-                        return "text-amber-400";
-                      case "CULTIST":
-                        return "text-green-400";
-                      default:
-                        return "text-cyan-400";
-                    }
-                  };
                   return (
                     <div
                       key={p.id}
@@ -742,9 +732,9 @@ export function GameView({
               Flogging Result
             </h2>
 
-            <RoleReveal.Root className="mb-8" defaultRevealed={true}>
-              <RoleReveal.Canvas className="h-[400px] w-full">
-                <RoleReveal.Revealed className="space-y-6">
+            <div className="mb-8">
+              <div className="h-[400px] w-full">
+                <div className="space-y-6">
                   <div className="flex flex-col items-center">
                     <Avatar
                       url={
@@ -766,14 +756,16 @@ export function GameView({
                       <p className="text-slate-400 text-sm uppercase font-bold mb-2">
                         Is Definitely
                       </p>
-                      <p className="text-3xl font-bold text-amber-400">
+                      <p
+                        className={`text-3xl font-bold ${getRoleColor(floggingReveal.revealedRole)}`}
+                      >
                         NOT {floggingReveal.revealedRole.replace("_", " ")}
                       </p>
                     </div>
                   </div>
-                </RoleReveal.Revealed>
-              </RoleReveal.Canvas>
-            </RoleReveal.Root>
+                </div>
+              </div>
+            </div>
 
             <button
               type="button"

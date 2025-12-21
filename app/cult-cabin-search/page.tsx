@@ -11,6 +11,7 @@ import { Quiz } from "../components/Quiz";
 import { useGame } from "../context/GameContext";
 import { QUIZ_QUESTIONS } from "../data/quiz";
 import type { Role } from "../types";
+import { getRoleColor } from "../utils/role-utils";
 
 export default function CultCabinSearchPage() {
   const router = useRouter();
@@ -435,19 +436,6 @@ function RevealedPlayerCard({
   roleName: string;
   actualRole: Role | null;
 }) {
-  const getRoleColor = (role: Role | null) => {
-    switch (role) {
-      case "PIRATE":
-        return "text-red-400";
-      case "CULT_LEADER":
-        return "text-amber-500";
-      case "CULTIST":
-        return "text-purple-400";
-      default:
-        return "text-cyan-400";
-    }
-  };
-
   const getRoleLabel = (role: Role | null) => {
     if (!role) return "Unknown";
     return role.replace("_", " ");

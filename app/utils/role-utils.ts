@@ -117,3 +117,17 @@ export function isValidComposition(
       return roles.length === playerCount;
   }
 }
+export function getRoleColor(role: Role | null): string {
+  switch (role) {
+    case "PIRATE":
+      return "text-red-500";
+    case "CULT_LEADER":
+      return "text-amber-500";
+    case "CULTIST":
+      return "text-green-500";
+    case "SAILOR":
+      return "text-cyan-500";
+    default:
+      return "text-cyan-500";
+  }
+}

@@ -13,3 +13,6 @@ Avoid passing excessive boolean flags (e.g., isOpen, isEditing) down the compone
 
 **Principle: Visible Feedback Over Restriction**
 Do not disable interactive elements (like buttons) or hide standard controls without explanation. Instead, keep elements interactive and use Tooltips, Toasts, or Inline Validation to explain why an action is currently unavailable, guiding the user toward the correct state.
+
+**Principle: Don't repeat yourself (DRY)**
+Avoid code duplication by extracting common logic into reusable functions or components. This makes the codebase more maintainable and reduces the risk of bugs. Before writing new code, check if a similar pattern exists and consider reusing it. IMPORTANT: The scope of the DRY principle is global in terms of the codebase.

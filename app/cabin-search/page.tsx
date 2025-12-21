@@ -8,6 +8,7 @@ import { PlayerSelectionList } from "../components/PlayerSelectionList";
 import { RoleReveal } from "../components/RoleReveal";
 import { useGame } from "../context/GameContext";
 import type { Role } from "../types";
+import { getRoleColor } from "../utils/role-utils";
 
 export default function CabinSearchPage() {
   const router = useRouter();
@@ -21,34 +22,35 @@ export default function CabinSearchPage() {
   } = useGame();
 
   const getRoleDetails = (role: Role) => {
+    const color = getRoleColor(role);
     switch (role) {
       case "PIRATE":
         return {
           title: "Pirate",
           desc: "Sabotage the journey! Feed the Kraken or kill the Captain.",
-          icon: <Skull className="w-16 h-16 text-red-500" />,
-          color: "text-red-500",
+          icon: <Skull className={`w-16 h-16 ${color}`} />,
+          color,
         };
       case "CULT_LEADER":
         return {
           title: "Cult Leader",
           desc: "Convert others to your cause. You win if you are chosen to feed the Kraken.",
-          icon: <Eye className="w-16 h-16 text-amber-500" />,
-          color: "text-amber-500",
+          icon: <Eye className={`w-16 h-16 ${color}`} />,
+          color,
         };
       case "CULTIST":
         return {
           title: "Cultist",
           desc: "Support the Cult Leader's cause.",
-          icon: <Eye className="w-16 h-16 text-green-500" />,
-          color: "text-green-500",
+          icon: <Eye className={`w-16 h-16 ${color}`} />,
+          color,
         };
       default:
         return {
           title: "Loyal Sailor",
           desc: "Steer the ship safely to port. Trust no one!",
-          icon: <Anchor className="w-16 h-16 text-cyan-500" />,
-          color: "text-cyan-500",
+          icon: <Anchor className={`w-16 h-16 ${color}`} />,
+          color,
         };
     }
   };
