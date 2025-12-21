@@ -1071,11 +1071,13 @@ export default class Server implements Party.Server {
 
         if (searcherConnection) {
           const role = this.lobbyState.assignments[targetPlayerId];
+          const originalRole = this.lobbyState.originalRoles?.[targetPlayerId];
           searcherConnection.send(
             JSON.stringify({
               type: "CABIN_SEARCH_RESULT",
               targetPlayerId,
               role,
+              originalRole,
             }),
           );
         }

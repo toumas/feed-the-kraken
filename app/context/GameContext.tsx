@@ -69,7 +69,11 @@ export interface GameContextValue {
 
   // Cabin Search State
   cabinSearchPrompt: { searcherId: string; searcherName: string } | null;
-  cabinSearchResult: { targetPlayerId: string; role: Role } | null;
+  cabinSearchResult: {
+    targetPlayerId: string;
+    role: Role;
+    originalRole?: Role;
+  } | null;
   isCabinSearchPending: boolean;
   clearCabinSearchResult: () => void;
 
@@ -176,6 +180,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [cabinSearchResult, setCabinSearchResult] = useState<{
     targetPlayerId: string;
     role: Role;
+    originalRole?: Role;
   } | null>(null);
   const [isCabinSearchPending, setIsCabinSearchPending] = useState(false);
 
@@ -347,6 +352,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               setCabinSearchResult({
                 targetPlayerId: data.targetPlayerId,
                 role: data.role,
+                originalRole: data.originalRole,
               });
               setIsCabinSearchPending(false);
               break;

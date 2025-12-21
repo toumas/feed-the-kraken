@@ -110,8 +110,18 @@ export type MessagePayload =
   | { type: "CABIN_SEARCH_REQUEST"; targetPlayerId: string }
   | { type: "CABIN_SEARCH_PROMPT"; searcherId: string; searcherName: string }
   | { type: "CABIN_SEARCH_RESPONSE"; searcherId: string; confirmed: boolean }
-  | { type: "CABIN_SEARCH_RESULT"; targetPlayerId: string; role: Role }
-  | { type: "CABIN_SEARCH_RESULT"; targetPlayerId: string; role: Role }
+  | {
+      type: "CABIN_SEARCH_RESULT";
+      targetPlayerId: string;
+      role: Role;
+      originalRole?: Role;
+    }
+  | {
+      type: "CABIN_SEARCH_RESULT";
+      targetPlayerId: string;
+      role: Role;
+      originalRole?: Role;
+    }
   | { type: "CABIN_SEARCH_DENIED"; targetPlayerId: string }
   | { type: "FLOGGING_REQUEST"; targetPlayerId: string }
   | { type: "FLOGGING_CONFIRMATION_REQUEST"; hostId: string; hostName: string }
