@@ -22,7 +22,7 @@ test.describe("Cult Guns Stash Flow", () => {
     const codeElement = hostPage.locator("p.font-mono");
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
-    console.log(`Lobby created with code: ${code}`);
+
 
     // 2. 4 Players join (Total 5 players)
     const players = [];
@@ -96,7 +96,7 @@ test.describe("Cult Guns Stash Flow", () => {
     ).toBeVisible({ timeout: 5000 });
     await expect(hostPage.getByText("Return to Ship")).toBeVisible();
 
-    console.log("Guns Stash flow completed successfully");
+
 
     // Cleanup
     await hostContext.close();

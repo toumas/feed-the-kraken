@@ -2,7 +2,6 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Back to Lobby", () => {
   test("Host can return to lobby and reset the game state", async ({
-    context,
     browser,
   }) => {
     // 1. Host creates lobby
@@ -23,7 +22,7 @@ test.describe("Back to Lobby", () => {
     const codeElement = hostPage.locator("p.font-mono");
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
-    console.log(`Lobby created with code: ${code}`);
+
 
     // 2. 4 Players join (Total 5 players)
     const players = [];

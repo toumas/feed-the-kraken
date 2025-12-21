@@ -23,7 +23,7 @@ test.describe("Conversion Role Display", () => {
     const codeElement = hostPage.locator("p.font-mono");
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
-    console.log(`Lobby created with code: ${code}`);
+
 
     // 2. 5 Players join (Total 6 players for 2 Pirates)
     const players = [];
@@ -73,8 +73,7 @@ test.describe("Conversion Role Display", () => {
     if (pirates.length < 2)
       throw new Error(`Need at least 2 Pirates, found ${pirates.length}`);
 
-    console.log(`Cult Leader: ${cultLeaderName}`);
-    console.log(`Pirates: ${pirates.map((p) => p.name).join(", ")}`);
+
 
     // 5. Convert one Pirate
     const targetPirate = pirates[0];
@@ -180,7 +179,7 @@ test.describe("Conversion Role Display", () => {
     const codeElement = hostPage.locator("p.font-mono");
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
-    console.log(`Lobby created with code: ${code}`);
+
 
     // 2. 5 Players join (Total 6 players for 2 Pirates)
     const players = [];
@@ -237,8 +236,7 @@ test.describe("Conversion Role Display", () => {
             throw new Error("Need at least 2 Sailors to run this test");
           })();
 
-    console.log(`Target Sailor: ${targetSailor.name}`);
-    console.log(`Searcher Sailor: ${searcherSailor.name}`);
+
 
     // 5. Convert the target sailor
     await cultLeaderPage
@@ -340,9 +338,7 @@ test.describe("Conversion Role Display", () => {
 
     await revealBtn.dispatchEvent("mouseup");
 
-    console.log(
-      "Cabin Search correctly shows original role and Converted badge",
-    );
+
 
     // Cleanup
     await hostContext.close();

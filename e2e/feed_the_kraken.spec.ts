@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { checkRoleVisible } from "./helpers";
 
 test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
@@ -69,7 +69,7 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
 
   // Check if Player 1 is the Cult Leader
   const isCultLeader = await checkRoleVisible(page);
-  console.log(`Player 1 is Cult Leader: ${isCultLeader}`);
+
 
   // 5. Host initiates Feed the Kraken on Player 1
   await hostPage.getByRole("link", { name: "Feed the Kraken" }).click();

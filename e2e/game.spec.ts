@@ -21,7 +21,7 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
   await expect(codeElement).toBeVisible();
   const code = await codeElement.innerText();
   expect(code).toHaveLength(6);
-  console.log(`Lobby created with code: ${code}`);
+
 
   // 2. 4 Players join
   const players = [];
@@ -66,7 +66,7 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
   const hostRoleTitle = hostPage.locator("h2.text-4xl");
   await expect(hostRoleTitle).toBeVisible();
   const hostRole = await hostRoleTitle.innerText();
-  console.log("Host Role:", hostRole);
+
 
   const allRoles = [hostRole];
 
@@ -74,7 +74,7 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
     const roleTitle = p.page.locator("h2.text-4xl");
     await expect(roleTitle).toBeVisible();
     const role = await roleTitle.innerText();
-    console.log(`${p.name} Role:`, role);
+
     allRoles.push(role);
   }
 

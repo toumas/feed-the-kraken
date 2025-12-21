@@ -23,7 +23,7 @@ test.describe("Conversion to Cult", () => {
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
     expect(code).toHaveLength(6);
-    console.log(`Lobby created with code: ${code}`);
+
 
     // 2. 4 Players join
     const players = [];
@@ -61,7 +61,6 @@ test.describe("Conversion to Cult", () => {
     // 4. Find which player is the Cult Leader
     // We need to reveal the role on each page to find who is the Cult Leader
     let cultLeaderPage = null;
-    let _cultLeaderContext = null;
     let cultLeaderIndex = -1;
 
     // Helper to check role
@@ -88,14 +87,12 @@ test.describe("Conversion to Cult", () => {
     // Check host first
     if (await checkRole(hostPage)) {
       cultLeaderPage = hostPage;
-      _cultLeaderContext = hostContext;
       cultLeaderIndex = -1; // -1 indicates host
     } else {
       // Check each player
       for (let i = 0; i < players.length; i++) {
         if (await checkRole(players[i].page)) {
           cultLeaderPage = players[i].page;
-          _cultLeaderContext = players[i].context;
           cultLeaderIndex = i;
           break;
         }
@@ -108,9 +105,7 @@ test.describe("Conversion to Cult", () => {
       );
     }
 
-    console.log(
-      `Cult leader is: ${cultLeaderIndex === -1 ? "Host" : players[cultLeaderIndex].name}`,
-    );
+
 
     // 5. Initiate Conversion
     await cultLeaderPage
@@ -181,9 +176,8 @@ test.describe("Conversion to Cult", () => {
     const target = players.find((p) => p.page !== cultLeaderPage);
     if (!target) throw new Error("No valid target found");
     const targetName = target.name;
-    const _targetPage = target.page;
 
-    console.log(`Cult Leader selecting target: ${targetName}`);
+
 
     // Wait for player list to be fully rendered, then click Target
     const targetLabel = cultLeaderPage
@@ -225,7 +219,6 @@ test.describe("Conversion to Cult", () => {
     // The backend may convert a different player due to timing or fallback logic
     // So we need to check which player page shows the conversion message
     let actualConvertedPage = null;
-    let actualConvertedName = null;
 
     for (const p of players) {
       if (p.page !== cultLeaderPage) {
@@ -235,7 +228,6 @@ test.describe("Conversion to Cult", () => {
           .catch(() => false);
         if (hasConversionMessage) {
           actualConvertedPage = p.page;
-          actualConvertedName = p.name;
           break;
         }
       }
@@ -247,7 +239,7 @@ test.describe("Conversion to Cult", () => {
       );
     }
 
-    console.log(`Player actually converted: ${actualConvertedName}`);
+
 
     // 13. Verify Results for Converted Player
     // The converted player should see "YOU HAVE BEEN CONVERTED!" message
@@ -314,7 +306,7 @@ test.describe("Conversion to Cult", () => {
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
     expect(code).toHaveLength(6);
-    console.log(`Lobby created with code: ${code}`);
+
 
     // 2. 4 Players join
     const players = [];
@@ -352,8 +344,6 @@ test.describe("Conversion to Cult", () => {
     // 4. Find which player is the Cult Leader
     // We need to reveal the role on each page to find who is the Cult Leader
     let cultLeaderPage = null;
-    let _cultLeaderContext = null;
-    let cultLeaderIndex = -1;
 
     // Helper to check role
     const checkRole = async (page: Page) => {
@@ -379,15 +369,11 @@ test.describe("Conversion to Cult", () => {
     // Check host first
     if (await checkRole(hostPage)) {
       cultLeaderPage = hostPage;
-      _cultLeaderContext = hostContext;
-      cultLeaderIndex = -1; // -1 indicates host
     } else {
       // Check each player
       for (let i = 0; i < players.length; i++) {
         if (await checkRole(players[i].page)) {
           cultLeaderPage = players[i].page;
-          _cultLeaderContext = players[i].context;
-          cultLeaderIndex = i;
           break;
         }
       }
@@ -399,9 +385,7 @@ test.describe("Conversion to Cult", () => {
       );
     }
 
-    console.log(
-      `Cult leader is: ${cultLeaderIndex === -1 ? "Host" : players[cultLeaderIndex].name}`,
-    );
+
 
     // 5. Initiate Conversion
     await cultLeaderPage
@@ -469,7 +453,7 @@ test.describe("Conversion to Cult", () => {
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
     expect(code).toHaveLength(6);
-    console.log(`Lobby created with code: ${code}`);
+
 
     // 2. 4 Players join
     const players = [];
@@ -507,8 +491,6 @@ test.describe("Conversion to Cult", () => {
     // 4. Find which player is the Cult Leader
     // We need to reveal the role on each page to find who is the Cult Leader
     let cultLeaderPage = null;
-    let _cultLeaderContext = null;
-    let cultLeaderIndex = -1;
 
     // Helper to check role
     const checkRole = async (page: Page) => {
@@ -534,15 +516,11 @@ test.describe("Conversion to Cult", () => {
     // Check host first
     if (await checkRole(hostPage)) {
       cultLeaderPage = hostPage;
-      _cultLeaderContext = hostContext;
-      cultLeaderIndex = -1; // -1 indicates host
     } else {
       // Check each player
       for (let i = 0; i < players.length; i++) {
         if (await checkRole(players[i].page)) {
           cultLeaderPage = players[i].page;
-          _cultLeaderContext = players[i].context;
-          cultLeaderIndex = i;
           break;
         }
       }
@@ -554,9 +532,7 @@ test.describe("Conversion to Cult", () => {
       );
     }
 
-    console.log(
-      `Cult leader is: ${cultLeaderIndex === -1 ? "Host" : players[cultLeaderIndex].name}`,
-    );
+
 
     // 5. Initiate Conversion
     await cultLeaderPage

@@ -22,7 +22,7 @@ test.describe("Cult Cabin Search Flow", () => {
     const codeElement = hostPage.locator("p.font-mono");
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
-    console.log(`Lobby created with code: ${code}`);
+
 
     // 2. 4 Players join (Total 5 players)
     const players = [];
@@ -119,7 +119,7 @@ test.describe("Cult Cabin Search Flow", () => {
     // Crew answers quiz
     await crewPage.getByRole("button", { name: /^A\./ }).click();
 
-    console.log("Cabin Search flow completed successfully");
+
 
     // Cleanup
     await hostContext.close();
