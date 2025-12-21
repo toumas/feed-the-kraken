@@ -726,4 +726,37 @@ describe("GameView", () => {
     const yourLeaderSection = screen.getByText("Your Leader").parentElement;
     expect(yourLeaderSection?.textContent).not.toContain("Original Cultist");
   });
+
+  it("renders multiple statuses simultaneously in Crew Status", () => {
+    const lobbyWithMultipleStatuses: LobbyState = {
+      ...mockLobby,
+      players: [
+        {
+          ...mockLobby.players[0],
+          id: "p1",
+          name: "Player 1",
+          isEliminated: false,
+        },
+        {
+          ...mockLobby.players[0],
+          id: "p2",
+          name: "Multitasker",
+          isEliminated: true,
+          isUnconvertible: true,
+          hasTongue: false,
+          isOnline: false,
+        },
+      ],
+      status: "PLAYING",
+    };
+
+    render(<GameView {...defaultProps} lobby={lobbyWithMultipleStatuses} />);
+
+    // Check that all labels are present
+    expect(screen.getByText("Eliminated")).toBeDefined();
+    expect(screen.getByText("Unconvertible")).toBeDefined();
+    expect(screen.getByText("Silenced")).toBeDefined();
+    expect(screen.getByText("Offline")).toBeDefined();
+    expect(screen.getByText("Multitasker")).toBeDefined();
+  });
 });

@@ -24,7 +24,6 @@ test.describe("Conversion to Cult", () => {
     const code = await codeElement.innerText();
     expect(code).toHaveLength(6);
 
-
     // 2. 4 Players join
     const players = [];
     for (let i = 0; i < 4; i++) {
@@ -105,8 +104,6 @@ test.describe("Conversion to Cult", () => {
       );
     }
 
-
-
     // 5. Initiate Conversion
     await cultLeaderPage
       .getByRole("button", { name: "Conversion to Cult" })
@@ -177,8 +174,6 @@ test.describe("Conversion to Cult", () => {
     if (!target) throw new Error("No valid target found");
     const targetName = target.name;
 
-
-
     // Wait for player list to be fully rendered, then click Target
     const targetLabel = cultLeaderPage
       .locator("label")
@@ -238,8 +233,6 @@ test.describe("Conversion to Cult", () => {
         "No player was converted - could not find conversion message on any player page",
       );
     }
-
-
 
     // 13. Verify Results for Converted Player
     // The converted player should see "YOU HAVE BEEN CONVERTED!" message
@@ -306,7 +299,6 @@ test.describe("Conversion to Cult", () => {
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
     expect(code).toHaveLength(6);
-
 
     // 2. 4 Players join
     const players = [];
@@ -384,8 +376,6 @@ test.describe("Conversion to Cult", () => {
         "No cult leader found - could not identify Cult Leader role",
       );
     }
-
-
 
     // 5. Initiate Conversion
     await cultLeaderPage
@@ -454,7 +444,6 @@ test.describe("Conversion to Cult", () => {
     const code = await codeElement.innerText();
     expect(code).toHaveLength(6);
 
-
     // 2. 4 Players join
     const players = [];
     for (let i = 0; i < 4; i++) {
@@ -531,8 +520,6 @@ test.describe("Conversion to Cult", () => {
         "No cult leader found - could not identify Cult Leader role",
       );
     }
-
-
 
     // 5. Initiate Conversion
     await cultLeaderPage

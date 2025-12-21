@@ -248,7 +248,10 @@ export default function ConversionPage() {
                     }
                   }}
                 >
-                  <PlayerSelectionList.Content disabledLabel="Unconvertible" />
+                  <PlayerSelectionList.Content
+                    disabledLabel="Unconvertible"
+                    isPlayerDisabled={(p) => p.isUnconvertible}
+                  />
                 </PlayerSelectionList.Root>
               </div>
             )}

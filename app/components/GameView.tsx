@@ -14,6 +14,7 @@ import { useState } from "react";
 import { Avatar } from "../components/Avatar";
 import { RoleReveal } from "../components/RoleReveal";
 import type { LobbyState, Role } from "../types";
+import { cn } from "../utils";
 import { CancellationModal } from "./CancellationModal";
 
 interface GameViewProps {
@@ -344,56 +345,67 @@ export function GameView({
                   <Avatar
                     url={p.photoUrl}
                     size="sm"
-                    className={
+                    className={cn(
+                      "ring-2",
                       p.isEliminated
-                        ? "ring-2 ring-slate-600 opacity-50 grayscale"
-                        : p.isUnconvertible
-                          ? "ring-2 ring-purple-500"
-                          : p.hasTongue === false
-                            ? "ring-2 ring-amber-500"
-                            : "ring-2 ring-slate-700"
-                    }
+                        ? "ring-slate-600 opacity-50 grayscale"
+                        : "ring-slate-700",
+                      !p.isEliminated && p.isUnconvertible && "ring-purple-500",
+                      !p.isEliminated &&
+                        p.hasTongue === false &&
+                        "ring-amber-500",
+                    )}
                   />
-                  {p.isEliminated && (
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-600 rounded-full flex items-center justify-center">
-                      <Skull className="w-2.5 h-2.5 text-white" />
-                    </div>
-                  )}
-                  {!p.isEliminated && p.isUnconvertible && (
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
-                      <Search className="w-2.5 h-2.5 text-white" />
-                    </div>
-                  )}
-                  {!p.isEliminated &&
-                    !p.isUnconvertible &&
-                    p.hasTongue === false && (
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+                  <div className="absolute -bottom-1 -right-1 flex flex-wrap-reverse justify-end gap-0.5 pointer-events-none max-w-[40px]">
+                    {p.isEliminated && (
+                      <div className="w-4 h-4 bg-slate-600 rounded-full flex items-center justify-center shadow-sm">
+                        <Skull className="w-2.5 h-2.5 text-white" />
+                      </div>
+                    )}
+                    {p.isUnconvertible && (
+                      <div className="w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center shadow-sm">
+                        <Search className="w-2.5 h-2.5 text-white" />
+                      </div>
+                    )}
+                    {p.hasTongue === false && (
+                      <div className="w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center shadow-sm">
                         <Scissors className="w-2.5 h-2.5 text-white" />
                       </div>
                     )}
+                    {p.isOnline === false && (
+                      <div className="w-4 h-4 bg-red-600 rounded-full flex items-center justify-center shadow-sm">
+                        <LogOut className="w-2.5 h-2.5 text-white" />
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <span
                   className={`text-xs font-medium truncate max-w-[70px] text-center ${p.isEliminated ? "text-slate-600 line-through" : "text-slate-400"}`}
                 >
                   {p.name}
                 </span>
-                {p.isEliminated && (
-                  <span className="text-[10px] text-slate-500 font-bold uppercase">
-                    Eliminated
-                  </span>
-                )}
-                {!p.isEliminated && p.isUnconvertible && (
-                  <span className="text-[10px] text-purple-400 font-bold uppercase">
-                    Unconvertible
-                  </span>
-                )}
-                {!p.isEliminated &&
-                  !p.isUnconvertible &&
-                  p.hasTongue === false && (
-                    <span className="text-[10px] text-amber-400 font-bold uppercase">
+                <div className="flex flex-col items-center">
+                  {p.isEliminated && (
+                    <span className="text-[10px] text-slate-500 font-bold uppercase leading-tight">
+                      Eliminated
+                    </span>
+                  )}
+                  {p.isUnconvertible && (
+                    <span className="text-[10px] text-purple-400 font-bold uppercase leading-tight">
+                      Unconvertible
+                    </span>
+                  )}
+                  {p.hasTongue === false && (
+                    <span className="text-[10px] text-amber-400 font-bold uppercase leading-tight">
                       Silenced
                     </span>
                   )}
+                  {p.isOnline === false && (
+                    <span className="text-[10px] text-red-500 font-bold uppercase leading-tight">
+                      Offline
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>

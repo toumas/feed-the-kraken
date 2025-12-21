@@ -24,7 +24,6 @@ test.describe("Conversion Role Display", () => {
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
 
-
     // 2. 5 Players join (Total 6 players for 2 Pirates)
     const players = [];
     for (let i = 0; i < 5; i++) {
@@ -72,8 +71,6 @@ test.describe("Conversion Role Display", () => {
     if (!cultLeaderPage) throw new Error("No Cult Leader found");
     if (pirates.length < 2)
       throw new Error(`Need at least 2 Pirates, found ${pirates.length}`);
-
-
 
     // 5. Convert one Pirate
     const targetPirate = pirates[0];
@@ -180,7 +177,6 @@ test.describe("Conversion Role Display", () => {
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
 
-
     // 2. 5 Players join (Total 6 players for 2 Pirates)
     const players = [];
     for (let i = 0; i < 5; i++) {
@@ -235,8 +231,6 @@ test.describe("Conversion Role Display", () => {
         : (() => {
             throw new Error("Need at least 2 Sailors to run this test");
           })();
-
-
 
     // 5. Convert the target sailor
     await cultLeaderPage
@@ -337,8 +331,6 @@ test.describe("Conversion Role Display", () => {
     await expect(resultOverlay.getByText("Converted to Cult")).toBeVisible();
 
     await revealBtn.dispatchEvent("mouseup");
-
-
 
     // Cleanup
     await hostContext.close();

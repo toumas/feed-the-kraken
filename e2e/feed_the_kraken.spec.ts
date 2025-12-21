@@ -70,7 +70,6 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   // Check if Player 1 is the Cult Leader
   const isCultLeader = await checkRoleVisible(page);
 
-
   // 5. Host initiates Feed the Kraken on Player 1
   await hostPage.getByRole("link", { name: "Feed the Kraken" }).click();
   // Should navigate to feed-the-kraken page

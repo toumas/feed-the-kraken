@@ -20,6 +20,7 @@ describe("PlayerSelectionList", () => {
       isReady: true,
       notRole: null,
       joinedAt: Date.now(),
+      hasTongue: true,
     },
     {
       id: "p2",
@@ -32,6 +33,7 @@ describe("PlayerSelectionList", () => {
       isReady: true,
       notRole: null,
       joinedAt: Date.now(),
+      hasTongue: true,
     },
     {
       id: "p3",
@@ -44,6 +46,7 @@ describe("PlayerSelectionList", () => {
       isReady: true,
       notRole: null,
       joinedAt: Date.now(),
+      hasTongue: true,
     },
   ];
 
@@ -99,6 +102,64 @@ describe("PlayerSelectionList", () => {
 
       // Error should be cleared
       expect(screen.queryByText("Please select a player first.")).toBeNull();
+    });
+  });
+
+  describe("Disabling Logic", () => {
+    it("does not disable unconvertible players by default", () => {
+      const playersWithUnconvertible = [...mockPlayers];
+      playersWithUnconvertible[1] = {
+        ...playersWithUnconvertible[1],
+        isUnconvertible: true,
+      };
+
+      render(
+        <PlayerSelectionList.Root
+          players={playersWithUnconvertible}
+          myPlayerId="p1"
+        >
+          <PlayerSelectionList.Content />
+        </PlayerSelectionList.Root>,
+      );
+
+      const radio = screen.getByDisplayValue("p2") as HTMLInputElement;
+      expect(radio.disabled).toBe(false);
+    });
+
+    it("disables players when isPlayerDisabled returns true", () => {
+      render(
+        <PlayerSelectionList.Root players={mockPlayers} myPlayerId="p1">
+          <PlayerSelectionList.Content
+            isPlayerDisabled={(p) => p.id === "p2"}
+            disabledLabel="Special Disabled"
+          />
+        </PlayerSelectionList.Root>,
+      );
+
+      const radio = screen.getByDisplayValue("p2") as HTMLInputElement;
+      expect(radio.disabled).toBe(true);
+      expect(screen.getByText("Special Disabled")).toBeDefined();
+    });
+
+    it("still disables eliminated players regardless of isPlayerDisabled", () => {
+      const playersWithEliminated = [...mockPlayers];
+      playersWithEliminated[1] = {
+        ...playersWithEliminated[1],
+        isEliminated: true,
+      };
+
+      render(
+        <PlayerSelectionList.Root
+          players={playersWithEliminated}
+          myPlayerId="p1"
+        >
+          <PlayerSelectionList.Content isPlayerDisabled={() => false} />
+        </PlayerSelectionList.Root>,
+      );
+
+      const radio = screen.getByDisplayValue("p2") as HTMLInputElement;
+      expect(radio.disabled).toBe(true);
+      expect(screen.getByText("Eliminated")).toBeDefined();
     });
   });
 });

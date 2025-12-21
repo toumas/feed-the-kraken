@@ -23,7 +23,6 @@ test.describe("Cult Cabin Search Flow", () => {
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
 
-
     // 2. 4 Players join (Total 5 players)
     const players = [];
     for (let i = 0; i < 4; i++) {
@@ -118,8 +117,6 @@ test.describe("Cult Cabin Search Flow", () => {
 
     // Crew answers quiz
     await crewPage.getByRole("button", { name: /^A\./ }).click();
-
-
 
     // Cleanup
     await hostContext.close();

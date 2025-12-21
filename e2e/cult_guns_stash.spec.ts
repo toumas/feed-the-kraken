@@ -23,7 +23,6 @@ test.describe("Cult Guns Stash Flow", () => {
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
 
-
     // 2. 4 Players join (Total 5 players)
     const players = [];
     for (let i = 0; i < 4; i++) {
@@ -95,8 +94,6 @@ test.describe("Cult Guns Stash Flow", () => {
       hostPage.getByRole("heading", { name: "Ritual Complete" }),
     ).toBeVisible({ timeout: 5000 });
     await expect(hostPage.getByText("Return to Ship")).toBeVisible();
-
-
 
     // Cleanup
     await hostContext.close();

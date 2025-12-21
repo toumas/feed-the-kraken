@@ -86,11 +86,9 @@ function Content({
     <div className="flex-1 overflow-y-auto space-y-2 pb-4">
       {availablePlayers.map((player) => {
         const isSelected = selectedId === player.id;
-        const isDisabledAction =
-          isPlayerDisabled?.(player) ?? player.isUnconvertible;
+        const isDisabledAction = isPlayerDisabled?.(player) ?? false;
         const isEliminated = player.isEliminated;
         const isDisabled = isDisabledAction || isEliminated;
-
         return (
           <label
             key={player.id}

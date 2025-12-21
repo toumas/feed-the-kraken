@@ -22,7 +22,6 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
   const code = await codeElement.innerText();
   expect(code).toHaveLength(6);
 
-
   // 2. 4 Players join
   const players = [];
   for (let i = 0; i < 4; i++) {
@@ -66,7 +65,6 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
   const hostRoleTitle = hostPage.locator("h2.text-4xl");
   await expect(hostRoleTitle).toBeVisible();
   const hostRole = await hostRoleTitle.innerText();
-
 
   const allRoles = [hostRole];
 

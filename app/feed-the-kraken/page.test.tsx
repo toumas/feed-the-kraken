@@ -140,12 +140,54 @@ describe("FeedTheKrakenPage", () => {
     ).toBeDefined();
   });
 
-  it("shows error when error prop is set", () => {
-    setupMock({ error: "The captain cannot feed themselves to the Kraken." });
+  it("allows selecting unconvertible players", () => {
+    setupMock({
+      lobby: {
+        code: "TESTCODE",
+        players: [
+          {
+            id: "p1",
+            name: "Captain",
+            photoUrl: null,
+            isHost: true,
+            isReady: true,
+            isOnline: true,
+            isEliminated: false,
+            isUnconvertible: false,
+            notRole: null,
+            joinedAt: 1000,
+            hasTongue: true,
+          },
+          {
+            id: "p2",
+            name: "Unconvertible Player",
+            photoUrl: null,
+            isHost: false,
+            isReady: true,
+            isOnline: true,
+            isEliminated: false,
+            isUnconvertible: true,
+            notRole: null,
+            joinedAt: 2000,
+            hasTongue: true,
+          },
+        ],
+        status: "PLAYING",
+      },
+      myPlayerId: "p1",
+    });
+
     render(<FeedTheKrakenPage />);
 
-    expect(
-      screen.getByText("The captain cannot feed themselves to the Kraken."),
-    ).toBeDefined();
+    // Select "Unconvertible Player"
+    const radio = screen.getByDisplayValue("p2") as HTMLInputElement;
+    expect(radio.disabled).toBe(false);
+
+    fireEvent.click(screen.getByText("Unconvertible Player"));
+
+    // Click submit
+    fireEvent.click(screen.getByRole("button", { name: "Feed to Kraken" }));
+
+    expect(mockHandleFeedTheKrakenRequest).toHaveBeenCalledWith("p2");
   });
 });
