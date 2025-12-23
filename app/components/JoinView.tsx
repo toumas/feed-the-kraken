@@ -30,7 +30,9 @@ export function JoinView({ onJoin }: JoinViewProps) {
   return (
     <div className="flex-1 flex flex-col animate-in slide-in-from-right">
       <div className="flex-1 flex flex-col justify-center max-w-xs mx-auto w-full">
-        <h2 className="text-2xl font-bold mb-6 text-center">{t("join.title")}</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">
+          {t("join.title")}
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <input
             ref={inputRef}

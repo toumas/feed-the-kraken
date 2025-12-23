@@ -83,7 +83,9 @@ export default function FeedTheKrakenPage() {
               players={lobby.players}
               myPlayerId={myPlayerId}
             >
-              <PlayerSelectionList.Content disabledLabel={t("game.eliminated")} />
+              <PlayerSelectionList.Content
+                disabledLabel={t("game.eliminated")}
+              />
               <PlayerSelectionList.Actions>
                 <PlayerSelectionList.Submit onSubmit={handlePlayerSelect}>
                   {t("feedTheKraken.title")}

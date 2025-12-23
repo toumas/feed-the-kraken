@@ -90,7 +90,9 @@ export default function CultCabinSearchPage() {
         <div className="max-w-md w-full bg-slate-900 border border-slate-800 p-6 space-y-6">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-800">
             <Eye className="w-6 h-6 text-amber-500" />
-            <h1 className="text-xl font-bold text-white">{t("cabinSearch.title")}</h1>
+            <h1 className="text-xl font-bold text-white">
+              {t("cabinSearch.title")}
+            </h1>
           </div>
 
           {/* Player List with Status */}
@@ -259,7 +261,9 @@ export default function CultCabinSearchPage() {
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
               <div className="text-center space-y-2">
-                <h2 className="text-lg font-bold text-white">{t("cabinSearch.revealedRoles")}</h2>
+                <h2 className="text-lg font-bold text-white">
+                  {t("cabinSearch.revealedRoles")}
+                </h2>
               </div>
 
               <div className="space-y-4">
@@ -303,7 +307,9 @@ export default function CultCabinSearchPage() {
         <div className="max-w-md w-full space-y-6">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-cyan-500 uppercase tracking-wider">
-              {myClaim === "CREW" ? t("cabinSearch.crewQuiz") : t("cabinSearch.cabinInspection")}
+              {myClaim === "CREW"
+                ? t("cabinSearch.crewQuiz")
+                : t("cabinSearch.cabinInspection")}
             </h1>
             <div className="flex items-center gap-2 text-2xl font-mono font-bold text-white bg-slate-900 px-4 py-2 rounded-lg border border-slate-800">
               <Clock className="w-5 h-5 text-slate-400" />
@@ -327,8 +333,13 @@ export default function CultCabinSearchPage() {
               title={t("conversion.proveWorth")}
               description={t("conversion.proveWorthDesc")}
             />
-            <Quiz.Question text={question.question} />
-            <Quiz.OptionsList options={question.options} />
+            <Quiz.Question text={t(question.question)} />
+            <Quiz.OptionsList
+              options={question.options.map((opt) => ({
+                ...opt,
+                text: t(opt.text),
+              }))}
+            />
           </Quiz.Root>
         </div>
       </div>
@@ -351,7 +362,9 @@ export default function CultCabinSearchPage() {
           {myClaim !== "CREW" && (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center space-y-4">
               <Eye className="w-16 h-16 text-amber-500 mx-auto" />
-              <h2 className="text-xl font-bold text-white">{t("cabinSearch.roleRevealed")}</h2>
+              <h2 className="text-xl font-bold text-white">
+                {t("cabinSearch.roleRevealed")}
+              </h2>
               <p className="text-slate-400">
                 {t("cabinSearch.revealedToLeader")}
               </p>
@@ -362,7 +375,9 @@ export default function CultCabinSearchPage() {
             <FeedbackCard.Root variant={isCorrect ? "success" : "error"}>
               <FeedbackCard.Icon icon={isCorrect ? CheckCircle : XCircle} />
               <FeedbackCard.Title>
-                {isCorrect ? t("conversion.correctAnswer") : t("conversion.wrongAnswer")}
+                {isCorrect
+                  ? t("conversion.correctAnswer")
+                  : t("conversion.wrongAnswer")}
               </FeedbackCard.Title>
               <FeedbackCard.Description>
                 {isCorrect

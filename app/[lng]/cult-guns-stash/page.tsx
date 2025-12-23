@@ -112,7 +112,9 @@ export default function CultGunsStashPage() {
         <div className="max-w-md w-full bg-slate-900 border border-slate-800 p-6 space-y-6 rounded-2xl">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-800">
             <Eye className="w-6 h-6 text-amber-500" />
-            <h1 className="text-xl font-bold text-white">{t("cultGunsStash.title")}</h1>
+            <h1 className="text-xl font-bold text-white">
+              {t("cultGunsStash.title")}
+            </h1>
           </div>
 
           {/* Player List with Status */}
@@ -236,8 +238,13 @@ export default function CultGunsStashPage() {
                 title={t("conversion.proveWorth")}
                 description={t("conversion.proveWorthDesc")}
               />
-              <Quiz.Question text={question.question} />
-              <Quiz.OptionsList options={question.options} />
+              <Quiz.Question text={t(question.question)} />
+              <Quiz.OptionsList
+                options={question.options.map((opt) => ({
+                  ...opt,
+                  text: t(opt.text),
+                }))}
+              />
             </Quiz.Root>
           </div>
         </div>
@@ -275,7 +282,9 @@ export default function CultGunsStashPage() {
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
             <div className="flex justify-between items-center px-2">
-              <p className="text-sm text-slate-400">{t("cultGunsStash.distributeTitle")}</p>
+              <p className="text-sm text-slate-400">
+                {t("cultGunsStash.distributeTitle")}
+              </p>
               <span
                 className={`font-mono font-bold ${valid ? "text-green-400" : "text-slate-400"}`}
               >
@@ -382,10 +391,10 @@ export default function CultGunsStashPage() {
             ) : (
               <>
                 <Ghost className="w-16 h-16 text-slate-600 mx-auto" />
-                <h2 className="text-xl font-bold text-white">{t("cultGunsStash.emptyHands")}</h2>
-                <p className="text-slate-400">
-                  {t("cultGunsStash.noGuns")}
-                </p>
+                <h2 className="text-xl font-bold text-white">
+                  {t("cultGunsStash.emptyHands")}
+                </h2>
+                <p className="text-slate-400">{t("cultGunsStash.noGuns")}</p>
               </>
             )}
           </div>
@@ -395,7 +404,9 @@ export default function CultGunsStashPage() {
             <FeedbackCard.Root variant={isCorrect ? "success" : "error"}>
               <FeedbackCard.Icon icon={isCorrect ? CheckCircle : XCircle} />
               <FeedbackCard.Title>
-                {isCorrect ? t("conversion.correctAnswer") : t("conversion.wrongAnswer")}
+                {isCorrect
+                  ? t("conversion.correctAnswer")
+                  : t("conversion.wrongAnswer")}
               </FeedbackCard.Title>
               <FeedbackCard.Description>
                 {isCorrect

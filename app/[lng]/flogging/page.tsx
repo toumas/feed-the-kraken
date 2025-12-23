@@ -75,7 +75,9 @@ export default function FloggingPage() {
               players={lobby.players}
               myPlayerId={myPlayerId}
             >
-              <PlayerSelectionList.Content disabledLabel={t("flogging.alreadyRevealed")} />
+              <PlayerSelectionList.Content
+                disabledLabel={t("flogging.alreadyRevealed")}
+              />
               <PlayerSelectionList.Actions>
                 <PlayerSelectionList.Submit onSubmit={handlePlayerSelect}>
                   {t("flogging.flogPlayer")}

@@ -108,9 +108,7 @@ function ProfileEditorPhoto() {
               screenshotFormat="image/jpeg"
               videoConstraints={{ facingMode: "user", aspectRatio: 1 }}
               className="w-full h-full object-cover flip-horizontal"
-              onUserMediaError={() =>
-                alert(t("profile.cameraDenied"))
-              }
+              onUserMediaError={() => alert(t("profile.cameraDenied"))}
             />
             <button
               type="button"

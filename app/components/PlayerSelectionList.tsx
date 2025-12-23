@@ -75,10 +75,7 @@ interface ContentProps {
   isPlayerDisabled?: (player: Player) => boolean;
 }
 
-function Content({
-  disabledLabel,
-  isPlayerDisabled,
-}: ContentProps) {
+function Content({ disabledLabel, isPlayerDisabled }: ContentProps) {
   const { players, myPlayerId, selectedId, setSelectedId } =
     usePlayerSelection();
   const { t } = useT("common");

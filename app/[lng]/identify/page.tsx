@@ -50,9 +50,7 @@ function IdentifyContent() {
             <h1 className="text-4xl font-black text-white uppercase tracking-tight">
               {t("identify.title")}
             </h1>
-            <p className="text-slate-400 text-lg">
-              {t("identify.subtitle")}
-            </p>
+            <p className="text-slate-400 text-lg">{t("identify.subtitle")}</p>
           </div>
 
           <ProfileEditor.Root

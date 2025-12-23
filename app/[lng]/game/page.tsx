@@ -100,9 +100,7 @@ export default function GamePage() {
       <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-100 font-sans">
         <div className="flex flex-col items-center space-y-4">
           <div className="w-16 h-16 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-400">
-            {t("game.loading")}
-          </p>
+          <p className="text-slate-400">{t("game.loading")}</p>
         </div>
       </div>
     );

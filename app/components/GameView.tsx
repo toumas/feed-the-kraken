@@ -156,7 +156,9 @@ export function GameView({
       <div className="flex-1 flex flex-col items-center justify-center space-y-6 animate-in zoom-in-95 duration-700">
         <div className="text-center space-y-4">
           <Skull className="w-24 h-24 text-slate-600 mx-auto" />
-          <h2 className="text-3xl font-bold text-slate-500">{t("game.eliminated")}</h2>
+          <h2 className="text-3xl font-bold text-slate-500">
+            {t("game.eliminated")}
+          </h2>
           <p className="text-slate-400 max-w-xs mx-auto">
             {t("game.eliminatedDesc")}
           </p>
@@ -176,9 +178,7 @@ export function GameView({
               <h2 className="text-xl font-bold text-white mb-4">
                 {t("game.endSession")}
               </h2>
-              <p className="text-slate-400 mb-8">
-                {t("game.endSessionDesc")}
-              </p>
+              <p className="text-slate-400 mb-8">{t("game.endSessionDesc")}</p>
               <div className="flex gap-4">
                 <button
                   type="button"
@@ -462,9 +462,7 @@ export function GameView({
             type="button"
             onClick={() => {
               if ((lobby.conversionCount || 0) >= 3) {
-                window.alert(
-                  t("conversion.limitReached"),
-                );
+                window.alert(t("conversion.limitReached"));
               } else {
                 onStartConversion();
               }
@@ -534,20 +532,18 @@ export function GameView({
             <CancellationModal.Header title={t("cabinSearch.title")} />
             <CancellationModal.Body
               message={t("cultGunsStash.interrupted")}
-              reason={
-                (() => {
-                  if (!lobby.cabinSearchStatus.cancellationReason)
-                    return t("cultGunsStash.cancelled");
-                  const [key, ...paramStrings] =
-                    lobby.cabinSearchStatus.cancellationReason.split("|");
-                  const params: Record<string, string> = {};
-                  paramStrings.forEach((p) => {
-                    const [k, v] = p.split(":");
-                    if (k && v) params[k] = v;
-                  });
-                  return t(key, params);
-                })()
-              }
+              reason={(() => {
+                if (!lobby.cabinSearchStatus.cancellationReason)
+                  return t("cultGunsStash.cancelled");
+                const [key, ...paramStrings] =
+                  lobby.cabinSearchStatus.cancellationReason.split("|");
+                const params: Record<string, string> = {};
+                paramStrings.forEach((p) => {
+                  const [k, v] = p.split(":");
+                  if (k && v) params[k] = v;
+                });
+                return t(key, params);
+              })()}
             />
             <CancellationModal.Action onClick={onDismissCabinSearch} />
           </CancellationModal.Root>
@@ -560,20 +556,18 @@ export function GameView({
             <CancellationModal.Header title={t("cultGunsStash.title")} />
             <CancellationModal.Body
               message={t("cultGunsStash.interrupted")}
-              reason={
-                (() => {
-                  if (!lobby.gunsStashStatus.cancellationReason)
-                    return t("cultGunsStash.cancelled");
-                  const [key, ...paramStrings] =
-                    lobby.gunsStashStatus.cancellationReason.split("|");
-                  const params: Record<string, string> = {};
-                  paramStrings.forEach((p) => {
-                    const [k, v] = p.split(":");
-                    if (k && v) params[k] = v;
-                  });
-                  return t(key, params);
-                })()
-              }
+              reason={(() => {
+                if (!lobby.gunsStashStatus.cancellationReason)
+                  return t("cultGunsStash.cancelled");
+                const [key, ...paramStrings] =
+                  lobby.gunsStashStatus.cancellationReason.split("|");
+                const params: Record<string, string> = {};
+                paramStrings.forEach((p) => {
+                  const [k, v] = p.split(":");
+                  if (k && v) params[k] = v;
+                });
+                return t(key, params);
+              })()}
             />
             <CancellationModal.Action onClick={onDismissGunsStash} />
           </CancellationModal.Root>
@@ -587,9 +581,7 @@ export function GameView({
               <AlertTriangle className="w-6 h-6 text-red-500" />
               {t("game.resetGame")}
             </h2>
-            <p className="text-slate-300 mb-6">
-              {t("game.resetGameDesc")}
-            </p>
+            <p className="text-slate-300 mb-6">{t("game.resetGameDesc")}</p>
             <div className="flex gap-4">
               <button
                 type="button"
@@ -621,9 +613,7 @@ export function GameView({
               <Target className="w-6 h-6 text-cyan-500" />
               {t("game.backToLobby")}
             </h2>
-            <p className="text-slate-300 mb-6">
-              {t("game.backToLobbyDesc")}
-            </p>
+            <p className="text-slate-300 mb-6">{t("game.backToLobbyDesc")}</p>
             <div className="flex gap-4">
               <button
                 type="button"
@@ -684,10 +674,10 @@ export function GameView({
       {showEndSessionConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
-            <h2 className="text-xl font-bold text-white mb-4">{t("game.endSession")}</h2>
-            <p className="text-slate-400 mb-8">
-              {t("game.endSessionDesc")}
-            </p>
+            <h2 className="text-xl font-bold text-white mb-4">
+              {t("game.endSession")}
+            </h2>
+            <p className="text-slate-400 mb-8">{t("game.endSessionDesc")}</p>
             <div className="flex gap-4">
               <button
                 type="button"
@@ -777,7 +767,8 @@ export function GameView({
                       <p
                         className={`text-3xl font-bold ${getRoleColor(floggingReveal.revealedRole)}`}
                       >
-                        {t("game.not")} {t(`roles.${floggingReveal.revealedRole}`)}
+                        {t("game.not")}{" "}
+                        {t(`roles.${floggingReveal.revealedRole}`)}
                       </p>
                     </div>
                   </div>
@@ -893,9 +884,7 @@ export function GameView({
                         <button
                           type="button"
                           onClick={() =>
-                            window.alert(
-                              t("conversion.alreadyAccepted"),
-                            )
+                            window.alert(t("conversion.alreadyAccepted"))
                           }
                           className="flex-1 py-3 bg-amber-600/50 text-white/50 cursor-not-allowed rounded-xl font-bold border border-amber-600/20"
                         >
@@ -916,7 +905,9 @@ export function GameView({
           <div className="w-full max-w-md bg-slate-900 border border-red-900/50 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300 mx-4">
             <div className="flex items-center gap-3 mb-6">
               <Skull className="w-8 h-8 text-red-500" />
-              <h2 className="text-xl font-bold text-white">{t("feedTheKraken.title")}</h2>
+              <h2 className="text-xl font-bold text-white">
+                {t("feedTheKraken.title")}
+              </h2>
             </div>
             <p className="text-slate-300 mb-6">
               <span className="font-bold text-white">
@@ -986,7 +977,9 @@ export function GameView({
                         )?.name
                       }
                     </p>
-                    <p className="text-sm text-red-400">{t("game.eliminated")}</p>
+                    <p className="text-sm text-red-400">
+                      {t("game.eliminated")}
+                    </p>
                   </div>
                 </div>
               </>

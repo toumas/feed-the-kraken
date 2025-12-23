@@ -525,7 +525,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     connectToLobby(newCode, {
       type: "CREATE_LOBBY",
       playerId: myPlayerId,
-      playerName: nameToUse === t("lobby.newSailor") ? t("lobby.host") : nameToUse,
+      playerName:
+        nameToUse === t("lobby.newSailor") ? t("lobby.host") : nameToUse,
       playerPhoto: photoToUse,
     });
 

@@ -19,10 +19,10 @@ export function HomeView({ onCreate, onJoin }: HomeViewProps) {
       </div>
 
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-slate-100">{t("home.welcome")}</h2>
-        <p className="text-slate-400">
-          {t("home.subtext")}
-        </p>
+        <h2 className="text-2xl font-bold text-slate-100">
+          {t("home.welcome")}
+        </h2>
+        <p className="text-slate-400">{t("home.subtext")}</p>
       </div>
 
       <div className="w-full max-w-xs space-y-4 pt-8">

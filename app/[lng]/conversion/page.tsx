@@ -111,7 +111,9 @@ export default function ConversionPage() {
             <FeedbackCard.Root variant={isCorrect ? "success" : "error"}>
               <FeedbackCard.Icon icon={isCorrect ? CheckCircle : XCircle} />
               <FeedbackCard.Title>
-                {isCorrect ? t("conversion.correctAnswer") : t("conversion.wrongAnswer")}
+                {isCorrect
+                  ? t("conversion.correctAnswer")
+                  : t("conversion.wrongAnswer")}
               </FeedbackCard.Title>
               <FeedbackCard.Description>
                 {isCorrect
@@ -128,9 +130,7 @@ export default function ConversionPage() {
               <h2 className="text-2xl font-black text-amber-500">
                 {t("conversion.youConverted")}
               </h2>
-              <p className="text-amber-200">
-                {t("conversion.nowCultist")}
-              </p>
+              <p className="text-amber-200">{t("conversion.nowCultist")}</p>
               {cultLeader && (
                 <div className="bg-slate-900/50 p-4 rounded-xl border border-amber-900/30">
                   <p className="text-xs text-amber-500/60 uppercase font-bold mb-2">
@@ -157,9 +157,7 @@ export default function ConversionPage() {
                   {convertedPlayer.name}
                 </span>
               </div>
-              <p className="text-amber-200">
-                {t("conversion.joinedRanks")}
-              </p>
+              <p className="text-amber-200">{t("conversion.joinedRanks")}</p>
             </div>
           ) : null}
 
@@ -195,7 +193,9 @@ export default function ConversionPage() {
         {isCultLeader ? (
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6 h-[600px] flex flex-col">
             <div className="text-center space-y-2 shrink-0">
-              <h2 className="text-lg font-bold text-white">{t("conversion.chooseConvert")}</h2>
+              <h2 className="text-lg font-bold text-white">
+                {t("conversion.chooseConvert")}
+              </h2>
             </div>
 
             {isSubmitted && selectedPlayerId ? (
@@ -272,14 +272,17 @@ export default function ConversionPage() {
             {round.playerQuestions[myPlayerId] !== undefined && (
               <div className="space-y-4">
                 <Quiz.Question
-                  text={
-                    QUIZ_QUESTIONS[round.playerQuestions[myPlayerId]].question
-                  }
+                  text={t(
+                    QUIZ_QUESTIONS[round.playerQuestions[myPlayerId]].question,
+                  )}
                 />
                 <Quiz.OptionsList
-                  options={
-                    QUIZ_QUESTIONS[round.playerQuestions[myPlayerId]].options
-                  }
+                  options={QUIZ_QUESTIONS[
+                    round.playerQuestions[myPlayerId]
+                  ].options.map((opt) => ({
+                    ...opt,
+                    text: t(opt.text),
+                  }))}
                 />
               </div>
             )}
