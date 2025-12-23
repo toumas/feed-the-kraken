@@ -69,9 +69,7 @@ describe("GameView", () => {
   it("renders role information", () => {
     render(<GameView {...defaultProps} />);
     expect(screen.getByText("Loyal Sailor")).toBeDefined();
-    expect(
-      screen.getByText("Steer the ship safely to port. Trust no one!"),
-    ).toBeDefined();
+    expect(screen.getByText("Steer the ship to blue area.")).toBeDefined();
   });
 
   it("renders Denial of Command link", () => {
@@ -124,7 +122,7 @@ describe("GameView", () => {
 
     render(<GameView {...defaultProps} onLeave={onLeave} />);
 
-    fireEvent.click(screen.getByText("End Session"));
+    fireEvent.click(screen.getByText("End Session?"));
 
     // Check if modal appears
     expect(
@@ -144,7 +142,7 @@ describe("GameView", () => {
 
     render(<GameView {...defaultProps} onLeave={onLeave} />);
 
-    fireEvent.click(screen.getByText("End Session"));
+    fireEvent.click(screen.getByText("End Session?"));
 
     // Click cancel (Stay)
     fireEvent.click(screen.getByText("Stay"));
@@ -169,7 +167,7 @@ describe("GameView", () => {
         lobby={{ ...mockLobby, status: "PLAYING" }}
       />,
     );
-    expect(screen.getByText("Conversion to Cult")).toBeDefined();
+    expect(screen.getByText("Conversion")).toBeDefined();
   });
 
   it("calls onStartConversion when button is clicked", () => {
@@ -182,7 +180,7 @@ describe("GameView", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("Conversion to Cult"));
+    fireEvent.click(screen.getByText("Conversion"));
     expect(mockOnStartConversion).toHaveBeenCalled();
   });
 
@@ -222,9 +220,7 @@ describe("GameView", () => {
     );
 
     // Check for modal title
-    expect(
-      screen.getByRole("heading", { name: "Conversion to Cult" }),
-    ).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Conversion" })).toBeDefined();
     expect(
       screen.getByText(
         "A ritual has begun. All players must accept to proceed.",
@@ -326,7 +322,7 @@ describe("GameView", () => {
     );
 
     expect(screen.getByText("The ritual was interrupted!")).toBeDefined();
-    expect(screen.getByText("Close")).toBeDefined();
+    expect(screen.getByText("Done")).toBeDefined();
   });
 
   // --- Converted Player Role Display Tests ---

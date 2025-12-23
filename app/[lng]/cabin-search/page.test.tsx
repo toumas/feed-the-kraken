@@ -2,13 +2,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GameContextValue } from "../../context/GameContext";
 
-// Mock useRouter
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-  }),
-}));
-
 // Mock useGame
 vi.mock("../../context/GameContext", () => ({
   useGame: vi.fn(),

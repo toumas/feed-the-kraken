@@ -38,6 +38,7 @@ describe("CultCabinSearchPage", () => {
             isEliminated: false,
             isUnconvertible: false,
             notRole: null,
+            hasTongue: true,
             joinedAt: 1000,
           },
           {
@@ -50,6 +51,7 @@ describe("CultCabinSearchPage", () => {
             isEliminated: false,
             isUnconvertible: false,
             notRole: null,
+            hasTongue: true,
             joinedAt: 2000,
           },
           {
@@ -62,6 +64,7 @@ describe("CultCabinSearchPage", () => {
             isEliminated: false,
             isUnconvertible: false,
             notRole: null,
+            hasTongue: true,
             joinedAt: 3000,
           },
         ],
@@ -87,24 +90,26 @@ describe("CultCabinSearchPage", () => {
       setupMock();
       render(<CultCabinSearchPage />);
       expect(
-        screen.queryByText("This role has already been claimed."),
+        screen.queryByText("This role is already claimed by someone else."),
       ).toBeNull();
     });
 
     it("shows error when error prop is set", () => {
-      setupMock({ error: "This role has already been claimed." });
+      setupMock({ error: "This role is already claimed by someone else." });
       render(<CultCabinSearchPage />);
       expect(
-        screen.getByText("This role has already been claimed."),
+        screen.getByText("This role is already claimed by someone else."),
       ).toBeDefined();
     });
 
     it("calls setError(null) when dismiss button is clicked", () => {
-      setupMock({ error: "This role has already been claimed." });
+      setupMock({ error: "This role is already claimed by someone else." });
       render(<CultCabinSearchPage />);
 
       // Find dismiss button within error component
-      const errorText = screen.getByText("This role has already been claimed.");
+      const errorText = screen.getByText(
+        "This role is already claimed by someone else.",
+      );
       const errorContainer = errorText.closest("div")?.parentElement;
       const dismissButton = errorContainer?.querySelector("button");
 
@@ -130,6 +135,7 @@ describe("CultCabinSearchPage", () => {
               isEliminated: false,
               isUnconvertible: false,
               notRole: null,
+              hasTongue: true,
               joinedAt: 1000,
             },
             {
@@ -142,6 +148,7 @@ describe("CultCabinSearchPage", () => {
               isEliminated: false,
               isUnconvertible: false,
               notRole: null,
+              hasTongue: true,
               joinedAt: 2000,
             },
           ],
@@ -159,7 +166,7 @@ describe("CultCabinSearchPage", () => {
       fireEvent.click(captainButton);
 
       expect(mockSetError).toHaveBeenCalledWith(
-        "This role has already been claimed.",
+        "This role is already claimed by someone else.",
       );
     });
 

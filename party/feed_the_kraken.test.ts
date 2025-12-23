@@ -133,7 +133,7 @@ describe("Feed the Kraken Server Logic", () => {
       expect.stringContaining("ERROR"),
     );
     expect(captainConn.send).toHaveBeenCalledWith(
-      expect.stringContaining("cannot feed themselves"),
+      expect.stringContaining("errors.captainCannotFeedSelf"),
     );
   });
 

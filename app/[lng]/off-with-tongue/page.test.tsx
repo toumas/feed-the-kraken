@@ -82,7 +82,7 @@ describe("OffWithTonguePage", () => {
   it("renders loading state when lobby is null", () => {
     setupMock({ lobby: null });
     render(<OffWithTonguePage />);
-    expect(screen.getByText("Loading...")).toBeDefined();
+    expect(screen.getByText("Loading game...")).toBeDefined();
   });
 
   it("renders player list showing self excluded, silenced players shown as disabled", () => {

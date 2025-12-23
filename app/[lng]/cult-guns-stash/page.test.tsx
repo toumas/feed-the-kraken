@@ -138,7 +138,7 @@ describe("CultGunsStashPage", () => {
 
     it("renders the Waiting For Players view", () => {
       render(<CultGunsStashPage />);
-      expect(screen.getByText("Cult's Guns Stash")).toBeDefined();
+      expect(screen.getByText("Cult's Gun Stash")).toBeDefined();
       expect(screen.getByText("I'm Ready")).toBeDefined();
     });
 

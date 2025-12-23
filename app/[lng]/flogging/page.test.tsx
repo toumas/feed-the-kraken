@@ -40,7 +40,7 @@ describe("FloggingPage", () => {
       lobby: null,
     } as unknown as GameContextValue);
     render(<FloggingPage />);
-    expect(screen.getByText("Loading...")).toBeDefined();
+    expect(screen.getByText("Loading game...")).toBeDefined();
   });
 
   it("renders player selection list", () => {

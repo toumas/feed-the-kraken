@@ -128,7 +128,7 @@ describe("Off with the Tongue Server Logic", () => {
       expect.stringContaining("ERROR"),
     );
     expect(captainConn.send).toHaveBeenCalledWith(
-      expect.stringContaining("cannot give the token to yourself"),
+      expect.stringContaining("errors.cannotTargetSelf"),
     );
   });
 
@@ -147,7 +147,7 @@ describe("Off with the Tongue Server Logic", () => {
       expect.stringContaining("ERROR"),
     );
     expect(captainConn.send).toHaveBeenCalledWith(
-      expect.stringContaining("already lost their tongue"),
+      expect.stringContaining("errors.playerAlreadySilenced"),
     );
   });
 
@@ -240,9 +240,7 @@ describe("Off with the Tongue Server Logic", () => {
       expect.stringContaining("ERROR"),
     );
     expect(silencedConn.send).toHaveBeenCalledWith(
-      expect.stringContaining(
-        "cannot claim Captain because you have been silenced",
-      ),
+      expect.stringContaining("errors.silencedCannotClaimCaptain"),
     );
 
     // Role should not be claimed
