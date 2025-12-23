@@ -1,6 +1,7 @@
 "use client";
 
 import { Eye } from "lucide-react";
+import { useT } from "../i18n/client";
 
 interface CancellationModalProps {
   children: React.ReactNode;
@@ -47,13 +48,14 @@ function Body({ message, reason }: { message: string; reason?: string }) {
 }
 
 function Action({ onClick }: { onClick: () => void }) {
+  const { t } = useT("common");
   return (
     <button
       type="button"
       onClick={onClick}
       className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
     >
-      Close
+      {t("actions.done")}
     </button>
   );
 }

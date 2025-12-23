@@ -3,6 +3,7 @@ import type { Player } from "../types";
 import { cn } from "../utils";
 import { Avatar } from "./Avatar";
 import { InlineError } from "./InlineError";
+import { useT } from "../i18n/client";
 
 type PlayerSelectionContextType = {
   selectedId: string | null;
@@ -75,11 +76,12 @@ interface ContentProps {
 }
 
 function Content({
-  disabledLabel = "Unavailable",
+  disabledLabel,
   isPlayerDisabled,
 }: ContentProps) {
   const { players, myPlayerId, selectedId, setSelectedId } =
     usePlayerSelection();
+  const { t } = useT("common");
   const availablePlayers = players.filter((p) => p.id !== myPlayerId);
 
   return (
@@ -125,10 +127,12 @@ function Content({
                 {player.name}
               </p>
               {isDisabledAction && (
-                <p className="text-xs text-slate-500">{disabledLabel}</p>
+                <p className="text-xs text-slate-500">
+                  {disabledLabel || t("game.unavailable")}
+                </p>
               )}
               {isEliminated && (
-                <p className="text-xs text-red-500">Eliminated</p>
+                <p className="text-xs text-red-500">{t("game.eliminated")}</p>
               )}
             </div>
 
@@ -155,10 +159,11 @@ interface SubmitProps {
 
 function Submit({ children, onSubmit }: SubmitProps) {
   const { selectedId, error, setError } = usePlayerSelection();
+  const { t } = useT("common");
 
   const handleClick = () => {
     if (!selectedId) {
-      setError("Please select a player first.");
+      setError(t("game.selectPlayer"));
       return;
     }
     onSubmit(selectedId);

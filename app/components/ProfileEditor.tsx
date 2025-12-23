@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import Webcam from "react-webcam";
+import { useT } from "../i18n/client";
 import { Avatar } from "./Avatar";
 
 // --- Context ---
@@ -84,6 +85,7 @@ function ProfileEditorRoot({
 
 function ProfileEditorPhoto() {
   const { photo, setPhoto, showErrors } = useProfileEditor();
+  const { t } = useT("common");
   const [cameraOpen, setCameraOpen] = useState(false);
   const webcamRef = useRef<Webcam>(null);
 
@@ -107,7 +109,7 @@ function ProfileEditorPhoto() {
               videoConstraints={{ facingMode: "user", aspectRatio: 1 }}
               className="w-full h-full object-cover flip-horizontal"
               onUserMediaError={() =>
-                alert("Camera access denied. You can continue without a photo.")
+                alert(t("profile.cameraDenied"))
               }
             />
             <button
@@ -133,7 +135,7 @@ function ProfileEditorPhoto() {
               type="button"
               onClick={() => setCameraOpen(true)}
               className="absolute bottom-0 right-0 bg-cyan-600 hover:bg-cyan-500 text-white p-2 rounded-full shadow-lg transition-colors"
-              title="Open Camera"
+              title={t("profile.openCamera")}
             >
               <Camera className="w-5 h-5" />
             </button>
@@ -142,7 +144,7 @@ function ProfileEditorPhoto() {
                 type="button"
                 onClick={() => setPhoto(null)}
                 className="absolute -top-1 -left-1 bg-red-900/80 text-white p-1 rounded-full hover:bg-red-700"
-                title="Remove Photo"
+                title={t("profile.removePhoto")}
               >
                 <X className="w-3 h-3" />
               </button>
@@ -152,7 +154,7 @@ function ProfileEditorPhoto() {
       </div>
       {showErrors && !photo && (
         <p className="text-red-400 text-sm text-center animate-in slide-in-from-top-1 mt-2">
-          Please take a photo to continue.
+          {t("profile.photoRequired")}
         </p>
       )}
     </div>
@@ -161,11 +163,12 @@ function ProfileEditorPhoto() {
 
 function ProfileEditorName() {
   const { name, setName, showErrors } = useProfileEditor();
+  const { t } = useT("common");
 
   return (
     <div>
       <label htmlFor="display-name" className="sr-only">
-        Display Name
+        {t("profile.displayName")}
       </label>
       <div className="relative">
         <input
@@ -173,7 +176,7 @@ function ProfileEditorName() {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Enter your pirate name..."
+          placeholder={t("profile.namePlaceholder")}
           maxLength={20}
           className="w-full bg-slate-950 border border-slate-700 focus:border-cyan-500 rounded-lg pl-4 pr-10 py-3 text-white placeholder:text-slate-600 outline-none transition-colors"
         />
@@ -181,7 +184,7 @@ function ProfileEditorName() {
       </div>
       {showErrors && name.trim().length === 0 && (
         <p className="text-red-400 text-sm mt-1 animate-in slide-in-from-top-1">
-          Please enter your name.
+          {t("profile.nameRequired")}
         </p>
       )}
     </div>
@@ -189,13 +192,14 @@ function ProfileEditorName() {
 }
 
 function ProfileEditorSubmit() {
+  const { t } = useT("common");
   return (
     <button
       type="submit"
       className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 text-white rounded-lg font-bold transition-all flex items-center justify-center gap-2"
     >
       <CheckCircle2 className="w-5 h-5" />
-      Save Profile
+      {t("profile.saveProfile")}
     </button>
   );
 }

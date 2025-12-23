@@ -7,6 +7,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useState } from "react";
+import { useT } from "../i18n/client";
 import {
   type ConnectionStatus,
   type LobbyState,
@@ -40,6 +41,7 @@ export function LobbyView({
   onSetRoleDistributionMode,
   connectionStatus,
 }: LobbyViewProps) {
+  const { t } = useT("common");
   const myPlayer = lobby.players.find((p) => p.id === myPlayerId);
   const isHost = myPlayer?.isHost;
   const playerCount = lobby.players.length;
@@ -56,7 +58,7 @@ export function LobbyView({
 
   const handleStart = () => {
     if (!canStart) {
-      setError(`Need at least ${MIN_PLAYERS} sailors to depart!`);
+      setError(t("lobby.minPlayers", { min: MIN_PLAYERS }));
       return;
     }
     onStart();
@@ -68,7 +70,7 @@ export function LobbyView({
       <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
         <div>
           <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-1">
-            Ship Code
+            {t("lobby.shipCode")}
           </p>
           <p className="text-3xl font-mono tracking-wider text-cyan-400 font-bold">
             {lobby.code}
@@ -90,14 +92,14 @@ export function LobbyView({
               )}
             />
             <span className="text-xs text-slate-400 capitalize">
-              {connectionStatus}
+              {t("lobby.connectionStatus")}: {connectionStatus}
             </span>
           </div>
           <button
             onClick={copyCode}
             type="button"
             className="p-3 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
-            title="Copy Code"
+            title={t("lobby.copyCode")}
           >
             {copied ? (
               <CheckCircle2 className="w-6 h-6 text-green-500" />
@@ -111,13 +113,13 @@ export function LobbyView({
       {/* My Profile Editor */}
       <div className="bg-slate-900/80 border border-cyan-900/30 rounded-xl p-4 shadow-lg">
         <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider">
-          My Identity
+          {t("lobby.myIdentity")}
         </h3>
         <EditableProfile
           defaultEditing={
             !myPlayer?.name ||
             myPlayer.name.includes("Player") ||
-            myPlayer.name === "New Sailor"
+            myPlayer.name === t("lobby.newSailor")
           }
         >
           <EditableProfile.Editor>
@@ -145,12 +147,12 @@ export function LobbyView({
                     {myPlayer?.name}
                   </p>
                   <p className="text-sm text-cyan-500">
-                    {isHost ? "Host" : "Sailor"}
+                    {isHost ? t("lobby.host") : t("lobby.sailor")}
                   </p>
                 </div>
               </div>
               <EditableProfile.EditTrigger className="px-4 py-2 text-sm bg-slate-800 hover:bg-slate-700 rounded-lg font-medium text-slate-300">
-                Edit
+                {t("lobby.edit")}
               </EditableProfile.EditTrigger>
             </div>
           </EditableProfile.Display>
@@ -164,7 +166,7 @@ export function LobbyView({
             <div className="flex items-center gap-2">
               <Settings className="w-4 h-4 text-slate-400" />
               <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-                Role Assignment
+                {t("lobby.roleAssignment")}
               </span>
             </div>
             <div className="flex bg-slate-800 rounded-lg p-1">
@@ -178,7 +180,7 @@ export function LobbyView({
                     : "text-slate-400 hover:text-slate-200",
                 )}
               >
-                Automatic
+                {t("lobby.automatic")}
               </button>
               <button
                 type="button"
@@ -190,14 +192,14 @@ export function LobbyView({
                     : "text-slate-400 hover:text-slate-200",
                 )}
               >
-                Manual
+                {t("lobby.manual")}
               </button>
             </div>
           </div>
           <p className="text-xs text-slate-500 mt-2">
             {(lobby.roleDistributionMode || "automatic") === "automatic"
-              ? "Roles will be randomly assigned when the game starts."
-              : "Each player will choose their own role when the game starts."}
+              ? t("lobby.autoDesc")
+              : t("lobby.manualDesc")}
           </p>
         </div>
       )}
@@ -206,7 +208,7 @@ export function LobbyView({
       <div className="flex-1">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-            Crew Manifest ({playerCount}/{MAX_PLAYERS})
+            {t("lobby.crewManifest")} ({playerCount}/{MAX_PLAYERS})
           </h3>
           {/* DEV ONLY BUTTON - For demo purposes to test constraints */}
           <button
@@ -214,7 +216,7 @@ export function LobbyView({
             type="button"
             className="text-xs px-2 py-1 bg-slate-800 text-slate-500 rounded flex items-center gap-1 hover:text-slate-300 hover:bg-slate-700"
           >
-            <UserPlus className="w-3 h-3" /> Debug Bot
+            <UserPlus className="w-3 h-3" /> {t("lobby.debugBot")}
           </button>
         </div>
 
@@ -235,7 +237,7 @@ export function LobbyView({
                 {!player.isOnline && (
                   <div
                     className="absolute -bottom-1 -right-1 w-3 h-3 bg-slate-500 rounded-full border-2 border-slate-900"
-                    title="Offline"
+                    title={t("lobby.offline")}
                   />
                 )}
               </div>
@@ -243,16 +245,16 @@ export function LobbyView({
                 <p className="font-medium truncate text-slate-200 text-sm">
                   {player.name}
                   {player.id === myPlayerId && (
-                    <span className="text-cyan-500 ml-1">(You)</span>
+                    <span className="text-cyan-500 ml-1">{t("lobby.you")}</span>
                   )}
                 </p>
                 {player.isHost && (
                   <p className="text-xs text-yellow-500/80 flex items-center gap-1">
-                    Host
+                    {t("lobby.host")}
                   </p>
                 )}
                 {!player.isOnline && (
-                  <p className="text-xs text-slate-500">Offline</p>
+                  <p className="text-xs text-slate-500">{t("lobby.offline")}</p>
                 )}
               </div>
             </div>
@@ -265,7 +267,7 @@ export function LobbyView({
                 key={`waiting-slot-${MIN_PLAYERS - playerCount}-${i}`}
                 className="flex items-center justify-center p-3 rounded-lg border border-dashed border-slate-800 bg-slate-900/20 text-slate-600 text-sm italic"
               >
-                Waiting...
+                {t("lobby.waiting")}
               </div>
             ),
           )}
@@ -276,7 +278,7 @@ export function LobbyView({
       <div className="pt-4 border-t border-slate-800 mt-auto space-y-3">
         {playerCount >= MAX_PLAYERS && (
           <p className="text-center text-yellow-500 text-sm bg-yellow-950/30 py-2 rounded-lg border border-yellow-900/50">
-            Lobby Reached Max Capacity
+            {t("lobby.maxCapacity")}
           </p>
         )}
 
@@ -294,12 +296,12 @@ export function LobbyView({
             )}
           >
             <Play className={cn("w-6 h-6", canStart && "animate-pulse")} />
-            Start Voyage
+            {t("lobby.startVoyage")}
           </button>
         ) : (
           <div className="w-full py-4 bg-slate-800 text-slate-400 rounded-xl font-bold text-center flex items-center justify-center gap-2 animate-pulse">
             <Anchor className="w-5 h-5" />
-            Awaiting Host...
+            {t("lobby.awaitingHost")}
           </div>
         )}
 
@@ -308,7 +310,7 @@ export function LobbyView({
           type="button"
           className="w-full py-3 text-slate-500 hover:text-red-400 text-sm font-medium transition-colors"
         >
-          Abandon Ship
+          {t("lobby.abandonShip")}
         </button>
       </div>
     </div>

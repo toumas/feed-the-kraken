@@ -16,6 +16,7 @@ import {
   MIN_PLAYERS,
   type Role,
 } from "../types";
+import { useT } from "../i18n/client";
 
 export interface GameContextValue {
   // User State
@@ -121,6 +122,7 @@ export interface GameContextValue {
   // Actually, view state is better kept local to page.tsx for navigation,
   // but we might need to trigger view changes from context (e.g. on game start).
   // For now, let's expose a way to set view or just let page.tsx handle it via effects on lobby state.
+  // For now, let's expose a way to set view or just let page.tsx handle it via effects on lobby state.
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -134,6 +136,8 @@ export function useGame() {
 }
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useT("common");
+
   // --- State ---
   const [error, setError] = useState<string | null>(null);
 
@@ -151,9 +155,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const [myName, setMyName] = useState<string>(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("kraken_player_name") || "New Sailor";
+      return localStorage.getItem("kraken_player_name") || "";
     }
-    return "New Sailor";
+    return "";
   });
 
   const [myPhoto, setMyPhoto] = useState<string | null>(() => {
@@ -358,13 +362,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               break;
             case "CABIN_SEARCH_DENIED":
               setIsCabinSearchPending(false);
-              setError("The player denied the cabin search.");
+              setError(t("errors.cabinSearchDenied"));
               setTimeout(() => setError(null), 3000);
               break;
-            case "ERROR":
-              setError(data.message);
+            case "ERROR": {
+              // Parse potential parameters: "key|param1:val1|param2:val2"
+              const [key, ...paramStrings] = data.message.split("|");
+              const params: Record<string, string> = {};
+              paramStrings.forEach((p: string) => {
+                const [k, v] = p.split(":");
+                if (k && v) params[k] = v;
+              });
+              setError(t(key, params));
               setTimeout(() => setError(null), 3000);
               break;
+            }
             case "FLOGGING_CONFIRMATION_REQUEST":
               setFloggingConfirmationPrompt({
                 hostId: data.hostId,
@@ -378,7 +390,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               });
               break;
             case "FLOGGING_DENIED":
-              setError("The player denied the flogging.");
+              setError(t("errors.floggingDenied"));
               setTimeout(() => setError(null), 3000);
               break;
 
@@ -402,7 +414,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               break;
             case "FEED_THE_KRAKEN_DENIED":
               setIsFeedTheKrakenPending(false);
-              setError("The player refused to be fed to the Kraken.");
+              setError(t("errors.feedTheKrakenDenied"));
               setTimeout(() => setError(null), 3000);
               break;
 
@@ -418,7 +430,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               break;
             case "OFF_WITH_TONGUE_DENIED":
               setIsOffWithTonguePending(false);
-              setError("The player refused to be silenced.");
+              setError(t("errors.offWithTongueDenied"));
               setTimeout(() => setError(null), 3000);
               break;
           }
@@ -429,7 +441,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       setSocket(newSocket);
     },
-    [myPlayerId, socket],
+    [myPlayerId, socket, t],
   );
 
   // Auto-reconnect on mount
@@ -513,7 +525,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     connectToLobby(newCode, {
       type: "CREATE_LOBBY",
       playerId: myPlayerId,
-      playerName: nameToUse === "New Sailor" ? "Host" : nameToUse,
+      playerName: nameToUse === t("lobby.newSailor") ? t("lobby.host") : nameToUse,
       playerPhoto: photoToUse,
     });
 
@@ -523,7 +535,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const joinLobby = (codeEntered: string) => {
     if (codeEntered.length < 4) {
-      setError("Invalid room code format.");
+      setError(t("errors.invalidCode"));
       return;
     }
     connectToLobby(codeEntered.toUpperCase(), {
@@ -554,7 +566,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const startGame = () => {
     if (!lobby) return;
     if (lobby.players.length < MIN_PLAYERS) {
-      setError(`Need at least ${MIN_PLAYERS} sailors to depart!`);
+      setError(t("lobby.minPlayers", { min: MIN_PLAYERS }));
       return;
     }
     if (socket) {

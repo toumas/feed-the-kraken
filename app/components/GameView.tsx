@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useT } from "../i18n/client";
 import { Avatar } from "../components/Avatar";
 import { RoleReveal } from "../components/RoleReveal";
 import type { LobbyState, Role } from "../types";
@@ -107,6 +108,7 @@ export function GameView({
   onResetGame,
   onBackToLobby,
 }: GameViewProps) {
+  const { t } = useT("common");
   const [showEndSessionConfirm, setShowEndSessionConfirm] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showBackToLobbyConfirm, setShowBackToLobbyConfirm] = useState(false);
@@ -116,29 +118,29 @@ export function GameView({
     switch (role) {
       case "PIRATE":
         return {
-          title: "Pirate",
-          desc: "Sabotage the journey! Feed the Kraken or kill the Captain.",
+          title: t("roles.PIRATE"),
+          desc: t("roles.PIRATE_DESC"),
           icon: <Skull className={`w-16 h-16 ${color}`} />,
           color,
         };
       case "CULT_LEADER":
         return {
-          title: "Cult Leader",
-          desc: "Convert others to your cause. You win if you are chosen to feed the Kraken.",
+          title: t("roles.CULT_LEADER"),
+          desc: t("roles.CULT_LEADER_DESC"),
           icon: <Eye className={`w-16 h-16 ${color}`} />,
           color,
         };
       case "CULTIST":
         return {
-          title: "Cultist",
-          desc: "Support the Cult Leader's cause.",
+          title: t("roles.CULTIST"),
+          desc: t("roles.CULTIST_DESC"),
           icon: <Eye className={`w-16 h-16 ${color}`} />,
           color,
         };
       default:
         return {
-          title: "Loyal Sailor",
-          desc: "Steer the ship safely to port. Trust no one!",
+          title: t("roles.SAILOR"),
+          desc: t("roles.SAILOR_DESC"),
           icon: <Anchor className={`w-16 h-16 ${color}`} />,
           color,
         };
@@ -154,10 +156,9 @@ export function GameView({
       <div className="flex-1 flex flex-col items-center justify-center space-y-6 animate-in zoom-in-95 duration-700">
         <div className="text-center space-y-4">
           <Skull className="w-24 h-24 text-slate-600 mx-auto" />
-          <h2 className="text-3xl font-bold text-slate-500">Eliminated</h2>
+          <h2 className="text-3xl font-bold text-slate-500">{t("game.eliminated")}</h2>
           <p className="text-slate-400 max-w-xs mx-auto">
-            You have been thrown overboard or fed to the Kraken. Your journey
-            ends here.
+            {t("game.eliminatedDesc")}
           </p>
         </div>
         <button
@@ -165,7 +166,7 @@ export function GameView({
           onClick={() => setShowEndSessionConfirm(true)}
           className="px-6 py-3 bg-slate-800/50 hover:bg-slate-800 text-slate-400 rounded-xl font-medium transition-colors border border-slate-700"
         >
-          Return to Shore
+          {t("game.returnToShore")}
         </button>
 
         {/* End Session Confirmation Modal */}
@@ -173,11 +174,10 @@ export function GameView({
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
               <h2 className="text-xl font-bold text-white mb-4">
-                End Session?
+                {t("game.endSession")}
               </h2>
               <p className="text-slate-400 mb-8">
-                Are you sure you want to leave the game? You won't be able to
-                rejoin with the same role.
+                {t("game.endSessionDesc")}
               </p>
               <div className="flex gap-4">
                 <button
@@ -185,14 +185,14 @@ export function GameView({
                   onClick={() => setShowEndSessionConfirm(false)}
                   className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
                 >
-                  Stay
+                  {t("game.stay")}
                 </button>
                 <button
                   type="button"
                   onClick={onLeave}
                   className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors"
                 >
-                  Leave
+                  {t("game.leave")}
                 </button>
               </div>
             </div>
@@ -216,7 +216,7 @@ export function GameView({
             {myRole === "PIRATE" && lobby.assignments && (
               <div className="mt-6 pt-6 border-t border-slate-700 w-full">
                 <h3 className="text-red-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
-                  Pirate Crew
+                  {t("game.pirateCrew")}
                 </h3>
                 <div className="flex flex-wrap justify-center gap-3">
                   {lobby.players
@@ -248,7 +248,7 @@ export function GameView({
                         lobby.assignments?.[p.id] === "PIRATE"),
                   ).length === 0 && (
                     <p className="text-xs text-slate-500 italic">
-                      No other pirates
+                      {t("game.noPirates")}
                     </p>
                   )}
                 </div>
@@ -261,7 +261,7 @@ export function GameView({
               lobby.originalRoles[myPlayerId] !== "CULTIST" && (
                 <div className="mt-6 pt-6 border-t border-slate-700 w-full">
                   <h3 className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
-                    Your Leader
+                    {t("game.yourLeader")}
                   </h3>
                   <div className="flex flex-wrap justify-center gap-3">
                     {lobby.players
@@ -295,7 +295,7 @@ export function GameView({
         {lobby.players.some((p) => p.notRole) && (
           <div className="mb-6 pb-6 border-b border-slate-800">
             <h3 className="text-sm text-slate-500 uppercase mb-4 font-bold">
-              Public Info
+              {t("game.publicInfo")}
             </h3>
             <div className="space-y-3">
               {lobby.players
@@ -314,7 +314,7 @@ export function GameView({
                         <p
                           className={`text-xs font-bold ${getRoleColor(p.notRole)}`}
                         >
-                          NOT {p.notRole?.replace("_", " ")}
+                          {t("game.not")} {t(`roles.${p.notRole}`)}
                         </p>
                       </div>
                     </div>
@@ -325,7 +325,7 @@ export function GameView({
         )}
 
         <h3 className="text-sm text-slate-500 uppercase mb-4 font-bold">
-          Crew Status
+          {t("game.crewStatus")}
         </h3>
         <div className="mb-6">
           <div className="grid grid-cols-3 gap-3">
@@ -377,22 +377,22 @@ export function GameView({
                 <div className="flex flex-col items-center">
                   {p.isEliminated && (
                     <span className="text-[10px] text-slate-500 font-bold uppercase leading-tight">
-                      Eliminated
+                      {t("game.eliminated")}
                     </span>
                   )}
                   {p.isUnconvertible && (
                     <span className="text-[10px] text-purple-400 font-bold uppercase leading-tight">
-                      Unconvertible
+                      {t("game.unconvertible")}
                     </span>
                   )}
                   {p.hasTongue === false && (
                     <span className="text-[10px] text-amber-400 font-bold uppercase leading-tight">
-                      Silenced
+                      {t("game.silenced")}
                     </span>
                   )}
                   {p.isOnline === false && (
                     <span className="text-[10px] text-red-500 font-bold uppercase leading-tight">
-                      Offline
+                      {t("game.offline")}
                     </span>
                   )}
                 </div>
@@ -404,7 +404,7 @@ export function GameView({
               <span className="text-lg font-bold text-white mr-1">
                 {lobby.players.length}
               </span>
-              Sailors
+              {t("game.sailors")}
             </p>
           </div>
         </div>
@@ -415,7 +415,7 @@ export function GameView({
             className="w-full py-3 bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-200 border border-cyan-800/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
           >
             <Search className="w-5 h-5" />
-            Cabin Search
+            {t("cabinSearch.title")}
           </Link>
 
           <button
@@ -424,7 +424,7 @@ export function GameView({
             className="w-full py-3 bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
           >
             <Eye className="w-5 h-5" />
-            Cult Cabin Search
+            {t("cabinSearch.title")} ({t("cabinSearch.cult")})
           </button>
 
           <button
@@ -433,7 +433,7 @@ export function GameView({
             className="w-full py-3 bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
           >
             <Target className="w-5 h-5" />
-            Cult's Guns Stash
+            {t("cultGunsStash.title")}
           </button>
 
           <Link
@@ -441,7 +441,7 @@ export function GameView({
             className="w-full py-3 bg-red-950/30 hover:bg-red-900/50 text-red-200 border border-red-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
           >
             <AlertTriangle className="w-5 h-5" />
-            Denial of Command
+            {t("denial.title")}
           </Link>
 
           <Link
@@ -453,7 +453,9 @@ export function GameView({
             }`}
           >
             <Gavel className="w-5 h-5" />
-            {lobby.isFloggingUsed ? "Flogging (Used)" : "Flogging"}
+            {lobby.isFloggingUsed
+              ? `${t("flogging.title")} (${t("flogging.used")})`
+              : t("flogging.title")}
           </Link>
 
           <button
@@ -461,7 +463,7 @@ export function GameView({
             onClick={() => {
               if ((lobby.conversionCount || 0) >= 3) {
                 window.alert(
-                  "The conversion ritual can only be performed 3 times per game.",
+                  t("conversion.limitReached"),
                 );
               } else {
                 onStartConversion();
@@ -470,7 +472,7 @@ export function GameView({
             className="w-full py-3 bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
           >
             <Eye className="w-5 h-5" />
-            Conversion to Cult
+            {t("conversion.title")}
           </button>
 
           <Link
@@ -478,7 +480,7 @@ export function GameView({
             className="w-full py-3 bg-red-950/30 hover:bg-red-900/50 text-red-200 border border-red-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
           >
             <Skull className="w-5 h-5" />
-            Feed the Kraken
+            {t("feedTheKraken.title")}
           </Link>
 
           <Link
@@ -486,7 +488,7 @@ export function GameView({
             className="w-full py-3 bg-amber-900/30 hover:bg-amber-900/50 text-amber-200 border border-amber-800/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
           >
             <Scissors className="w-5 h-5" />
-            Off with the Tongue
+            {t("offWithTongue.title")}
           </Link>
 
           <button
@@ -495,7 +497,7 @@ export function GameView({
             className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
           >
             <LogOut className="w-5 h-5" />
-            End Session
+            {t("game.endSession")}
           </button>
 
           {me?.isHost && (
@@ -506,7 +508,7 @@ export function GameView({
                 className="w-full py-3 bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-900/30 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 mt-4"
               >
                 <AlertTriangle className="w-5 h-5" />
-                Reset Game
+                {t("game.resetGame")}
               </button>
 
               <button
@@ -515,7 +517,7 @@ export function GameView({
                 className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
               >
                 <Target className="w-5 h-5" />
-                Back to Lobby
+                {t("game.backToLobby")}
               </button>
             </>
           )}
@@ -529,12 +531,22 @@ export function GameView({
             isOpen={true}
             onDismiss={onDismissCabinSearch}
           >
-            <CancellationModal.Header title="Cult Cabin Search" />
+            <CancellationModal.Header title={t("cabinSearch.title")} />
             <CancellationModal.Body
-              message="The search was interrupted!"
+              message={t("cultGunsStash.interrupted")}
               reason={
-                lobby.cabinSearchStatus.cancellationReason ||
-                "The search has been cancelled."
+                (() => {
+                  if (!lobby.cabinSearchStatus.cancellationReason)
+                    return t("cultGunsStash.cancelled");
+                  const [key, ...paramStrings] =
+                    lobby.cabinSearchStatus.cancellationReason.split("|");
+                  const params: Record<string, string> = {};
+                  paramStrings.forEach((p) => {
+                    const [k, v] = p.split(":");
+                    if (k && v) params[k] = v;
+                  });
+                  return t(key, params);
+                })()
               }
             />
             <CancellationModal.Action onClick={onDismissCabinSearch} />
@@ -545,12 +557,22 @@ export function GameView({
       {lobby.gunsStashStatus?.state === "CANCELLED" &&
         !isGunsStashDismissed && (
           <CancellationModal.Root isOpen={true} onDismiss={onDismissGunsStash}>
-            <CancellationModal.Header title="Cult's Guns Stash" />
+            <CancellationModal.Header title={t("cultGunsStash.title")} />
             <CancellationModal.Body
-              message="The ritual was interrupted!"
+              message={t("cultGunsStash.interrupted")}
               reason={
-                lobby.gunsStashStatus.cancellationReason ||
-                "The action has been cancelled."
+                (() => {
+                  if (!lobby.gunsStashStatus.cancellationReason)
+                    return t("cultGunsStash.cancelled");
+                  const [key, ...paramStrings] =
+                    lobby.gunsStashStatus.cancellationReason.split("|");
+                  const params: Record<string, string> = {};
+                  paramStrings.forEach((p) => {
+                    const [k, v] = p.split(":");
+                    if (k && v) params[k] = v;
+                  });
+                  return t(key, params);
+                })()
               }
             />
             <CancellationModal.Action onClick={onDismissGunsStash} />
@@ -563,12 +585,10 @@ export function GameView({
           <div className="w-full max-w-md bg-slate-900 border border-red-900 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
               <AlertTriangle className="w-6 h-6 text-red-500" />
-              Reset Game?
+              {t("game.resetGame")}
             </h2>
             <p className="text-slate-300 mb-6">
-              This will revert the game to the start of the voyage. All actions
-              (Cabin Searches, Floggings, Conversions) will be undone. Roles
-              will remain the same.
+              {t("game.resetGameDesc")}
             </p>
             <div className="flex gap-4">
               <button
@@ -576,7 +596,7 @@ export function GameView({
                 onClick={() => setShowResetConfirm(false)}
                 className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
               >
-                Cancel
+                {t("actions.cancel")}
               </button>
               <button
                 type="button"
@@ -586,7 +606,7 @@ export function GameView({
                 }}
                 className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors"
               >
-                Reset
+                {t("actions.confirm")}
               </button>
             </div>
           </div>
@@ -599,11 +619,10 @@ export function GameView({
           <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
               <Target className="w-6 h-6 text-cyan-500" />
-              Back to Lobby?
+              {t("game.backToLobby")}
             </h2>
             <p className="text-slate-300 mb-6">
-              This will completely reset the game state and return everyone to
-              the lobby. Roles will be cleared and the voyage will end.
+              {t("game.backToLobbyDesc")}
             </p>
             <div className="flex gap-4">
               <button
@@ -611,7 +630,7 @@ export function GameView({
                 onClick={() => setShowBackToLobbyConfirm(false)}
                 className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
               >
-                Cancel
+                {t("actions.cancel")}
               </button>
               <button
                 type="button"
@@ -621,7 +640,7 @@ export function GameView({
                 }}
                 className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold transition-colors"
               >
-                Back to Lobby
+                {t("actions.confirm")}
               </button>
             </div>
           </div>
@@ -633,13 +652,13 @@ export function GameView({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
             <h2 className="text-xl font-bold text-white mb-4">
-              Cabin Search Request
+              {t("cabinSearch.title")}
             </h2>
             <p className="text-slate-300 mb-6">
               <span className="font-bold text-white">
                 {cabinSearchPrompt.searcherName}
               </span>{" "}
-              wants to search your cabin. Do you allow this?
+              {t("cabinSearch.request")}
             </p>
             <div className="flex gap-4">
               <button
@@ -647,14 +666,14 @@ export function GameView({
                 onClick={() => onCabinSearchResponse(false)}
                 className="flex-1 py-3 bg-red-900/50 hover:bg-red-900 text-red-200 rounded-xl font-bold transition-colors"
               >
-                Deny
+                {t("actions.deny")}
               </button>
               <button
                 type="button"
                 onClick={() => onCabinSearchResponse(true)}
                 className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold transition-colors"
               >
-                Allow
+                {t("actions.allow")}
               </button>
             </div>
           </div>
@@ -665,10 +684,9 @@ export function GameView({
       {showEndSessionConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
-            <h2 className="text-xl font-bold text-white mb-4">End Session?</h2>
+            <h2 className="text-xl font-bold text-white mb-4">{t("game.endSession")}</h2>
             <p className="text-slate-400 mb-8">
-              Are you sure you want to leave the game? You won't be able to
-              rejoin with the same role.
+              {t("game.endSessionDesc")}
             </p>
             <div className="flex gap-4">
               <button
@@ -676,14 +694,14 @@ export function GameView({
                 onClick={() => setShowEndSessionConfirm(false)}
                 className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
               >
-                Stay
+                {t("game.stay")}
               </button>
               <button
                 type="button"
                 onClick={onLeave}
                 className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors"
               >
-                Leave
+                {t("game.leave")}
               </button>
             </div>
           </div>
@@ -696,13 +714,13 @@ export function GameView({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
             <h2 className="text-xl font-bold text-white mb-4">
-              Flogging Request
+              {t("flogging.title")}
             </h2>
             <p className="text-slate-300 mb-6">
               <span className="font-bold text-white">
                 {floggingConfirmationPrompt.hostName}
               </span>{" "}
-              wants to flog you. Do you allow this?
+              {t("flogging.request")}
             </p>
             <div className="flex gap-4">
               <button
@@ -710,14 +728,14 @@ export function GameView({
                 onClick={() => onFloggingConfirmationResponse(false)}
                 className="flex-1 py-3 bg-red-900/50 hover:bg-red-900 text-red-200 rounded-xl font-bold transition-colors"
               >
-                Deny
+                {t("actions.deny")}
               </button>
               <button
                 type="button"
                 onClick={() => onFloggingConfirmationResponse(true)}
                 className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold transition-colors"
               >
-                Allow
+                {t("actions.allow")}
               </button>
             </div>
           </div>
@@ -729,7 +747,7 @@ export function GameView({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md animate-in fade-in duration-500">
           <div className="w-full max-w-md p-6 flex flex-col items-center">
             <h2 className="text-2xl font-bold text-white mb-8 text-center">
-              Flogging Result
+              {t("flogging.title")}
             </h2>
 
             <div className="mb-8">
@@ -754,12 +772,12 @@ export function GameView({
                     </h3>
                     <div className="bg-slate-800/80 p-6 rounded-2xl border border-slate-700 text-center">
                       <p className="text-slate-400 text-sm uppercase font-bold mb-2">
-                        Is Definitely
+                        {t("flogging.isDefinitely")}
                       </p>
                       <p
                         className={`text-3xl font-bold ${getRoleColor(floggingReveal.revealedRole)}`}
                       >
-                        NOT {floggingReveal.revealedRole.replace("_", " ")}
+                        {t("game.not")} {t(`roles.${floggingReveal.revealedRole}`)}
                       </p>
                     </div>
                   </div>
@@ -772,7 +790,7 @@ export function GameView({
               onClick={onClearFloggingReveal}
               className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors"
             >
-              Close
+              {t("actions.done")}
             </button>
           </div>
         </div>
@@ -788,7 +806,7 @@ export function GameView({
               <div className="flex items-center gap-3 mb-6">
                 <Eye className="w-8 h-8 text-amber-500" />
                 <h2 className="text-xl font-bold text-white">
-                  Conversion to Cult
+                  {t("conversion.title")}
                 </h2>
               </div>
 
@@ -797,17 +815,17 @@ export function GameView({
                   isOpen={true}
                   onDismiss={onDismissConversion}
                 >
-                  <CancellationModal.Header title="Conversion to Cult" />
+                  <CancellationModal.Header title={t("conversion.title")} />
                   <CancellationModal.Body
-                    message="The ritual was interrupted!"
-                    reason="Someone refused the call. The conversion has failed."
+                    message={t("cultGunsStash.interrupted")}
+                    reason={t("conversion.failed")}
                   />
                   <CancellationModal.Action onClick={onDismissConversion} />
                 </CancellationModal.Root>
               ) : (
                 <>
                   <p className="text-slate-300 mb-6">
-                    A ritual has begun. All players must accept to proceed.
+                    {t("conversion.ritualBegun")}
                   </p>
 
                   <div className="space-y-2 mb-8 max-h-60 overflow-y-auto">
@@ -828,11 +846,11 @@ export function GameView({
                             </div>
                             {hasAccepted ? (
                               <span className="text-green-400 text-sm font-bold flex items-center gap-1">
-                                Accepted
+                                {t("actions.accepted")}
                               </span>
                             ) : (
                               <span className="text-slate-500 text-sm font-bold flex items-center gap-1">
-                                Pending...
+                                {t("actions.pending")}
                               </span>
                             )}
                           </div>
@@ -847,14 +865,14 @@ export function GameView({
                         onClick={() => onRespondConversion(false)}
                         className="flex-1 py-3 bg-red-900/50 hover:bg-red-900 text-red-200 rounded-xl font-bold transition-colors"
                       >
-                        Decline
+                        {t("actions.deny")}
                       </button>
                       <button
                         type="button"
                         onClick={() => onRespondConversion(true)}
                         className="flex-1 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold transition-colors"
                       >
-                        Accept
+                        {t("actions.allow")}
                       </button>
                     </div>
                   )}
@@ -862,7 +880,7 @@ export function GameView({
                   {conversionStatus.responses[myPlayerId] && (
                     <div className="flex flex-col gap-3">
                       <p className="text-center text-slate-500 italic">
-                        Waiting for others...
+                        {t("game.waitingForOthers")}
                       </p>
                       <div className="flex gap-4">
                         <button
@@ -870,18 +888,18 @@ export function GameView({
                           onClick={() => onRespondConversion(false)}
                           className="flex-1 py-3 bg-red-900/30 hover:bg-red-900/50 text-red-200 rounded-xl font-bold transition-colors border border-red-900/30"
                         >
-                          Decline
+                          {t("actions.deny")}
                         </button>
                         <button
                           type="button"
                           onClick={() =>
                             window.alert(
-                              "You have already accepted the ritual.",
+                              t("conversion.alreadyAccepted"),
                             )
                           }
                           className="flex-1 py-3 bg-amber-600/50 text-white/50 cursor-not-allowed rounded-xl font-bold border border-amber-600/20"
                         >
-                          Accepted
+                          {t("actions.accepted")}
                         </button>
                       </div>
                     </div>
@@ -898,13 +916,13 @@ export function GameView({
           <div className="w-full max-w-md bg-slate-900 border border-red-900/50 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300 mx-4">
             <div className="flex items-center gap-3 mb-6">
               <Skull className="w-8 h-8 text-red-500" />
-              <h2 className="text-xl font-bold text-white">Feed the Kraken</h2>
+              <h2 className="text-xl font-bold text-white">{t("feedTheKraken.title")}</h2>
             </div>
             <p className="text-slate-300 mb-6">
               <span className="font-bold text-white">
                 {feedTheKrakenPrompt.captainName}
               </span>{" "}
-              has chosen to feed you to the Kraken. Do you accept your fate?
+              {t("feedTheKraken.request")}
             </p>
             <div className="flex gap-4">
               <button
@@ -912,14 +930,14 @@ export function GameView({
                 onClick={() => onFeedTheKrakenResponse(false)}
                 className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl font-bold transition-colors"
               >
-                Deny
+                {t("actions.deny")}
               </button>
               <button
                 type="button"
                 onClick={() => onFeedTheKrakenResponse(true)}
                 className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors"
               >
-                Accept Fate
+                {t("feedTheKraken.acceptFate")}
               </button>
             </div>
           </div>
@@ -936,12 +954,10 @@ export function GameView({
                   <Eye className="w-12 h-12 text-amber-500" />
                 </div>
                 <h2 className="text-3xl font-bold text-amber-400 mb-4 text-center">
-                  CULT WINS!
+                  {t("feedTheKraken.cultWins")}
                 </h2>
                 <p className="text-slate-300 text-center mb-8">
-                  The Cult Leader was fed to the Kraken!
-                  <br />
-                  The Cult Leader and all Cultists immediately win the game.
+                  {t("feedTheKraken.cultWinsDesc")}
                 </p>
               </>
             ) : (
@@ -950,7 +966,7 @@ export function GameView({
                   <Skull className="w-12 h-12 text-red-500" />
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-4 text-center">
-                  Fed to the Kraken
+                  {t("feedTheKraken.title")}
                 </h2>
                 <div className="flex items-center gap-3 mb-6">
                   <Avatar
@@ -970,7 +986,7 @@ export function GameView({
                         )?.name
                       }
                     </p>
-                    <p className="text-sm text-red-400">Has been eliminated</p>
+                    <p className="text-sm text-red-400">{t("game.eliminated")}</p>
                   </div>
                 </div>
               </>
@@ -980,7 +996,7 @@ export function GameView({
               onClick={onClearFeedTheKrakenResult}
               className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors"
             >
-              Close
+              {t("actions.done")}
             </button>
           </div>
         </div>
@@ -993,18 +1009,17 @@ export function GameView({
             <div className="flex items-center gap-3 mb-6">
               <Scissors className="w-8 h-8 text-amber-500" />
               <h2 className="text-xl font-bold text-white">
-                Off with the Tongue
+                {t("offWithTongue.title")}
               </h2>
             </div>
             <p className="text-slate-300 mb-4">
               <span className="font-bold text-white">
                 {offWithTonguePrompt.captainName}
               </span>{" "}
-              wants to silence you.
+              {t("offWithTongue.request")}
             </p>
             <p className="text-sm text-slate-400 mb-6">
-              If you accept, you can no longer articulate words (but can make
-              sounds and gesticulate) and can no longer become captain.
+              {t("offWithTongue.requestDesc")}
             </p>
             <div className="flex gap-4">
               <button
@@ -1012,14 +1027,14 @@ export function GameView({
                 onClick={() => onOffWithTongueResponse(false)}
                 className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl font-bold transition-colors"
               >
-                Deny
+                {t("actions.deny")}
               </button>
               <button
                 type="button"
                 onClick={() => onOffWithTongueResponse(true)}
                 className="flex-1 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold transition-colors"
               >
-                Accept
+                {t("actions.allow")}
               </button>
             </div>
           </div>

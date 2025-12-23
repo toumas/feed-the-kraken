@@ -520,7 +520,7 @@ export default class Server implements Party.Server {
       sender.send(
         JSON.stringify({
           type: "ERROR",
-          message: "Lobby already exists",
+          message: "errors.lobbyAlreadyExists",
         }),
       );
       return;
@@ -559,7 +559,7 @@ export default class Server implements Party.Server {
       sender.send(
         JSON.stringify({
           type: "ERROR",
-          message: "Lobby not found",
+          message: "errors.lobbyNotFound",
         }),
       );
       return;
@@ -588,7 +588,7 @@ export default class Server implements Party.Server {
       sender.send(
         JSON.stringify({
           type: "ERROR",
-          message: "Lobby is full",
+          message: "errors.lobbyFull",
         }),
       );
       return;
@@ -738,7 +738,7 @@ export default class Server implements Party.Server {
       sender.send(
         JSON.stringify({
           type: "ERROR",
-          message: "Only the host can change role distribution mode.",
+          message: "errors.onlyHostCanChangeMode",
         }),
       );
       return;
@@ -749,7 +749,7 @@ export default class Server implements Party.Server {
       sender.send(
         JSON.stringify({
           type: "ERROR",
-          message: "Cannot change mode after the game has started.",
+          message: "errors.cannotChangeModeAfterStart",
         }),
       );
       return;
@@ -776,7 +776,7 @@ export default class Server implements Party.Server {
       sender.send(
         JSON.stringify({
           type: "ERROR",
-          message: "Role selection has already completed.",
+          message: "errors.roleSelectionCompleted",
         }),
       );
       return;
@@ -787,7 +787,7 @@ export default class Server implements Party.Server {
       sender.send(
         JSON.stringify({
           type: "ERROR",
-          message: "You have already confirmed your role selection.",
+          message: "errors.alreadyConfirmedRole",
         }),
       );
       return;
@@ -801,7 +801,7 @@ export default class Server implements Party.Server {
       sender.send(
         JSON.stringify({
           type: "ERROR",
-          message: "This role is not available for this player count.",
+          message: "errors.roleNotAvailableForCount",
         }),
       );
       return;
@@ -830,7 +830,7 @@ export default class Server implements Party.Server {
       sender.send(
         JSON.stringify({
           type: "ERROR",
-          message: "Role selection has already completed.",
+          message: "errors.roleSelectionCompleted",
         }),
       );
       return;
@@ -841,7 +841,7 @@ export default class Server implements Party.Server {
       sender.send(
         JSON.stringify({
           type: "ERROR",
-          message: "Please select a role first.",
+          message: "errors.selectRoleFirst",
         }),
       );
       return;
@@ -942,7 +942,7 @@ export default class Server implements Party.Server {
 
     // Cancel the role selection and return to WAITING
     this.lobbyState.roleSelectionStatus.state = "CANCELLED";
-    this.lobbyState.roleSelectionStatus.cancellationReason = `${player.name} cancelled role selection.`;
+    this.lobbyState.roleSelectionStatus.cancellationReason = `errors.playerCancelledSelection|name:${player.name}`;
     this.lobbyState.status = "WAITING";
 
     // Clear role selection status after delay to let clients read it
@@ -957,7 +957,7 @@ export default class Server implements Party.Server {
       sender.send(
         JSON.stringify({
           type: "ERROR",
-          message: "Lobby is full",
+          message: "errors.lobbyFull",
         }),
       );
       return;
@@ -1114,7 +1114,7 @@ export default class Server implements Party.Server {
       sender.send(
         JSON.stringify({
           type: "ERROR",
-          message: "Flogging has already been used this game.",
+          message: "errors.floggingAlreadyUsed",
         }),
       );
       return;
@@ -1498,7 +1498,7 @@ export default class Server implements Party.Server {
         sender.send(
           JSON.stringify({
             type: "ERROR",
-            message: "You cannot claim Captain because you have been silenced.",
+            message: "errors.silencedCannotClaimCaptain",
           }),
         );
         return;
@@ -1540,7 +1540,7 @@ export default class Server implements Party.Server {
         // Invalid distribution, cancel immediately
         this.lobbyState.cabinSearchStatus.state = "CANCELLED";
         this.lobbyState.cabinSearchStatus.cancellationReason =
-          "Invalid role distribution: Must have exactly one Captain, one Navigator, and one Lieutenant.";
+          "errors.invalidRoleDistribution";
       } else {
         // Initialize questions and answers
         const playerQuestions: Record<string, number> = {};
@@ -1880,7 +1880,7 @@ export default class Server implements Party.Server {
     if (this.lobbyState.gunsStashStatus.state === "WAITING_FOR_PLAYERS") {
       this.lobbyState.gunsStashStatus.state = "CANCELLED";
       this.lobbyState.gunsStashStatus.cancellationReason =
-        "The action was cancelled.";
+        "cultGunsStash.cancelled";
       await this.saveLobbyState();
       this.broadcastLobbyUpdate();
     }
@@ -1902,7 +1902,7 @@ export default class Server implements Party.Server {
       sender.send(
         JSON.stringify({
           type: "ERROR",
-          message: "The captain cannot feed themselves to the Kraken.",
+          message: "errors.captainCannotFeedSelf",
         }),
       );
       return;
@@ -2003,7 +2003,7 @@ export default class Server implements Party.Server {
       sender.send(
         JSON.stringify({
           type: "ERROR",
-          message: "You cannot give the token to yourself.",
+          message: "errors.cannotTargetSelf",
         }),
       );
       return;
@@ -2017,7 +2017,7 @@ export default class Server implements Party.Server {
       sender.send(
         JSON.stringify({
           type: "ERROR",
-          message: "This player has already lost their tongue.",
+          message: "errors.playerAlreadySilenced",
         }),
       );
       return;

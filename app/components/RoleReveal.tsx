@@ -2,6 +2,7 @@
 
 import { EyeOff } from "lucide-react";
 import { createContext, useContext, useState } from "react";
+import { useT } from "../i18n/client";
 import { cn } from "../utils";
 
 // --- Context ---
@@ -91,6 +92,7 @@ interface HiddenProps {
 
 function Hidden({ children, className }: HiddenProps) {
   const { isRevealed } = useRoleReveal();
+  const { t } = useT("common");
 
   return (
     <div
@@ -108,13 +110,13 @@ function Hidden({ children, className }: HiddenProps) {
             <EyeOff className="w-16 h-16 text-slate-500" />
           </div>
           <h2 className="text-3xl font-bold text-center text-slate-200 drop-shadow-lg mb-2">
-            Role Hidden
+            {t("roleReveal.hidden")}
           </h2>
           <p className="text-slate-400 text-center text-lg font-medium">
-            Press and hold to reveal your role.
+            {t("roleReveal.instruction")}
             <br />
             <span className="text-sm text-slate-500">
-              Make sure nobody is watching!
+              {t("roleReveal.warning")}
             </span>
           </p>
         </>

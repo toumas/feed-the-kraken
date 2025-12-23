@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useT } from "../i18n/client";
 import { cn } from "../utils";
 import { InlineError } from "./InlineError";
 
@@ -7,6 +8,7 @@ interface JoinViewProps {
 }
 
 export function JoinView({ onJoin }: JoinViewProps) {
+  const { t } = useT("common");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -18,7 +20,7 @@ export function JoinView({ onJoin }: JoinViewProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (code.length < 4) {
-      setError("Please enter a valid ship code (at least 4 characters).");
+      setError(t("join.invalidCode"));
       setTimeout(() => setError(null), 3000);
       return;
     }
@@ -28,7 +30,7 @@ export function JoinView({ onJoin }: JoinViewProps) {
   return (
     <div className="flex-1 flex flex-col animate-in slide-in-from-right">
       <div className="flex-1 flex flex-col justify-center max-w-xs mx-auto w-full">
-        <h2 className="text-2xl font-bold mb-6 text-center">Enter Ship Code</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">{t("join.title")}</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <input
             ref={inputRef}
@@ -52,7 +54,7 @@ export function JoinView({ onJoin }: JoinViewProps) {
               code.length < 4 && "bg-slate-800 text-slate-600",
             )}
           >
-            Board Ship
+            {t("join.boardShip")}
           </button>
         </form>
       </div>

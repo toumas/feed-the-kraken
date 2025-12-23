@@ -16,3 +16,8 @@ Do not disable interactive elements (like buttons) or hide standard controls wit
 
 **Principle: Don't repeat yourself (DRY)**
 Avoid code duplication by extracting common logic into reusable functions or components. This makes the codebase more maintainable and reduces the risk of bugs. Before writing new code, check if a similar pattern exists and consider reusing it. IMPORTANT: The scope of the DRY principle is global in terms of the codebase.
+
+**Principle: Use context7 tool**
+Always use context7 when I need code generation, setup or configuration steps, or
+library/API documentation. This means you should automatically use the Context7 MCP
+tools to resolve library id and get library docs without me having to explicitly ask.
