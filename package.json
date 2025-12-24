@@ -27,6 +27,7 @@
     "next": "16.0.10",
     "partykit": "^0.0.115",
     "partysocket": "^1.1.6",
+    "qrcode.react": "^4.2.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-i18next": "^16.5.0",

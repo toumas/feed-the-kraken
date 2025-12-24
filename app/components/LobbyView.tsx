@@ -3,9 +3,12 @@ import {
   CheckCircle2,
   Copy,
   Play,
+  QrCode,
   Settings,
   UserPlus,
+  X,
 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
 import { useT } from "../i18n/client";
 import {
@@ -48,6 +51,7 @@ export function LobbyView({
   const canStart = playerCount >= MIN_PLAYERS && playerCount <= MAX_PLAYERS;
 
   const [copied, setCopied] = useState(false);
+  const [showQR, setShowQR] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const copyCode = () => {
@@ -55,6 +59,11 @@ export function LobbyView({
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const qrUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/identify?next=join&code=${lobby.code}`
+      : "";
 
   const handleStart = () => {
     if (!canStart) {
@@ -95,20 +104,67 @@ export function LobbyView({
               {t("lobby.connectionStatus")}: {connectionStatus}
             </span>
           </div>
-          <button
-            onClick={copyCode}
-            type="button"
-            className="p-3 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
-            title={t("lobby.copyCode")}
-          >
-            {copied ? (
-              <CheckCircle2 className="w-6 h-6 text-green-500" />
-            ) : (
-              <Copy className="w-6 h-6" />
-            )}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowQR(true)}
+              type="button"
+              className="p-3 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
+              title={t("lobby.showQRCode")}
+            >
+              <QrCode className="w-6 h-6" />
+            </button>
+            <button
+              onClick={copyCode}
+              type="button"
+              className="p-3 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
+              title={t("lobby.copyCode")}
+            >
+              {copied ? (
+                <CheckCircle2 className="w-6 h-6 text-green-500" />
+              ) : (
+                <Copy className="w-6 h-6" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* QR Code Modal */}
+      {showQR && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-sm w-full relative shadow-2xl flex flex-col items-center gap-6">
+            <button
+              onClick={() => setShowQR(false)}
+              type="button"
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full hover:bg-slate-700 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center space-y-2">
+              <h3 className="text-xl font-bold text-white uppercase tracking-wider">
+                {t("lobby.scanToJoin")}
+              </h3>
+              <p className="text-cyan-400 font-mono text-2xl font-bold tracking-widest">
+                {lobby.code}
+              </p>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl">
+              <QRCodeSVG
+                value={qrUrl}
+                size={240}
+                level="H"
+                includeMargin={false}
+              />
+            </div>
+
+            <p className="text-sm text-slate-400 text-center max-w-[200px]">
+              {t("home.subtext")}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* My Profile Editor */}
       <div className="bg-slate-900/80 border border-cyan-900/30 rounded-xl p-4 shadow-lg">
