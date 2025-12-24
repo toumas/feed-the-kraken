@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { isValidComposition, getRolesForPlayerCount } from "./role-utils";
+import { describe, expect, it } from "vitest";
 import type { Role } from "../types";
+import { getRolesForPlayerCount, isValidComposition } from "./role-utils";
 
 describe("role-utils", () => {
   describe("getRolesForPlayerCount", () => {

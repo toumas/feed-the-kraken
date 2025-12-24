@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { isValidComposition } from "../app/utils/role-utils";
 import type { Role } from "@/app/types";
+import { isValidComposition } from "../app/utils/role-utils";
 
 describe("isValidComposition", () => {
   it("should validate 5-player variants", () => {

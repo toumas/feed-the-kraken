@@ -11,9 +11,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { useT } from "../i18n/client";
 import { Avatar } from "../components/Avatar";
 import { RoleReveal } from "../components/RoleReveal";
+import { useT } from "../i18n/client";
 import type { LobbyState, Role } from "../types";
 import { cn } from "../utils";
 import { getRoleColor } from "../utils/role-utils";

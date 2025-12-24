@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
 import acceptLanguage from "accept-language";
+import { type NextRequest, NextResponse } from "next/server";
 import {
   cookieName,
   fallbackLng,

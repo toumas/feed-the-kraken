@@ -9,8 +9,8 @@ import { FeedbackCard } from "../../components/FeedbackCard";
 import { InlineError } from "../../components/InlineError";
 import { Quiz } from "../../components/Quiz";
 import { useGame } from "../../context/GameContext";
-import { useT } from "../../i18n/client";
 import { QUIZ_QUESTIONS } from "../../data/quiz";
+import { useT } from "../../i18n/client";
 import type { Role } from "../../types";
 import { getRoleColor } from "../../utils/role-utils";
 

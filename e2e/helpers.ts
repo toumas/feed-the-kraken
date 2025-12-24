@@ -1,4 +1,4 @@
-import { type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 /**
  * Presses and holds the "Role Hidden" button to reveal the player's role,

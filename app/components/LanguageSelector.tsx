@@ -2,7 +2,7 @@
 
 import { Globe } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { languages, type Language } from "../i18n/settings";
+import { type Language, languages } from "../i18n/settings";
 
 const languageNames: Record<Language, string> = {
   en: "English",

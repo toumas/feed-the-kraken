@@ -18,8 +18,8 @@ import { Avatar } from "../../components/Avatar";
 import { FeedbackCard } from "../../components/FeedbackCard";
 import { Quiz } from "../../components/Quiz";
 import { useGame } from "../../context/GameContext";
-import { useT } from "../../i18n/client";
 import { QUIZ_QUESTIONS } from "../../data/quiz";
+import { useT } from "../../i18n/client";
 
 export default function CultGunsStashPage() {
   const router = useRouter();

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("Back to Lobby", () => {
   test("Host can return to lobby and reset the game state", async ({

@@ -1,9 +1,9 @@
 import { createContext, type ReactNode, useContext, useState } from "react";
+import { useT } from "../i18n/client";
 import type { Player } from "../types";
 import { cn } from "../utils";
 import { Avatar } from "./Avatar";
 import { InlineError } from "./InlineError";
-import { useT } from "../i18n/client";
 
 type PlayerSelectionContextType = {
   selectedId: string | null;

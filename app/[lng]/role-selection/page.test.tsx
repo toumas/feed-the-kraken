@@ -1,9 +1,9 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
-import RoleSelectionPage from "./page";
-import { useGame } from "../../context/GameContext";
 import { useRouter } from "next/navigation";
-import { vi, describe, it, expect, type Mock } from "vitest";
+import { describe, expect, it, type Mock, vi } from "vitest";
+import { useGame } from "../../context/GameContext";
+import RoleSelectionPage from "./page";
 
 vi.mock("../../context/GameContext");
 vi.mock("next/navigation");

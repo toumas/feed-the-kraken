@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useT } from "../i18n/client";
 import {
   type ConnectionStatus,
   type LobbyState,
@@ -16,7 +17,6 @@ import {
   MIN_PLAYERS,
   type Role,
 } from "../types";
-import { useT } from "../i18n/client";
 
 export interface GameContextValue {
   // User State
