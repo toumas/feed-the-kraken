@@ -755,4 +755,11 @@ describe("GameView", () => {
     expect(screen.getByText("Offline")).toBeDefined();
     expect(screen.getByText("Multitasker")).toBeDefined();
   });
+
+  it("does not render sailor count text", () => {
+    render(<GameView {...defaultProps} />);
+    expect(screen.queryByText(/Sailors/i)).toBeNull();
+    expect(screen.queryByText(/Merenkulkijaa/i)).toBeNull();
+    expect(screen.queryByText("game.sailors")).toBeNull();
+  });
 });

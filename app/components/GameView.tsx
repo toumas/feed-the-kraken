@@ -399,14 +399,6 @@ export function GameView({
               </div>
             ))}
           </div>
-          <div className="flex items-center justify-end mt-3 pt-3 border-t border-slate-800">
-            <p className="text-sm text-slate-400">
-              <span className="text-lg font-bold text-white mr-1">
-                {lobby.players.length}
-              </span>
-              {t("game.sailors")}
-            </p>
-          </div>
         </div>
 
         <div className="space-y-3">
