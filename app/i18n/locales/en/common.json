@@ -61,7 +61,9 @@
     "startVoyage": "Start Voyage",
     "awaitingHost": "Awaiting Host...",
     "abandonShip": "Abandon Ship",
-    "minPlayers": "Need at least {{min}} sailors to depart!"
+    "minPlayers": "Need at least {{min}} sailors to depart!",
+    "showQRCode": "Show QR Code",
+    "scanToJoin": "Scan to Join"
   },
   "roles": {
     "SAILOR": "Loyal Sailor",
