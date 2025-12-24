@@ -1,0 +1,65 @@
+
+> feed-the-kraken-companion-openspec@0.1.0 dev
+> next dev
+
+   ▲ Next.js 16.0.10 (Turbopack)
+   - Local:         http://localhost:3000
+   - Network:       http://192.168.0.2:3000
+
+ ✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+ ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+ ✓ Ready in 1389ms
+ ○ Compiling /[lng] ...
+ GET /en 200 in 8.9s (compile: 8.6s, proxy.ts: 5ms, render: 282ms)
+ GET /en/identify?next=create 200 in 2.1s (compile: 2.1s, proxy.ts: 8ms, render: 41ms)
+ GET /en/lobby 200 in 1877ms (compile: 1831ms, proxy.ts: 9ms, render: 37ms)
+ GET /en 200 in 175ms (compile: 39ms, proxy.ts: 7ms, render: 129ms)
+ GET /en/identify?next=create 200 in 71ms (compile: 30ms, proxy.ts: 7ms, render: 35ms)
+ GET /en/lobby 200 in 69ms (compile: 33ms, proxy.ts: 6ms, render: 30ms)
+ GET /en 200 in 113ms (compile: 31ms, proxy.ts: 4ms, render: 78ms)
+ GET /en/identify?next=create 200 in 71ms (compile: 23ms, proxy.ts: 4ms, render: 44ms)
+ GET /en/lobby 200 in 84ms (compile: 36ms, proxy.ts: 10ms, render: 38ms)
+ GET /en 200 in 90ms (compile: 22ms, proxy.ts: 3ms, render: 66ms)
+ GET /en/identify?next=create 200 in 58ms (compile: 22ms, proxy.ts: 6ms, render: 29ms)
+ GET /en/lobby 200 in 70ms (compile: 28ms, proxy.ts: 4ms, render: 38ms)
+ GET /en 200 in 115ms (compile: 31ms, proxy.ts: 4ms, render: 80ms)
+ GET /en/identify?next=create 200 in 71ms (compile: 24ms, proxy.ts: 4ms, render: 43ms)
+ GET /en/lobby 200 in 106ms (compile: 27ms, proxy.ts: 4ms, render: 75ms)
+ GET /en 200 in 88ms (compile: 22ms, proxy.ts: 3ms, render: 63ms)
+ GET /en/identify?next=create 200 in 58ms (compile: 22ms, proxy.ts: 4ms, render: 32ms)
+ GET /en/lobby 200 in 79ms (compile: 33ms, proxy.ts: 6ms, render: 39ms)
+ GET /en 200 in 113ms (compile: 25ms, proxy.ts: 3ms, render: 85ms)
+ GET /en/identify?next=create 200 in 55ms (compile: 22ms, proxy.ts: 3ms, render: 30ms)
+ GET /en/lobby 200 in 67ms (compile: 25ms, proxy.ts: 6ms, render: 36ms)
+ GET /en 200 in 85ms (compile: 22ms, proxy.ts: 3ms, render: 60ms)
+ GET /en/identify?next=create 200 in 49ms (compile: 23ms, proxy.ts: 4ms, render: 22ms)
+ GET /en/lobby 200 in 72ms (compile: 32ms, proxy.ts: 5ms, render: 36ms)
+ GET /en 200 in 106ms (compile: 23ms, proxy.ts: 3ms, render: 80ms)
+ GET /en/identify?next=create 200 in 70ms (compile: 25ms, proxy.ts: 8ms, render: 37ms)
+ GET /en/lobby 200 in 77ms (compile: 32ms, proxy.ts: 4ms, render: 41ms)
+ GET /en 200 in 99ms (compile: 32ms, proxy.ts: 3ms, render: 65ms)
+ GET /en/join 200 in 1462ms (compile: 1429ms, proxy.ts: 4ms, render: 29ms)
+ GET /en/identify?next=join&code=DDZRYL 200 in 53ms (compile: 23ms, proxy.ts: 4ms, render: 27ms)
+ GET /en/lobby 200 in 94ms (compile: 44ms, proxy.ts: 7ms, render: 43ms)
+ GET /en 200 in 118ms (compile: 24ms, proxy.ts: 4ms, render: 90ms)
+ GET /en/join 200 in 83ms (compile: 38ms, proxy.ts: 4ms, render: 41ms)
+ GET /en/identify?next=join&code=DDZRYL 200 in 110ms (compile: 32ms, proxy.ts: 4ms, render: 74ms)
+ GET /en/lobby 200 in 77ms (compile: 41ms, proxy.ts: 5ms, render: 31ms)
+ GET /en 200 in 97ms (compile: 27ms, proxy.ts: 4ms, render: 66ms)
+ GET /en/join 200 in 64ms (compile: 25ms, proxy.ts: 3ms, render: 35ms)
+ GET /en/identify?next=join&code=DDZRYL 200 in 80ms (compile: 35ms, proxy.ts: 4ms, render: 41ms)
+ GET /en/lobby 200 in 96ms (compile: 33ms, proxy.ts: 15ms, render: 48ms)
+ GET /en 200 in 128ms (compile: 31ms, proxy.ts: 3ms, render: 94ms)
+ GET /en/join 200 in 88ms (compile: 39ms, proxy.ts: 4ms, render: 45ms)
+ GET /en/identify?next=join&code=DDZRYL 200 in 53ms (compile: 25ms, proxy.ts: 5ms, render: 24ms)
+ GET /en/lobby 200 in 197ms (compile: 64ms, proxy.ts: 8ms, render: 126ms)
+ GET /en/game 200 in 3.1s (compile: 2.9s, proxy.ts: 7ms, render: 166ms)
+ GET /en/game 200 in 3.1s (compile: 3.0s, proxy.ts: 15ms, render: 127ms)
+ GET /en/game 200 in 3.1s (compile: 3.0s, proxy.ts: 4ms, render: 99ms)
+ GET /en/game 200 in 3.1s (compile: 3.0s, proxy.ts: 6ms, render: 90ms)
+ GET /en/game 200 in 3.1s (compile: 3.0s, proxy.ts: 8ms, render: 165ms)

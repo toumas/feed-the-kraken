@@ -13,8 +13,7 @@ export default function JoinPage() {
   const { t } = useT("common");
 
   const handleJoin = (code: string) => {
-    joinLobby(code);
-    router.push("/lobby");
+    router.push(`/identify?next=join&code=${code}`);
   };
 
   return (

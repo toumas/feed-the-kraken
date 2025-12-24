@@ -32,7 +32,11 @@ export interface GameContextValue {
   connectToLobby: (lobbyCode: string, initialPayload?: MessagePayload) => void;
   disconnectFromLobby: () => void;
   createLobby: (overrideName?: string, overridePhoto?: string | null) => void;
-  joinLobby: (codeEntered: string) => void;
+  joinLobby: (
+    codeEntered: string,
+    overrideName?: string,
+    overridePhoto?: string | null,
+  ) => void;
   leaveLobby: () => void;
   startGame: () => void;
   addBotPlayer: () => void;
@@ -534,16 +538,24 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setError(null);
   };
 
-  const joinLobby = (codeEntered: string) => {
+  const joinLobby = (
+    codeEntered: string,
+    overrideName?: string,
+    overridePhoto?: string | null,
+  ) => {
     if (codeEntered.length < 4) {
       setError(t("errors.invalidCode"));
       return;
     }
+
+    const nameToUse = overrideName || myName;
+    const photoToUse = overridePhoto !== undefined ? overridePhoto : myPhoto;
+
     connectToLobby(codeEntered.toUpperCase(), {
       type: "JOIN_LOBBY",
       playerId: myPlayerId,
-      playerName: myName,
-      playerPhoto: myPhoto,
+      playerName: nameToUse,
+      playerPhoto: photoToUse,
     });
 
     localStorage.setItem("kraken_lobby_code", codeEntered.toUpperCase());
