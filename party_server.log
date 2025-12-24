@@ -1,0 +1,25 @@
+
+> feed-the-kraken-companion-openspec@0.1.0 partykit:dev
+> partykit dev
+
+🎈 PartyKit v0.0.115
+---------------------
+Build succeeded, starting server...
+
+[2K[1A[2K[G[pk:dbg] Updated `Request.cf` object cache!
+
+[2K[1A[2K[G[pk:inf] Ready on http://0.0.0.0:1999
+
+[2K[1A[2K[G[pk:inf] - http://127.0.0.1:1999
+
+[2K[1A[2K[G[pk:inf] - http://192.168.0.2:1999
+
+[2K[1A[2K[G[pk:inf] GET /parties/main/DDZRYL 101 Switching Protocols (25ms)
+
+[2K[1A[2K[G[pk:inf] GET /parties/main/DDZRYL 101 Switching Protocols (1ms)
+
+[2K[1A[2K[G[pk:inf] GET /parties/main/DDZRYL 101 Switching Protocols (2ms)
+
+[2K[1A[2K[G[pk:inf] GET /parties/main/DDZRYL 101 Switching Protocols (2ms)
+
+[2K[1A[2K[G[pk:inf] GET /parties/main/DDZRYL 101 Switching Protocols (5ms)

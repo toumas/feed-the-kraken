@@ -11,7 +11,9 @@ function IdentifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextAction = searchParams.get("next"); // "create" | "join"
-  const { myName, myPhoto, updateMyProfile, createLobby } = useGame();
+  const code = searchParams.get("code");
+  const { myName, myPhoto, updateMyProfile, createLobby, joinLobby } =
+    useGame();
   const { t } = useT("common");
 
   const handleSave = (name: string, photo: string | null) => {
@@ -23,7 +25,13 @@ function IdentifyContent() {
       // The lobby page will handle the "waiting for connection" state
       router.push("/lobby");
     } else if (nextAction === "join") {
-      router.push("/join");
+      if (code) {
+        joinLobby(code, name, photo);
+        router.push("/lobby");
+      } else {
+        // Fallback if code is missing, though flow should ensure it's there
+        router.push("/join");
+      }
     } else {
       router.push("/");
     }

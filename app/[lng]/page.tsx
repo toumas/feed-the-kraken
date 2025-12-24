@@ -24,25 +24,12 @@ export default function KrakenCompanion() {
     }
   }, [lobby, router]);
 
-  const hasValidProfile = () => {
-    return myName !== "New Sailor" && myPhoto !== null;
-  };
-
   const handleCreate = () => {
-    if (hasValidProfile()) {
-      createLobby();
-      router.push("/lobby");
-    } else {
-      router.push("/identify?next=create");
-    }
+    router.push("/identify?next=create");
   };
 
   const handleJoin = () => {
-    if (hasValidProfile()) {
-      router.push("/join");
-    } else {
-      router.push("/identify?next=join");
-    }
+    router.push("/join");
   };
 
   return (

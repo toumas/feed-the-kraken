@@ -13,6 +13,11 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
   });
   await hostPage.goto("/");
   await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+
+  // Host should be redirected to Identify page, then save to go to lobby
+  await expect(hostPage).toHaveURL(/\/identify\?next=create/);
+  await hostPage.getByRole("button", { name: "Save Profile" }).click();
+
   await expect(hostPage).toHaveURL(/\/lobby/);
   await expect(hostPage.getByText("Host(You)")).toBeVisible();
 
@@ -41,11 +46,12 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
     // Fill join form
     await page.getByPlaceholder("XP7K9L").fill(code);
     await page.getByRole("button", { name: "Board Ship" }).click();
-    await expect(page).toHaveURL(/\/lobby/);
 
-    // Profile setup is bypassed via localStorage
-    // await page.getByPlaceholder("Enter your pirate name...").fill(playerName);
-    // await page.getByRole("button", { name: "Save Profile" }).click();
+    // Player should be redirected to Identify page
+    await expect(page).toHaveURL(new RegExp(`/identify\\?next=join&code=${code}`));
+    await page.getByRole("button", { name: "Save Profile" }).click();
+
+    await expect(page).toHaveURL(/\/lobby/);
 
     await expect(page.getByText(`${playerName}(You)`)).toBeVisible();
     players.push({ context, page, name: playerName });
