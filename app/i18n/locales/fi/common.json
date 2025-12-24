@@ -61,7 +61,9 @@
     "startVoyage": "Aloita matka",
     "awaitingHost": "Odotellaan pelinhoitajaa...",
     "abandonShip": "Jätä laiva",
-    "minPlayers": "Tarvitaan vähintään {{min}} merenkulkijaa lähtöön!"
+    "minPlayers": "Tarvitaan vähintään {{min}} merenkulkijaa lähtöön!",
+    "showQRCode": "Näytä QR-koodi",
+    "scanToJoin": "Skannaa liittyäksesi"
   },
   "roles": {
     "SAILOR": "Merenkulkija",
