@@ -32,6 +32,7 @@ describe("LobbyView", () => {
     onLeave: vi.fn(),
     onStart: vi.fn(),
     onAddBot: vi.fn(),
+    onSetRoleDistributionMode: vi.fn(),
     connectionStatus: "connected" as const,
   };
 
@@ -86,6 +87,40 @@ describe("LobbyView", () => {
 
       fireEvent.click(screen.getByText("Start Voyage"));
       expect(onStart).toHaveBeenCalled();
+    });
+  });
+
+  describe("QR Code", () => {
+    it("shows QR code button", () => {
+      render(<LobbyView lobby={createMockLobby(5)} {...defaultProps} />);
+      expect(screen.getByTitle("Show QR Code")).toBeDefined();
+    });
+
+    it("opens QR code modal when button clicked", () => {
+      render(<LobbyView lobby={createMockLobby(5)} {...defaultProps} />);
+
+      fireEvent.click(screen.getByTitle("Show QR Code"));
+
+      expect(screen.getByText("Scan to Join")).toBeDefined();
+      // The code is shown in the lobby header AND in the modal, so we expect multiple
+      expect(screen.getAllByText("ABC123").length).toBeGreaterThan(1);
+    });
+
+    it("closes QR code modal when X clicked", () => {
+      render(<LobbyView lobby={createMockLobby(5)} {...defaultProps} />);
+
+      fireEvent.click(screen.getByTitle("Show QR Code"));
+      expect(screen.getByText("Scan to Join")).toBeDefined();
+
+      // Simpler: The modal is the only place "Scan to Join" appears.
+      const modal = screen.getByText("Scan to Join").closest("div")?.parentElement;
+      const closeButton = modal?.querySelector("button");
+
+      if (closeButton) {
+        fireEvent.click(closeButton);
+      }
+
+      expect(screen.queryByText("Scan to Join")).toBeNull();
     });
   });
 });
