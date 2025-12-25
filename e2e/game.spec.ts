@@ -48,7 +48,9 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
     await page.getByRole("button", { name: "Board Ship" }).click();
 
     // Player should be redirected to Identify page
-    await expect(page).toHaveURL(new RegExp(`/identify\\?next=join&code=${code}`));
+    await expect(page).toHaveURL(
+      new RegExp(`/identify\\?next=join&code=${code}`),
+    );
     await page.getByRole("button", { name: "Save Profile" }).click();
 
     await expect(page).toHaveURL(/\/lobby/);
