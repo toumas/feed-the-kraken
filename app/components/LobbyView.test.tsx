@@ -113,7 +113,9 @@ describe("LobbyView", () => {
       expect(screen.getByText("Scan to Join")).toBeDefined();
 
       // Simpler: The modal is the only place "Scan to Join" appears.
-      const modal = screen.getByText("Scan to Join").closest("div")?.parentElement;
+      const modal = screen
+        .getByText("Scan to Join")
+        .closest("div")?.parentElement;
       const closeButton = modal?.querySelector("button");
 
       if (closeButton) {

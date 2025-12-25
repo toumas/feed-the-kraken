@@ -267,13 +267,15 @@ export function LobbyView({
             {t("lobby.crewManifest")} ({playerCount}/{MAX_PLAYERS})
           </h3>
           {/* DEV ONLY BUTTON - For demo purposes to test constraints */}
-          <button
-            onClick={onAddBot}
-            type="button"
-            className="text-xs px-2 py-1 bg-slate-800 text-slate-500 rounded flex items-center gap-1 hover:text-slate-300 hover:bg-slate-700"
-          >
-            <UserPlus className="w-3 h-3" /> {t("lobby.debugBot")}
-          </button>
+          {process.env.NODE_ENV === "development" && (
+            <button
+              onClick={onAddBot}
+              type="button"
+              className="text-xs px-2 py-1 bg-slate-800 text-slate-500 rounded flex items-center gap-1 hover:text-slate-300 hover:bg-slate-700"
+            >
+              <UserPlus className="w-3 h-3" /> {t("lobby.debugBot")}
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3 overflow-y-auto max-h-[40vh] p-1">
