@@ -110,7 +110,11 @@
     "unavailable": "Ei valittavissa",
     "selectPlayer": "Valitse ensin pelaaja.",
     "unknown": "Tuntematon",
-    "waitingForOthers": "Odotetaan muita..."
+    "waitingForOthers": "Odotetaan muita...",
+    "teamComposition": {
+      "title": "Tiimikoostumus",
+      "or": "tai"
+    }
   },
   "actions": {
     "confirm": "Vahvista",
