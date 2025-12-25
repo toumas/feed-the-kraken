@@ -18,6 +18,7 @@ import type { LobbyState, Role } from "../types";
 import { cn } from "../utils";
 import { getRoleColor } from "../utils/role-utils";
 import { CancellationModal } from "./CancellationModal";
+import { TeamComposition } from "./TeamComposition";
 
 interface GameViewProps {
   lobby: LobbyState;
@@ -289,6 +290,15 @@ export function GameView({
           </RoleReveal.Revealed>
         </RoleReveal.Canvas>
       </RoleReveal.Root>
+
+      {/* Team Composition */}
+      <TeamComposition
+        playerCount={
+          lobby.assignments
+            ? Object.keys(lobby.assignments).length
+            : lobby.players.length
+        }
+      />
 
       <div className="p-6 bg-slate-900 rounded-xl border border-slate-800 w-full max-w-sm">
         {/* Public Info Section */}

@@ -110,7 +110,11 @@
     "unavailable": "Unavailable",
     "selectPlayer": "Please select a player first.",
     "unknown": "Unknown",
-    "waitingForOthers": "Waiting for others..."
+    "waitingForOthers": "Waiting for others...",
+    "teamComposition": {
+      "title": "Team Composition Overview",
+      "or": "or"
+    }
   },
   "actions": {
     "confirm": "Confirm",
