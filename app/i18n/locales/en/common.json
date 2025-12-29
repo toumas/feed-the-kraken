@@ -174,11 +174,11 @@
     "waitingConfirmation": "Waiting for Confirmation",
     "waitingConfirmationDesc": "The crewmate must allow the search...",
     "searchedTitle": "Cabin Searched",
-    "searchedDesc": "Press and hold to reveal the loyalty card.",
+    "searchedDesc": "Tap 5 times to reveal the loyalty card.",
     "foundCard": "You found {{name}}'s loyalty card!"
   },
   "conversion": {
-    "title": "Conversion",
+    "title": "Conversion to Cult",
     "selectTarget": "Select a crew member to convert",
     "success": "{{name}} has been converted to the cult!",
     "failed": "Conversion failed!",
@@ -236,7 +236,8 @@
     "yourRoleIs": "Your role is",
     "teamInfo": "Your team:",
     "hidden": "Role Hidden",
-    "instruction": "Press and hold to reveal your role.",
+    "instruction": "Tap 5 times to reveal your role.",
+    "hideInstruction": "Tap once to hide your role.",
     "warning": "Make sure nobody is watching!"
   },
   "errors": {

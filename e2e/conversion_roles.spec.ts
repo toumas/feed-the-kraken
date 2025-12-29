@@ -1,5 +1,9 @@
 import { expect, type Page, test } from "@playwright/test";
-import { identifyRole, withRoleRevealed } from "./helpers";
+import {
+  completeIdentifyPage,
+  identifyRole,
+  withRoleRevealed,
+} from "./helpers";
 
 test.describe("Conversion Role Display", () => {
   test.setTimeout(120000); // Longer timeout for 6 players and conversion
@@ -17,6 +21,7 @@ test.describe("Conversion Role Display", () => {
     });
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+    await completeIdentifyPage(hostPage);
     await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
     // Get the room code
@@ -41,6 +46,7 @@ test.describe("Conversion Role Display", () => {
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
       await page.getByRole("button", { name: "Board Ship" }).click();
+      await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       players.push({ context, page, name: playerName });
     }
@@ -170,6 +176,7 @@ test.describe("Conversion Role Display", () => {
     });
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+    await completeIdentifyPage(hostPage);
     await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
     // Get the room code
@@ -194,6 +201,7 @@ test.describe("Conversion Role Display", () => {
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
       await page.getByRole("button", { name: "Board Ship" }).click();
+      await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       players.push({ context, page, name: playerName });
     }
@@ -318,11 +326,13 @@ test.describe("Conversion Role Display", () => {
     // Find the reveal button within the overlay (it contains "Cabin Searched" text, not "Role Hidden")
     const revealBtn = resultOverlay
       .locator("button")
-      .filter({ hasText: "Press and hold" });
+      .filter({ hasText: "Tap 5 times" });
     await expect(revealBtn).toBeVisible({ timeout: 5000 });
 
-    // Press and hold to reveal
-    await revealBtn.dispatchEvent("mousedown");
+    // Click 5 times to reveal
+    for (let i = 0; i < 5; i++) {
+      await revealBtn.click();
+    }
 
     // Should show original role (Sailor) and Converted to Cult badge
     await expect(resultOverlay.getByText("Loyal Sailor")).toBeVisible({
@@ -330,7 +340,8 @@ test.describe("Conversion Role Display", () => {
     });
     await expect(resultOverlay.getByText("Converted to Cult")).toBeVisible();
 
-    await revealBtn.dispatchEvent("mouseup");
+    // Click once to hide
+    await revealBtn.click();
 
     // Cleanup
     await hostContext.close();

@@ -167,7 +167,7 @@ describe("GameView", () => {
         lobby={{ ...mockLobby, status: "PLAYING" }}
       />,
     );
-    expect(screen.getByText("Conversion")).toBeDefined();
+    expect(screen.getByText("Conversion to Cult")).toBeDefined();
   });
 
   it("calls onStartConversion when button is clicked", () => {
@@ -180,7 +180,7 @@ describe("GameView", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("Conversion"));
+    fireEvent.click(screen.getByText("Conversion to Cult"));
     expect(mockOnStartConversion).toHaveBeenCalled();
   });
 
@@ -220,7 +220,7 @@ describe("GameView", () => {
     );
 
     // Check for modal title
-    expect(screen.getByRole("heading", { name: "Conversion" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Conversion to Cult" })).toBeDefined();
     expect(
       screen.getByText(
         "A ritual has begun. All players must accept to proceed.",

@@ -174,7 +174,7 @@
     "waitingConfirmation": "Odotetaan vahvistusta",
     "waitingConfirmationDesc": "Henkilöstön jäsenen on sallittava tarkastus...",
     "searchedTitle": "Hytti tarkastettu",
-    "searchedDesc": "Paina ja pidä pohjassa paljastaaksesi roolikortti.",
+    "searchedDesc": "Napauta 5 kertaa paljastaaksesi roolikortti.",
     "foundCard": "{{name}}"
   },
   "conversion": {
@@ -236,7 +236,8 @@
     "yourRoleIs": "Sinun roolisi on",
     "teamInfo": "Tiimisi:",
     "hidden": "Rooli piilotettu",
-    "instruction": "Paina ja pidä pohjassa paljastaaksesi roolisi.",
+    "instruction": "Napauta 5 kertaa paljastaaksesi roolisi.",
+    "hideInstruction": "Napauta kerran piilottaaksesi roolisi.",
     "warning": "Varmista, ettei kukaan muu näe!"
   },
   "errors": {

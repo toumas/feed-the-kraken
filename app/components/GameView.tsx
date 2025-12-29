@@ -214,6 +214,7 @@ export function GameView({
               {roleInfo.title}
             </RoleReveal.Title>
             <RoleReveal.Description>{roleInfo.desc}</RoleReveal.Description>
+            <RoleReveal.HideInstruction className="mt-4" />
             {myRole === "PIRATE" && lobby.assignments && (
               <div className="mt-6 pt-6 border-t border-slate-700 w-full">
                 <h3 className="text-red-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">

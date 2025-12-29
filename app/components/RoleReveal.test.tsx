@@ -26,7 +26,7 @@ describe("RoleReveal", () => {
     ).toContain("opacity-0");
   });
 
-  it("reveals content on mouse down", () => {
+  it("reveals content on 5 clicks", () => {
     render(
       <RoleReveal.Root>
         <RoleReveal.Canvas>
@@ -39,8 +39,17 @@ describe("RoleReveal", () => {
     );
 
     const button = screen.getByRole("button");
-    fireEvent.mouseDown(button);
 
+    // 4 clicks - should still be hidden
+    for (let i = 0; i < 4; i++) {
+      fireEvent.click(button);
+    }
+    expect(
+      screen.getByText("Secret Content").parentElement?.className,
+    ).toContain("opacity-0");
+
+    // 5th click - should reveal
+    fireEvent.click(button);
     expect(
       screen.getByText("Secret Content").parentElement?.className,
     ).toContain("opacity-100");
@@ -49,9 +58,9 @@ describe("RoleReveal", () => {
     );
   });
 
-  it("hides content on mouse up", () => {
+  it("hides content on 1 click when already revealed", () => {
     render(
-      <RoleReveal.Root>
+      <RoleReveal.Root defaultRevealed={true}>
         <RoleReveal.Canvas>
           <RoleReveal.Hidden />
           <RoleReveal.Revealed>
@@ -62,9 +71,14 @@ describe("RoleReveal", () => {
     );
 
     const button = screen.getByRole("button");
-    fireEvent.mouseDown(button);
-    fireEvent.mouseUp(button);
 
+    // Initially revealed
+    expect(
+      screen.getByText("Secret Content").parentElement?.className,
+    ).toContain("opacity-100");
+
+    // 1 click - should hide
+    fireEvent.click(button);
     expect(
       screen.getByText("Secret Content").parentElement?.className,
     ).toContain("opacity-0");
@@ -73,7 +87,7 @@ describe("RoleReveal", () => {
     );
   });
 
-  it("reveals content on touch start", () => {
+  it("reveals content on 5 Enter key presses", () => {
     render(
       <RoleReveal.Root>
         <RoleReveal.Canvas>
@@ -86,19 +100,20 @@ describe("RoleReveal", () => {
     );
 
     const button = screen.getByRole("button");
-    fireEvent.touchStart(button);
+
+    // 5 Enter key presses
+    for (let i = 0; i < 5; i++) {
+      fireEvent.keyDown(button, { key: "Enter" });
+    }
 
     expect(
       screen.getByText("Secret Content").parentElement?.className,
     ).toContain("opacity-100");
-    expect(screen.getByText("Role Hidden").parentElement?.className).toContain(
-      "opacity-0",
-    );
   });
 
-  it("hides content on touch end", () => {
+  it("hides content on 1 Enter key press when already revealed", () => {
     render(
-      <RoleReveal.Root>
+      <RoleReveal.Root defaultRevealed={true}>
         <RoleReveal.Canvas>
           <RoleReveal.Hidden />
           <RoleReveal.Revealed>
@@ -109,61 +124,25 @@ describe("RoleReveal", () => {
     );
 
     const button = screen.getByRole("button");
-    fireEvent.touchStart(button);
-    fireEvent.touchEnd(button);
 
-    expect(
-      screen.getByText("Secret Content").parentElement?.className,
-    ).toContain("opacity-0");
-    expect(screen.getByText("Role Hidden").parentElement?.className).toContain(
-      "opacity-100",
-    );
-  });
-
-  it("reveals content on Enter key down", () => {
-    render(
-      <RoleReveal.Root>
-        <RoleReveal.Canvas>
-          <RoleReveal.Hidden />
-          <RoleReveal.Revealed>
-            <div>Secret Content</div>
-          </RoleReveal.Revealed>
-        </RoleReveal.Canvas>
-      </RoleReveal.Root>,
-    );
-
-    const button = screen.getByRole("button");
     fireEvent.keyDown(button, { key: "Enter" });
 
     expect(
       screen.getByText("Secret Content").parentElement?.className,
-    ).toContain("opacity-100");
-    expect(screen.getByText("Role Hidden").parentElement?.className).toContain(
-      "opacity-0",
-    );
+    ).toContain("opacity-0");
   });
 
-  it("hides content on Enter key up", () => {
+  it("renders hide instruction when revealed", () => {
     render(
-      <RoleReveal.Root>
+      <RoleReveal.Root defaultRevealed={true}>
         <RoleReveal.Canvas>
-          <RoleReveal.Hidden />
           <RoleReveal.Revealed>
-            <div>Secret Content</div>
+            <RoleReveal.HideInstruction />
           </RoleReveal.Revealed>
         </RoleReveal.Canvas>
       </RoleReveal.Root>,
     );
 
-    const button = screen.getByRole("button");
-    fireEvent.keyDown(button, { key: "Enter" });
-    fireEvent.keyUp(button, { key: "Enter" });
-
-    expect(
-      screen.getByText("Secret Content").parentElement?.className,
-    ).toContain("opacity-0");
-    expect(screen.getByText("Role Hidden").parentElement?.className).toContain(
-      "opacity-100",
-    );
+    expect(screen.getByText("Tap once to hide your role.")).toBeDefined();
   });
 });

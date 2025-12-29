@@ -8,8 +8,10 @@ import { cn } from "../utils";
 // --- Context ---
 interface RoleRevealContextValue {
   isRevealed: boolean;
+  tapCount: number;
   startReveal: () => void;
   endReveal: () => void;
+  handleTap: () => void;
 }
 
 const RoleRevealContext = createContext<RoleRevealContextValue | null>(null);
@@ -34,12 +36,35 @@ interface RootProps {
 
 function Root({ children, className, defaultRevealed = false }: RootProps) {
   const [isRevealed, setIsRevealed] = useState(defaultRevealed);
+  const [taps, setTaps] = useState<number[]>([]);
 
   const startReveal = () => setIsRevealed(true);
   const endReveal = () => setIsRevealed(false);
 
+  const handleTap = () => {
+    if (isRevealed) {
+      endReveal();
+      setTaps([]);
+      return;
+    }
+
+    const now = Date.now();
+    const newTaps = [...taps, now].filter((t) => now - t < 2000);
+
+    if (newTaps.length >= 5) {
+      startReveal();
+      setTaps([]);
+    } else {
+      setTaps(newTaps);
+    }
+  };
+
+  const tapCount = taps.length;
+
   return (
-    <RoleRevealContext.Provider value={{ isRevealed, startReveal, endReveal }}>
+    <RoleRevealContext.Provider
+      value={{ isRevealed, tapCount, startReveal, endReveal, handleTap }}
+    >
       <div className={cn("relative w-full", className)}>{children}</div>
     </RoleRevealContext.Provider>
   );
@@ -50,7 +75,7 @@ interface CanvasProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 function Canvas({ children, className, ...props }: CanvasProps) {
-  const { startReveal, endReveal } = useRoleReveal();
+  const { handleTap } = useRoleReveal();
 
   return (
     <button
@@ -59,24 +84,13 @@ function Canvas({ children, className, ...props }: CanvasProps) {
         "relative flex flex-col items-center justify-center w-full cursor-pointer select-none touch-none bg-transparent border-none p-0 focus:outline-none",
         className,
       )}
-      onMouseDown={startReveal}
-      onMouseUp={endReveal}
-      onMouseLeave={endReveal}
-      onTouchStart={startReveal}
-      onTouchEnd={endReveal}
-      onTouchCancel={endReveal}
+      onClick={handleTap}
       onContextMenu={(e) => e.preventDefault()}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
-          startReveal();
+          handleTap();
         }
         props.onKeyDown?.(e);
-      }}
-      onKeyUp={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          endReveal();
-        }
-        props.onKeyUp?.(e);
       }}
       {...props}
     >
@@ -91,7 +105,7 @@ interface HiddenProps {
 }
 
 function Hidden({ children, className }: HiddenProps) {
-  const { isRevealed } = useRoleReveal();
+  const { isRevealed, tapCount } = useRoleReveal();
   const { t } = useT("common");
 
   return (
@@ -119,6 +133,23 @@ function Hidden({ children, className }: HiddenProps) {
               {t("roleReveal.warning")}
             </span>
           </p>
+          {/* Tap progress indicator */}
+          <div className="flex gap-2 mt-4">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={`tap-${
+                  // biome-ignore lint/suspicious/noArrayIndexKey: false positive for static array
+                  i
+                }`}
+                className={cn(
+                  "w-3 h-3 rounded-full transition-all duration-150",
+                  i < tapCount
+                    ? "bg-cyan-500 scale-110"
+                    : "bg-slate-700 scale-100",
+                )}
+              />
+            ))}
+          </div>
         </>
       )}
     </div>
@@ -190,6 +221,24 @@ function Description({ children, className }: DescriptionProps) {
   );
 }
 
+interface HideInstructionProps {
+  className?: string;
+}
+
+function HideInstruction({ className }: HideInstructionProps) {
+  const { t } = useT("common");
+  return (
+    <p
+      className={cn(
+        "text-slate-500 text-center text-sm font-medium",
+        className,
+      )}
+    >
+      {t("roleReveal.hideInstruction")}
+    </p>
+  );
+}
+
 export const RoleReveal = {
   Root,
   Canvas,
@@ -198,4 +247,5 @@ export const RoleReveal = {
   Icon,
   Title,
   Description,
+  HideInstruction,
 };

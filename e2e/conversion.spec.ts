@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { completeIdentifyPage } from "./helpers";
 
 test.describe("Conversion to Cult", () => {
   test.setTimeout(90000);
@@ -15,6 +16,7 @@ test.describe("Conversion to Cult", () => {
     });
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+    await completeIdentifyPage(hostPage);
     await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
     await expect(hostPage.getByText("Host(You)")).toBeVisible();
 
@@ -42,6 +44,7 @@ test.describe("Conversion to Cult", () => {
 
       await page.getByPlaceholder("XP7K9L").fill(code);
       await page.getByRole("button", { name: "Board Ship" }).click();
+      await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
       await expect(page.getByText(`${playerName}(You)`)).toBeVisible();
@@ -64,21 +67,43 @@ test.describe("Conversion to Cult", () => {
 
     // Helper to check role
     const checkRole = async (page: Page) => {
-      const revealBtn = page
-        .locator("button")
-        .filter({ hasText: "Role Hidden" });
+      const revealBtn = page.locator("button.touch-none");
       // Wait for button to be attached
       await revealBtn.waitFor({ state: "attached" });
 
-      // Dispatch mousedown to reveal
-      await revealBtn.dispatchEvent("mousedown");
+      // Click 5 times via native JavaScript events using page.evaluate
+      await page.evaluate(() => {
+        const btn = document.querySelector("button.touch-none");
+        if (btn) {
+          for (let i = 0; i < 5; i++) {
+            const clickEvent = new MouseEvent("click", {
+              bubbles: true,
+              cancelable: true,
+              view: window,
+            });
+            btn.dispatchEvent(clickEvent);
+          }
+        }
+      });
+
+      // Wait for React state to update
+      await page.waitForTimeout(200);
 
       // Check for Cult Leader text
-      // Use a short timeout since it should be immediate if it's there
       const isLeader = await page.getByText("Cult Leader").isVisible();
 
-      // Release mouse
-      await revealBtn.dispatchEvent("mouseup");
+      // Click once to hide
+      await page.evaluate(() => {
+        const btn = document.querySelector("button.touch-none");
+        if (btn) {
+          const clickEvent = new MouseEvent("click", {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+          });
+          btn.dispatchEvent(clickEvent);
+        }
+      });
 
       return isLeader;
     };
@@ -291,6 +316,7 @@ test.describe("Conversion to Cult", () => {
     });
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+    await completeIdentifyPage(hostPage);
     await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
     await expect(hostPage.getByText("Host(You)")).toBeVisible();
 
@@ -318,6 +344,7 @@ test.describe("Conversion to Cult", () => {
 
       await page.getByPlaceholder("XP7K9L").fill(code);
       await page.getByRole("button", { name: "Board Ship" }).click();
+      await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
       await expect(page.getByText(`${playerName}(You)`)).toBeVisible();
@@ -339,21 +366,43 @@ test.describe("Conversion to Cult", () => {
 
     // Helper to check role
     const checkRole = async (page: Page) => {
-      const revealBtn = page
-        .locator("button")
-        .filter({ hasText: "Role Hidden" });
+      const revealBtn = page.locator("button.touch-none");
       // Wait for button to be attached
       await revealBtn.waitFor({ state: "attached" });
 
-      // Dispatch mousedown to reveal
-      await revealBtn.dispatchEvent("mousedown");
+      // Click 5 times via native JavaScript events using page.evaluate
+      await page.evaluate(() => {
+        const btn = document.querySelector("button.touch-none");
+        if (btn) {
+          for (let i = 0; i < 5; i++) {
+            const clickEvent = new MouseEvent("click", {
+              bubbles: true,
+              cancelable: true,
+              view: window,
+            });
+            btn.dispatchEvent(clickEvent);
+          }
+        }
+      });
+
+      // Wait for React state to update
+      await page.waitForTimeout(200);
 
       // Check for Cult Leader text
-      // Use a short timeout since it should be immediate if it's there
       const isLeader = await page.getByText("Cult Leader").isVisible();
 
-      // Release mouse
-      await revealBtn.dispatchEvent("mouseup");
+      // Click once to hide
+      await page.evaluate(() => {
+        const btn = document.querySelector("button.touch-none");
+        if (btn) {
+          const clickEvent = new MouseEvent("click", {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+          });
+          btn.dispatchEvent(clickEvent);
+        }
+      });
 
       return isLeader;
     };
@@ -435,6 +484,7 @@ test.describe("Conversion to Cult", () => {
     });
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+    await completeIdentifyPage(hostPage);
     await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
     await expect(hostPage.getByText("Host(You)")).toBeVisible();
 
@@ -462,6 +512,7 @@ test.describe("Conversion to Cult", () => {
 
       await page.getByPlaceholder("XP7K9L").fill(code);
       await page.getByRole("button", { name: "Board Ship" }).click();
+      await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
       await expect(page.getByText(`${playerName}(You)`)).toBeVisible();
@@ -483,21 +534,43 @@ test.describe("Conversion to Cult", () => {
 
     // Helper to check role
     const checkRole = async (page: Page) => {
-      const revealBtn = page
-        .locator("button")
-        .filter({ hasText: "Role Hidden" });
+      const revealBtn = page.locator("button.touch-none");
       // Wait for button to be attached
       await revealBtn.waitFor({ state: "attached" });
 
-      // Dispatch mousedown to reveal
-      await revealBtn.dispatchEvent("mousedown");
+      // Click 5 times via native JavaScript events using page.evaluate
+      await page.evaluate(() => {
+        const btn = document.querySelector("button.touch-none");
+        if (btn) {
+          for (let i = 0; i < 5; i++) {
+            const clickEvent = new MouseEvent("click", {
+              bubbles: true,
+              cancelable: true,
+              view: window,
+            });
+            btn.dispatchEvent(clickEvent);
+          }
+        }
+      });
+
+      // Wait for React state to update
+      await page.waitForTimeout(200);
 
       // Check for Cult Leader text
-      // Use a short timeout since it should be immediate if it's there
       const isLeader = await page.getByText("Cult Leader").isVisible();
 
-      // Release mouse
-      await revealBtn.dispatchEvent("mouseup");
+      // Click once to hide
+      await page.evaluate(() => {
+        const btn = document.querySelector("button.touch-none");
+        if (btn) {
+          const clickEvent = new MouseEvent("click", {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+          });
+          btn.dispatchEvent(clickEvent);
+        }
+      });
 
       return isLeader;
     };
