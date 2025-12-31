@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GameContextValue } from "../../context/GameContext";
 
@@ -120,7 +120,15 @@ describe("CabinSearchPage", () => {
     ...overrides,
   });
 
-  it("shows Sailor role for non-converted player", () => {
+  // Helper to simulate 5 taps to reveal
+  const revealRole = () => {
+    const revealButton = screen.getByText("Tap 5 times to reveal your role.");
+    for (let i = 0; i < 5; i++) {
+      fireEvent.click(revealButton);
+    }
+  };
+
+  it("shows hidden state initially with cabin search result", () => {
     vi.mocked(useGame).mockReturnValue(
       createMockGameContext({
         cabinSearchResult: {
@@ -132,12 +140,30 @@ describe("CabinSearchPage", () => {
 
     render(<CabinSearchPage />);
 
-    // Should show the role reveal overlay
+    // Should show the role reveal overlay in hidden state
     expect(screen.getByText("Cabin Searched")).toBeDefined();
+    // Role should not be visible yet
+    expect(screen.queryByText("Loyal Sailor")).toBeNull();
+  });
+
+  it("shows Sailor role for non-converted player after reveal", () => {
+    vi.mocked(useGame).mockReturnValue(
+      createMockGameContext({
+        cabinSearchResult: {
+          targetPlayerId: "p2",
+          role: "SAILOR",
+        },
+      }),
+    );
+
+    render(<CabinSearchPage />);
+    revealRole();
+
+    // Should show the role
     expect(screen.getByText("Loyal Sailor")).toBeDefined();
   });
 
-  it("shows Pirate role for non-converted player", () => {
+  it("shows Pirate role for non-converted player after reveal", () => {
     vi.mocked(useGame).mockReturnValue(
       createMockGameContext({
         cabinSearchResult: {
@@ -148,11 +174,12 @@ describe("CabinSearchPage", () => {
     );
 
     render(<CabinSearchPage />);
+    revealRole();
 
     expect(screen.getByText("Pirate")).toBeDefined();
   });
 
-  it("shows Cult Leader role", () => {
+  it("shows Cult Leader role after reveal", () => {
     vi.mocked(useGame).mockReturnValue(
       createMockGameContext({
         cabinSearchResult: {
@@ -163,11 +190,12 @@ describe("CabinSearchPage", () => {
     );
 
     render(<CabinSearchPage />);
+    revealRole();
 
     expect(screen.getByText("Cult Leader")).toBeDefined();
   });
 
-  it("shows original Sailor role with Converted to Cult badge for converted player", () => {
+  it("shows original Sailor role with Converted to Cult badge for converted player after reveal", () => {
     vi.mocked(useGame).mockReturnValue(
       createMockGameContext({
         cabinSearchResult: {
@@ -179,6 +207,7 @@ describe("CabinSearchPage", () => {
     );
 
     render(<CabinSearchPage />);
+    revealRole();
 
     // Should show the original role
     expect(screen.getByText("Loyal Sailor")).toBeDefined();
@@ -186,7 +215,7 @@ describe("CabinSearchPage", () => {
     expect(screen.getByText("Converted to Cult")).toBeDefined();
   });
 
-  it("shows original Pirate role with Converted to Cult badge for converted player", () => {
+  it("shows original Pirate role with Converted to Cult badge for converted player after reveal", () => {
     vi.mocked(useGame).mockReturnValue(
       createMockGameContext({
         cabinSearchResult: {
@@ -198,6 +227,7 @@ describe("CabinSearchPage", () => {
     );
 
     render(<CabinSearchPage />);
+    revealRole();
 
     // Should show the original role
     expect(screen.getByText("Pirate")).toBeDefined();
@@ -205,7 +235,7 @@ describe("CabinSearchPage", () => {
     expect(screen.getByText("Converted to Cult")).toBeDefined();
   });
 
-  it("shows target player name in result", () => {
+  it("shows target player name in result after reveal", () => {
     vi.mocked(useGame).mockReturnValue(
       createMockGameContext({
         cabinSearchResult: {
@@ -216,6 +246,7 @@ describe("CabinSearchPage", () => {
     );
 
     render(<CabinSearchPage />);
+    revealRole();
 
     expect(
       screen.getByText("You found Target Player's loyalty card!"),

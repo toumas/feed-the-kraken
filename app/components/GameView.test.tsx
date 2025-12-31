@@ -66,8 +66,17 @@ describe("GameView", () => {
     onBackToLobby: vi.fn(),
   };
 
-  it("renders role information", () => {
+  // Helper to simulate 5 taps to reveal role
+  const revealRole = () => {
+    const revealButton = screen.getByText("Tap 5 times to reveal your role.");
+    for (let i = 0; i < 5; i++) {
+      fireEvent.click(revealButton);
+    }
+  };
+
+  it("renders role information after reveal", () => {
     render(<GameView {...defaultProps} />);
+    revealRole();
     expect(screen.getByText("Loyal Sailor")).toBeDefined();
     expect(screen.getByText("Steer the ship to blue area.")).toBeDefined();
   });
@@ -395,10 +404,11 @@ describe("GameView", () => {
       />,
     );
 
+    revealRole();
+
     // Pirate Crew section should be visible
     expect(screen.getByText("Pirate Crew")).toBeDefined();
 
-    // Converted pirate should still appear in the crew list
     // Converted pirate should still appear in the crew list
     // Returns multiple elements (Crew Status list and Pirate Crew list)
     expect(screen.getAllByText("Pirate 2 (Converted)").length).toBeGreaterThan(
@@ -448,12 +458,9 @@ describe("GameView", () => {
       />,
     );
 
-    // Verify the role reveal shows "Cultist" role
-    // We can check for the role-specific text that appears in the revealed content
-    expect(screen.getByText("Role Hidden")).toBeDefined();
+    revealRole();
 
-    // The revealed content should contain "Cultist" text (though hidden by default)
-    // We can verify it exists in the DOM even if not visible
+    // Verify the role reveal shows "Cultist" role
     const roleTexts = screen.getAllByText(/Cultist/i);
     expect(roleTexts.length).toBeGreaterThan(0);
   });
@@ -509,24 +516,15 @@ describe("GameView", () => {
       />,
     );
 
+    revealRole();
+
     // Pirate Crew section should be visible
     expect(screen.getByText("Pirate Crew")).toBeDefined();
 
     // Converted sailor should NOT appear in the crew list
-    // It might appear in Crew Status list, but NOT in Pirate Crew section
-    // Let's scope the check to the Pirate Crew section
     const pirateCrewSection = screen.getByText("Pirate Crew").parentElement;
     expect(pirateCrewSection).toBeDefined();
     if (pirateCrewSection) {
-      // Use within() to scope the query if using @testing-library/react within helper
-      // or just query the section container text content
-      // Since we don't have 'within' imported, let's use text content check or refined query
-      // Simpler approach: check if the text exists specifically inside this hierarchy
-      // But queryByText on full screen finds multiples if it exists elsewhere (e.g. Crew Status)
-      // Actually, if it's not in the list, it shouldn't be found in this section.
-      // However queryByText("Sailor 1 (Converted)") might find it in the Crew Status section now!
-      // So we must be careful.
-      // Let's verify "Sailor 1 (Converted)" is NOT in the pirate list container.
       expect(pirateCrewSection.textContent).not.toContain(
         "Sailor 1 (Converted)",
       );
@@ -586,6 +584,8 @@ describe("GameView", () => {
         myPlayerId="cultist1"
       />,
     );
+
+    revealRole();
 
     // Should show "Your Leader" section
     expect(screen.getByText("Your Leader")).toBeDefined();
@@ -715,6 +715,8 @@ describe("GameView", () => {
         myPlayerId="converted1"
       />,
     );
+
+    revealRole();
 
     // Should show "Your Leader" section with the leader
     expect(screen.getByText("Your Leader")).toBeDefined();
