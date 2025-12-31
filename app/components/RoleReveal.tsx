@@ -105,16 +105,15 @@ interface HiddenProps {
 }
 
 function Hidden({ children, className }: HiddenProps) {
-  const { isRevealed, tapCount } = useRoleReveal();
+  const { isRevealed, tapCount, handleTap } = useRoleReveal();
   const { t } = useT("common");
+
+  if (isRevealed) return null;
 
   return (
     <div
       className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-200 ease-in-out",
-        isRevealed
-          ? "opacity-0 scale-110 pointer-events-none"
-          : "opacity-100 scale-100",
+        "flex flex-col items-center justify-center transition-all duration-200 ease-in-out",
         className,
       )}
     >
@@ -123,35 +122,39 @@ function Hidden({ children, className }: HiddenProps) {
           <div className="w-32 h-32 rounded-full bg-slate-800/50 flex items-center justify-center mb-6 border-4 border-slate-700/50">
             <EyeOff className="w-16 h-16 text-slate-500" />
           </div>
-          <h2 className="text-3xl font-bold text-center text-slate-200 drop-shadow-lg mb-2">
+          <h2 className="text-3xl font-bold text-center text-slate-200 drop-shadow-lg mb-4">
             {t("roleReveal.hidden")}
           </h2>
-          <p className="text-slate-400 text-center text-lg font-medium">
-            {t("roleReveal.instruction")}
-            <br />
-            <span className="text-sm text-slate-500">
-              {t("roleReveal.warning")}
-            </span>
-          </p>
-          {/* Tap progress indicator */}
-          <div className="flex gap-2 mt-4">
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={`tap-${
-                  // biome-ignore lint/suspicious/noArrayIndexKey: false positive for static array
-                  i
-                }`}
-                className={cn(
-                  "w-3 h-3 rounded-full transition-all duration-150",
-                  i < tapCount
-                    ? "bg-cyan-500 scale-110"
-                    : "bg-slate-700 scale-100",
-                )}
-              />
-            ))}
-          </div>
         </>
       )}
+      <button
+        type="button"
+        onClick={handleTap}
+        onContextMenu={(e) => e.preventDefault()}
+        className="flex flex-col items-center gap-3 px-6 py-4 bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-200 border border-cyan-800/50 rounded-xl font-bold transition-all cursor-pointer select-none touch-none focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+      >
+        <span className="text-lg">{t("roleReveal.instruction")}</span>
+        {/* Tap progress indicator */}
+        <div className="flex gap-2">
+          {[...Array(5)].map((_, i) => (
+            <div
+              key={`tap-${
+                // biome-ignore lint/suspicious/noArrayIndexKey: false positive for static array
+                i
+              }`}
+              className={cn(
+                "w-3 h-3 rounded-full transition-all duration-150",
+                i < tapCount
+                  ? "bg-cyan-400 scale-110"
+                  : "bg-slate-600 scale-100",
+              )}
+            />
+          ))}
+        </div>
+      </button>
+      <p className="text-sm text-slate-500 mt-3">
+        {t("roleReveal.warning")}
+      </p>
     </div>
   );
 }
@@ -164,13 +167,12 @@ interface RevealedProps {
 function Revealed({ children, className }: RevealedProps) {
   const { isRevealed } = useRoleReveal();
 
+  if (!isRevealed) return null;
+
   return (
     <div
       className={cn(
-        "transition-all duration-200 ease-in-out flex flex-col items-center w-full",
-        isRevealed
-          ? "opacity-100 scale-100 blur-none"
-          : "opacity-0 scale-95 blur-md pointer-events-none",
+        "flex flex-col items-center w-full animate-in fade-in zoom-in-95 duration-200",
         className,
       )}
     >
@@ -227,15 +229,19 @@ interface HideInstructionProps {
 
 function HideInstruction({ className }: HideInstructionProps) {
   const { t } = useT("common");
+  const { handleTap } = useRoleReveal();
   return (
-    <p
+    <button
+      type="button"
+      onClick={handleTap}
+      onContextMenu={(e) => e.preventDefault()}
       className={cn(
-        "text-slate-500 text-center text-sm font-medium",
+        "px-6 py-4 bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-200 border border-cyan-800/50 rounded-xl font-bold transition-all cursor-pointer select-none touch-none focus:outline-none focus:ring-2 focus:ring-cyan-500/50",
         className,
       )}
     >
       {t("roleReveal.hideInstruction")}
-    </p>
+    </button>
   );
 }
 

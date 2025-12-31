@@ -206,27 +206,68 @@ export function GameView({
   return (
     <div className="flex-1 flex flex-col items-center justify-center space-y-6 animate-in zoom-in-95 duration-700">
       <RoleReveal.Root className="max-w-sm mx-auto">
-        <RoleReveal.Canvas className="h-[480px]">
-          <RoleReveal.Hidden />
-          <RoleReveal.Revealed className="space-y-6">
-            <RoleReveal.Icon>{roleInfo.icon}</RoleReveal.Icon>
-            <RoleReveal.Title className={roleInfo.color}>
-              {roleInfo.title}
-            </RoleReveal.Title>
-            <RoleReveal.Description>{roleInfo.desc}</RoleReveal.Description>
-            <RoleReveal.HideInstruction className="mt-4" />
-            {myRole === "PIRATE" && lobby.assignments && (
+        <RoleReveal.Hidden />
+        <RoleReveal.Revealed className="space-y-6">
+          <RoleReveal.Icon>{roleInfo.icon}</RoleReveal.Icon>
+          <RoleReveal.Title className={roleInfo.color}>
+            {roleInfo.title}
+          </RoleReveal.Title>
+          <RoleReveal.Description>{roleInfo.desc}</RoleReveal.Description>
+          <RoleReveal.HideInstruction className="mt-4" />
+          {myRole === "PIRATE" && lobby.assignments && (
+            <div className="mt-6 pt-6 border-t border-slate-700 w-full">
+              <h3 className="text-red-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
+                {t("game.pirateCrew")}
+              </h3>
+              <div className="flex flex-wrap justify-center gap-3">
+                {lobby.players
+                  .filter(
+                    (p) =>
+                      p.id !== myPlayerId &&
+                      (lobby.originalRoles?.[p.id] === "PIRATE" ||
+                        lobby.assignments?.[p.id] === "PIRATE"),
+                  )
+                  .map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex flex-col items-center gap-1"
+                    >
+                      <Avatar
+                        url={p.photoUrl}
+                        size="sm"
+                        className="ring-2 ring-red-900/50"
+                      />
+                      <span className="text-xs text-red-200/70 font-medium max-w-[60px] truncate">
+                        {p.name}
+                      </span>
+                    </div>
+                  ))}
+                {lobby.players.filter(
+                  (p) =>
+                    p.id !== myPlayerId &&
+                    (lobby.originalRoles?.[p.id] === "PIRATE" ||
+                      lobby.assignments?.[p.id] === "PIRATE"),
+                ).length === 0 && (
+                  <p className="text-xs text-slate-500 italic">
+                    {t("game.noPirates")}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {myRole === "CULTIST" &&
+            lobby.assignments &&
+            lobby.originalRoles &&
+            lobby.originalRoles[myPlayerId] !== "CULTIST" && (
               <div className="mt-6 pt-6 border-t border-slate-700 w-full">
-                <h3 className="text-red-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
-                  {t("game.pirateCrew")}
+                <h3 className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
+                  {t("game.yourLeader")}
                 </h3>
                 <div className="flex flex-wrap justify-center gap-3">
                   {lobby.players
                     .filter(
-                      (p) =>
-                        p.id !== myPlayerId &&
-                        (lobby.originalRoles?.[p.id] === "PIRATE" ||
-                          lobby.assignments?.[p.id] === "PIRATE"),
+                      (p) => lobby.assignments?.[p.id] === "CULT_LEADER",
                     )
                     .map((p) => (
                       <div
@@ -236,60 +277,17 @@ export function GameView({
                         <Avatar
                           url={p.photoUrl}
                           size="sm"
-                          className="ring-2 ring-red-900/50"
+                          className="ring-2 ring-purple-900/50"
                         />
-                        <span className="text-xs text-red-200/70 font-medium max-w-[60px] truncate">
+                        <span className="text-xs text-purple-200/70 font-medium max-w-[60px] truncate">
                           {p.name}
                         </span>
                       </div>
                     ))}
-                  {lobby.players.filter(
-                    (p) =>
-                      p.id !== myPlayerId &&
-                      (lobby.originalRoles?.[p.id] === "PIRATE" ||
-                        lobby.assignments?.[p.id] === "PIRATE"),
-                  ).length === 0 && (
-                    <p className="text-xs text-slate-500 italic">
-                      {t("game.noPirates")}
-                    </p>
-                  )}
                 </div>
               </div>
             )}
-
-            {myRole === "CULTIST" &&
-              lobby.assignments &&
-              lobby.originalRoles &&
-              lobby.originalRoles[myPlayerId] !== "CULTIST" && (
-                <div className="mt-6 pt-6 border-t border-slate-700 w-full">
-                  <h3 className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
-                    {t("game.yourLeader")}
-                  </h3>
-                  <div className="flex flex-wrap justify-center gap-3">
-                    {lobby.players
-                      .filter(
-                        (p) => lobby.assignments?.[p.id] === "CULT_LEADER",
-                      )
-                      .map((p) => (
-                        <div
-                          key={p.id}
-                          className="flex flex-col items-center gap-1"
-                        >
-                          <Avatar
-                            url={p.photoUrl}
-                            size="sm"
-                            className="ring-2 ring-purple-900/50"
-                          />
-                          <span className="text-xs text-purple-200/70 font-medium max-w-[60px] truncate">
-                            {p.name}
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-          </RoleReveal.Revealed>
-        </RoleReveal.Canvas>
+        </RoleReveal.Revealed>
       </RoleReveal.Root>
 
       {/* Team Composition */}

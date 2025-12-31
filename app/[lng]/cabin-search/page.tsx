@@ -127,61 +127,57 @@ export default function CabinSearchPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="w-full max-w-md mx-4">
               <RoleReveal.Root className="max-w-sm mx-auto">
-                <RoleReveal.Canvas className="h-[480px]">
-                  <RoleReveal.Hidden>
-                    <div className="w-32 h-32 rounded-full bg-slate-800/50 flex items-center justify-center mb-6 border-4 border-slate-700/50">
-                      <Search className="w-16 h-16 text-slate-500" />
-                    </div>
-                    <h2 className="text-3xl font-bold text-center text-slate-200 drop-shadow-lg mb-2">
-                      {t("cabinSearch.searchedTitle")}
-                    </h2>
-                    <p className="text-slate-400 text-center text-lg font-medium">
-                      {t("cabinSearch.searchedDesc")}
-                    </p>
-                  </RoleReveal.Hidden>
+                <RoleReveal.Hidden>
+                  <div className="w-32 h-32 rounded-full bg-slate-800/50 flex items-center justify-center mb-6 border-4 border-slate-700/50">
+                    <Search className="w-16 h-16 text-slate-500" />
+                  </div>
+                  <h2 className="text-3xl font-bold text-center text-slate-200 drop-shadow-lg mb-4">
+                    {t("cabinSearch.searchedTitle")}
+                  </h2>
+                </RoleReveal.Hidden>
 
-                  <RoleReveal.Revealed className="space-y-6">
-                    {/* Show original role with Cultist badge if converted */}
-                    {cabinSearchResult.role === "CULTIST" &&
-                    cabinSearchResult.originalRole ? (
-                      <>
-                        <RoleReveal.Icon>
-                          {getRoleDetails(cabinSearchResult.originalRole).icon}
-                        </RoleReveal.Icon>
-                        <RoleReveal.Title
-                          className={
-                            getRoleDetails(cabinSearchResult.originalRole).color
-                          }
-                        >
-                          {getRoleDetails(cabinSearchResult.originalRole).title}
-                        </RoleReveal.Title>
-                        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-green-900/30 border border-green-500/50 rounded-xl">
-                          <Eye className="w-5 h-5 text-green-500" />
-                          <span className="text-green-400 font-bold">
-                            {t("cabinSearch.converted")}
-                          </span>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <RoleReveal.Icon>{resultRoleInfo.icon}</RoleReveal.Icon>
-                        <RoleReveal.Title className={resultRoleInfo.color}>
-                          {resultRoleInfo.title}
-                        </RoleReveal.Title>
-                      </>
-                    )}
-                    <div className="flex justify-center">
-                      <Avatar
-                        url={targetPlayer?.photoUrl}
-                        size="lg"
-                        className="ring-4 ring-slate-800"
-                      />
-                    </div>
-                    <RoleReveal.Description>
-                      {t("cabinSearch.foundCard", { name: targetPlayer?.name })}
-                    </RoleReveal.Description>
-                  </RoleReveal.Revealed>
-                </RoleReveal.Canvas>
+                <RoleReveal.Revealed className="space-y-6">
+                  {/* Show original role with Cultist badge if converted */}
+                  {cabinSearchResult.role === "CULTIST" &&
+                  cabinSearchResult.originalRole ? (
+                    <>
+                      <RoleReveal.Icon>
+                        {getRoleDetails(cabinSearchResult.originalRole).icon}
+                      </RoleReveal.Icon>
+                      <RoleReveal.Title
+                        className={
+                          getRoleDetails(cabinSearchResult.originalRole).color
+                        }
+                      >
+                        {getRoleDetails(cabinSearchResult.originalRole).title}
+                      </RoleReveal.Title>
+                      <div className="flex items-center justify-center gap-2 px-4 py-2 bg-green-900/30 border border-green-500/50 rounded-xl">
+                        <Eye className="w-5 h-5 text-green-500" />
+                        <span className="text-green-400 font-bold">
+                          {t("cabinSearch.converted")}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <RoleReveal.Icon>{resultRoleInfo.icon}</RoleReveal.Icon>
+                      <RoleReveal.Title className={resultRoleInfo.color}>
+                        {resultRoleInfo.title}
+                      </RoleReveal.Title>
+                    </>
+                  )}
+                  <div className="flex justify-center">
+                    <Avatar
+                      url={targetPlayer?.photoUrl}
+                      size="lg"
+                      className="ring-4 ring-slate-800"
+                    />
+                  </div>
+                  <RoleReveal.Description>
+                    {t("cabinSearch.foundCard", { name: targetPlayer?.name })}
+                  </RoleReveal.Description>
+                  <RoleReveal.HideInstruction />
+                </RoleReveal.Revealed>
               </RoleReveal.Root>
 
               <button
