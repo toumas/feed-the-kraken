@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { completeIdentifyPage } from "./helpers";
 
 test("Game persistence across reloads", async ({ page }) => {
   // 1. Host creates a lobby
@@ -12,6 +13,9 @@ test("Game persistence across reloads", async ({ page }) => {
   });
   await page.goto("/");
   await page.getByRole("button", { name: "Create Voyage" }).click();
+  await completeIdentifyPage(page);
+  await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
+
   const codeElement = page
     .locator("text=Ship Code")
     .locator("..")

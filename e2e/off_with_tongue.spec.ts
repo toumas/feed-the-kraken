@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { completeIdentifyPage } from "./helpers";
 
 test("Off with the Tongue Flow: Host silences Player 1", async ({
   browser,
@@ -16,7 +17,8 @@ test("Off with the Tongue Flow: Host silences Player 1", async ({
   });
   await hostPage.goto("/");
   await hostPage.getByRole("button", { name: "Create Voyage" }).click();
-  await expect(hostPage).toHaveURL(/\/lobby/);
+  await completeIdentifyPage(hostPage);
+  await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
   // Get the room code
   const codeElement = hostPage.locator("p.font-mono");
@@ -38,7 +40,8 @@ test("Off with the Tongue Flow: Host silences Player 1", async ({
   await page.getByRole("button", { name: "Join Crew" }).click();
   await page.getByPlaceholder("XP7K9L").fill(code);
   await page.getByRole("button", { name: "Board Ship" }).click();
-  await expect(page).toHaveURL(/\/lobby/);
+  await completeIdentifyPage(page);
+  await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
   // 3. Add bots to reach 5 players
   for (let i = 0; i < 3; i++) {
@@ -98,6 +101,7 @@ test("Off with the Tongue Flow: Player 1 denies", async ({ browser }) => {
   });
   await hostPage.goto("/");
   await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+  await completeIdentifyPage(hostPage);
 
   const codeElement = hostPage.locator("p.font-mono");
   await expect(codeElement).toBeVisible();
@@ -118,6 +122,7 @@ test("Off with the Tongue Flow: Player 1 denies", async ({ browser }) => {
   await page.getByRole("button", { name: "Join Crew" }).click();
   await page.getByPlaceholder("XP7K9L").fill(code);
   await page.getByRole("button", { name: "Board Ship" }).click();
+  await completeIdentifyPage(page);
 
   // 3. Add bots
   for (let i = 0; i < 3; i++) {
@@ -151,7 +156,7 @@ test("Off with the Tongue Flow: Player 1 denies", async ({ browser }) => {
   await expect(
     page.getByRole("heading", { name: "Off with the Tongue" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Deny" }).click();
+  await page.getByRole("button", { name: "Decline" }).click();
 
   // 7. Host sees denial error
   await expect(
@@ -185,7 +190,8 @@ test("Silenced player cannot claim Captain in Cult Cabin Search", async ({
   });
   await hostPage.goto("/");
   await hostPage.getByRole("button", { name: "Create Voyage" }).click();
-  await expect(hostPage).toHaveURL(/\/lobby/);
+  await completeIdentifyPage(hostPage);
+  await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
   const codeElement = hostPage.locator("p.font-mono");
   await expect(codeElement).toBeVisible();
@@ -205,7 +211,8 @@ test("Silenced player cannot claim Captain in Cult Cabin Search", async ({
   await page.getByRole("button", { name: "Join Crew" }).click();
   await page.getByPlaceholder("XP7K9L").fill(code);
   await page.getByRole("button", { name: "Board Ship" }).click();
-  await expect(page).toHaveURL(/\/lobby/);
+  await completeIdentifyPage(page);
+  await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
   // 3. Add bots to reach 5 players
   for (let i = 0; i < 3; i++) {
@@ -238,7 +245,7 @@ test("Silenced player cannot claim Captain in Cult Cabin Search", async ({
   await expect(hostPage.getByText("Silenced")).toBeVisible();
 
   // 6. Start Cult Cabin Search
-  await hostPage.getByText("Cult Cabin Search").click();
+  await hostPage.getByRole("button", { name: "Cabin Search (Cult)" }).click();
   await expect(hostPage).toHaveURL(/\/cult-cabin-search/);
   await expect(page).toHaveURL(/\/cult-cabin-search/);
 

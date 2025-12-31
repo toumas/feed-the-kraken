@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { completeIdentifyPage } from "./helpers";
 
 test.describe("Back to Lobby", () => {
   test("Host can return to lobby and reset the game state", async ({
@@ -16,6 +17,7 @@ test.describe("Back to Lobby", () => {
     });
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+    await completeIdentifyPage(hostPage);
     await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
     // Get the room code
@@ -40,6 +42,7 @@ test.describe("Back to Lobby", () => {
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
       await page.getByRole("button", { name: "Board Ship" }).click();
+      await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       players.push({ context, page, name: playerName });
     }
@@ -52,10 +55,7 @@ test.describe("Back to Lobby", () => {
     await hostPage.getByRole("button", { name: "Back to Lobby" }).click();
 
     // 5. Confirm in modal
-    await hostPage
-      .getByRole("button", { name: "Back to Lobby", exact: true })
-      .nth(1)
-      .click();
+    await hostPage.getByRole("button", { name: "Confirm" }).click();
 
     // 6. Verify both are back in lobby
     await expect(hostPage).toHaveURL(/\/lobby/);

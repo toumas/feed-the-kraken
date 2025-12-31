@@ -534,10 +534,10 @@ export function GameView({
           >
             <CancellationModal.Header title={t("cabinSearch.title")} />
             <CancellationModal.Body
-              message={t("cultGunsStash.interrupted")}
+              message={t("cabinSearch.interrupted")}
               reason={(() => {
                 if (!lobby.cabinSearchStatus.cancellationReason)
-                  return t("cultGunsStash.cancelled");
+                  return t("cabinSearch.cancelled");
                 const [key, ...paramStrings] =
                   lobby.cabinSearchStatus.cancellationReason.split("|");
                 const params: Record<string, string> = {};
@@ -740,7 +740,7 @@ export function GameView({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md animate-in fade-in duration-500">
           <div className="w-full max-w-md p-6 flex flex-col items-center">
             <h2 className="text-2xl font-bold text-white mb-8 text-center">
-              {t("flogging.title")}
+              {t("flogging.resultTitle")}
             </h2>
 
             <div className="mb-8">
@@ -811,7 +811,7 @@ export function GameView({
                 >
                   <CancellationModal.Header title={t("conversion.title")} />
                   <CancellationModal.Body
-                    message={t("cultGunsStash.interrupted")}
+                    message={t("conversion.interrupted")}
                     reason={t("conversion.failed")}
                   />
                   <CancellationModal.Action onClick={onDismissConversion} />
@@ -960,7 +960,7 @@ export function GameView({
                   <Skull className="w-12 h-12 text-red-500" />
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-4 text-center">
-                  {t("feedTheKraken.title")}
+                  {t("feedTheKraken.resultTitle")}
                 </h2>
                 <div className="flex items-center gap-3 mb-6">
                   <Avatar

@@ -132,7 +132,9 @@
     "pending": "Pending..."
   },
   "feedTheKraken": {
+    "submit": "Feed to Kraken",
     "title": "Feed The Kraken",
+    "resultTitle": "Fed to the Kraken",
     "selectVictim": "Select a victim to feed to the Kraken",
     "confirmation": "Are you sure you want to feed {{name}} to the Kraken?",
     "result": "{{name}} has been fed to the Kraken!",
@@ -143,6 +145,7 @@
   },
   "flogging": {
     "title": "Flogging",
+    "resultTitle": "Flogging Result",
     "selectTarget": "Select a crew member to flog",
     "alreadyRevealed": "Already revealed",
     "flogPlayer": "Flog Player",
@@ -154,6 +157,8 @@
     "used": "Used"
   },
   "cabinSearch": {
+    "interrupted": "The search was interrupted!",
+    "cancelled": "The action was cancelled by a player.",
     "title": "Cabin Search",
     "converted": "Converted to Cult",
     "alreadyClaimed": "This role is already claimed by someone else.",
@@ -178,6 +183,7 @@
     "foundCard": "You found {{name}}'s loyalty card!"
   },
   "conversion": {
+    "interrupted": "The ritual was interrupted!",
     "title": "Conversion to Cult",
     "selectTarget": "Select a crew member to convert",
     "success": "{{name}} has been converted to the cult!",
@@ -215,7 +221,7 @@
     "silenceSailor": "Silence Sailor"
   },
   "cultGunsStash": {
-    "title": "Cult's Gun Stash",
+    "title": "Cult's Guns Stash",
     "interrupted": "The ritual was interrupted!",
     "cancelled": "The action has been cancelled.",
     "alreadyReady": "You are already ready.",

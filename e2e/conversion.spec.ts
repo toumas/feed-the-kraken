@@ -465,7 +465,7 @@ test.describe("Conversion to Cult", () => {
     ).toBeVisible();
 
     // Close
-    await hostPage.getByRole("button", { name: "Close" }).click();
+    await hostPage.getByRole("button", { name: "Done" }).click();
     await expect(
       hostPage.getByText("The ritual was interrupted!"),
     ).not.toBeVisible();
@@ -637,7 +637,7 @@ test.describe("Conversion to Cult", () => {
     ).toBeVisible();
 
     // Close
-    await hostPage.getByRole("button", { name: "Close" }).click();
+    await hostPage.getByRole("button", { name: "Done" }).click();
     await expect(
       hostPage.getByText("The ritual was interrupted!"),
     ).not.toBeVisible();

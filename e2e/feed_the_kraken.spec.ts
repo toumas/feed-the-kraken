@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { checkRoleVisible } from "./helpers";
+import { checkRoleVisible, completeIdentifyPage } from "./helpers";
 
 test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   // 1. Host creates lobby
@@ -15,7 +15,8 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   });
   await hostPage.goto("/");
   await hostPage.getByRole("button", { name: "Create Voyage" }).click();
-  await expect(hostPage).toHaveURL(/\/lobby/);
+  await completeIdentifyPage(hostPage);
+  await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
   // Get the room code
   const codeElement = hostPage.locator("p.font-mono");
@@ -37,7 +38,8 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   await page.getByRole("button", { name: "Join Crew" }).click();
   await page.getByPlaceholder("XP7K9L").fill(code);
   await page.getByRole("button", { name: "Board Ship" }).click();
-  await expect(page).toHaveURL(/\/lobby/);
+  await completeIdentifyPage(page);
+  await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
   // 3. Player 2 joins (Observer/Bystander)
   const context2 = await browser.newContext();
@@ -55,7 +57,8 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   await page2.getByRole("button", { name: "Join Crew" }).click();
   await page2.getByPlaceholder("XP7K9L").fill(code);
   await page2.getByRole("button", { name: "Board Ship" }).click();
-  await expect(page2).toHaveURL(/\/lobby/);
+  await completeIdentifyPage(page2);
+  await expect(page2).toHaveURL(/\/lobby/, { timeout: 15000 });
 
   // 4. Add bots to reach 5 players (Host + P1 + P2 + 2 bots)
   for (let i = 0; i < 2; i++) {
@@ -102,13 +105,15 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
       hostPage.getByText("The Cult Leader was fed to the Kraken!"),
     ).toBeVisible();
   } else {
-    await expect(hostPage.getByText("Fed to the Kraken")).toBeVisible();
-    await expect(hostPage.getByText("Has been eliminated")).toBeVisible();
-    // Scope "Player 1" check to the modal content to avoid matching player list
+    // Scope checks to the modal to avoid matching player list "Eliminated" badge
     const modal = hostPage
       .locator("div")
-      .filter({ hasText: "Fed to the Kraken" })
+      .filter({
+        has: hostPage.getByRole("heading", { name: "Fed to the Kraken" }),
+      })
       .last();
+    await expect(modal).toBeVisible();
+    await expect(modal.getByText("Eliminated")).toBeVisible();
     await expect(modal.getByText("Player 1")).toBeVisible();
   }
 
@@ -120,12 +125,19 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
       page2.getByText("The Cult Leader was fed to the Kraken!"),
     ).toBeVisible();
   } else {
-    await expect(page2.getByText("Fed to the Kraken")).toBeVisible();
-    await expect(page2.getByText("Has been eliminated")).toBeVisible();
+    // Scope checks to the modal to avoid matching player list "Eliminated" badge
+    const page2Modal = page2
+      .locator("div")
+      .filter({
+        has: page2.getByRole("heading", { name: "Fed to the Kraken" }),
+      })
+      .last();
+    await expect(page2Modal).toBeVisible();
+    await expect(page2Modal.getByText("Eliminated")).toBeVisible();
   }
 
   // Close result on Host
-  await hostPage.getByRole("button", { name: "Close" }).click();
+  await hostPage.getByRole("button", { name: "Done" }).click();
   await expect(hostPage.getByText("Fed to the Kraken")).not.toBeVisible();
 
   // 8. Verify Result on Player 1 (Eliminated screen)
@@ -147,6 +159,7 @@ test("Feed the Kraken Flow: Player 1 denies", async ({ browser }) => {
   });
   await hostPage.goto("/");
   await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+  await completeIdentifyPage(hostPage);
 
   const codeElement = hostPage.locator("p.font-mono");
   await expect(codeElement).toBeVisible();
@@ -167,6 +180,7 @@ test("Feed the Kraken Flow: Player 1 denies", async ({ browser }) => {
   await page.getByRole("button", { name: "Join Crew" }).click();
   await page.getByPlaceholder("XP7K9L").fill(code);
   await page.getByRole("button", { name: "Board Ship" }).click();
+  await completeIdentifyPage(page);
 
   // 3. Add bots
   for (let i = 0; i < 3; i++) {
@@ -203,7 +217,7 @@ test("Feed the Kraken Flow: Player 1 denies", async ({ browser }) => {
   await expect(
     page.getByRole("heading", { name: "Feed the Kraken" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Deny" }).click();
+  await page.getByRole("button", { name: "Decline" }).click();
 
   // 7. Host sees denial error
   // Wait for pending state to disappear

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { completeIdentifyPage } from "./helpers";
 
 /**
  * Visual Regression Tests
@@ -94,9 +95,10 @@ test.describe("Visual Regression Tests", () => {
 
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+    await completeIdentifyPage(hostPage);
 
     // Wait for lobby to load
-    await expect(hostPage).toHaveURL(/\/lobby/);
+    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
     await expect(hostPage.getByText("Captain(You)")).toBeVisible();
     await expect(hostPage.locator("p.font-mono")).toBeVisible(); // Ship code
 
@@ -122,7 +124,8 @@ test.describe("Visual Regression Tests", () => {
 
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/lobby/);
+    await completeIdentifyPage(hostPage);
+    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
     // Get the room code
     const codeElement = hostPage.locator("p.font-mono");
@@ -147,7 +150,8 @@ test.describe("Visual Regression Tests", () => {
       await playerPage.getByRole("button", { name: "Join Crew" }).click();
       await playerPage.getByPlaceholder("XP7K9L").fill(code);
       await playerPage.getByRole("button", { name: "Board Ship" }).click();
-      await expect(playerPage).toHaveURL(/\/lobby/);
+      await completeIdentifyPage(playerPage);
+      await expect(playerPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
       // Don't close context yet - keep players connected
     }
@@ -188,7 +192,8 @@ test.describe("Visual Regression Tests", () => {
 
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/lobby/);
+    await completeIdentifyPage(hostPage);
+    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
     const codeElement = hostPage.locator("p.font-mono");
     await expect(codeElement).toBeVisible();
@@ -213,7 +218,8 @@ test.describe("Visual Regression Tests", () => {
       await playerPage.getByRole("button", { name: "Join Crew" }).click();
       await playerPage.getByPlaceholder("XP7K9L").fill(code);
       await playerPage.getByRole("button", { name: "Board Ship" }).click();
-      await expect(playerPage).toHaveURL(/\/lobby/);
+      await completeIdentifyPage(playerPage);
+      await expect(playerPage).toHaveURL(/\/lobby/, { timeout: 15000 });
       playerContexts.push(playerContext);
     }
 
@@ -242,7 +248,7 @@ test.describe("Visual Regression Tests", () => {
   // Loading states for game feature pages
   test("Flogging Page - Loading", async ({ page }) => {
     await page.goto("/flogging");
-    await expect(page.getByText("Loading...")).toBeVisible();
+    await expect(page.getByText("Loading game...")).toBeVisible();
     await expect(page).toHaveScreenshot("flogging-loading.png", {
       fullPage: true,
     });
@@ -250,7 +256,7 @@ test.describe("Visual Regression Tests", () => {
 
   test("Denial Page - Loading", async ({ page }) => {
     await page.goto("/denial");
-    await expect(page.getByText("Loading...")).toBeVisible();
+    await expect(page.getByText("Loading game...")).toBeVisible();
     await expect(page).toHaveScreenshot("denial-loading.png", {
       fullPage: true,
     });
@@ -258,7 +264,7 @@ test.describe("Visual Regression Tests", () => {
 
   test("Cabin Search Page - Loading", async ({ page }) => {
     await page.goto("/cabin-search");
-    await expect(page.getByText("Loading...")).toBeVisible();
+    await expect(page.getByText("Loading game...")).toBeVisible();
     await expect(page).toHaveScreenshot("cabin-search-loading.png", {
       fullPage: true,
     });
@@ -266,7 +272,7 @@ test.describe("Visual Regression Tests", () => {
 
   test("Conversion Page - Loading", async ({ page }) => {
     await page.goto("/conversion");
-    await expect(page.getByText("Loading ritual...")).toBeVisible();
+    await expect(page.getByText("Loading game...")).toBeVisible();
     await expect(page).toHaveScreenshot("conversion-loading.png", {
       fullPage: true,
     });
@@ -274,7 +280,7 @@ test.describe("Visual Regression Tests", () => {
 
   test("Cult Cabin Search Page - Loading", async ({ page }) => {
     await page.goto("/cult-cabin-search");
-    await expect(page.getByText("Loading...")).toBeVisible();
+    await expect(page.getByText("Loading game...")).toBeVisible();
     await expect(page).toHaveScreenshot("cult-cabin-search-loading.png", {
       fullPage: true,
     });
@@ -305,7 +311,8 @@ test.describe("Action Flow Visual Tests", () => {
     // Create lobby and add bots
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/lobby/);
+    await completeIdentifyPage(hostPage);
+    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
     // Add 4 bots to reach minimum players
     for (let i = 0; i < 4; i++) {
@@ -350,7 +357,8 @@ test.describe("Action Flow Visual Tests", () => {
     // Create lobby and add bots
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/lobby/);
+    await completeIdentifyPage(hostPage);
+    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
     // Add 4 bots to reach minimum players
     for (let i = 0; i < 4; i++) {
@@ -398,7 +406,8 @@ test.describe("Action Flow Visual Tests", () => {
     // Create lobby and add bots
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/lobby/);
+    await completeIdentifyPage(hostPage);
+    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
     // Add 4 bots to reach minimum players
     for (let i = 0; i < 4; i++) {
@@ -441,7 +450,8 @@ test.describe("Action Flow Visual Tests", () => {
     // Create lobby and add bots
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/lobby/);
+    await completeIdentifyPage(hostPage);
+    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
     // Add 4 bots to reach minimum players
     for (let i = 0; i < 4; i++) {
