@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { completeIdentifyPage } from "./helpers";
 
 test("Navigation Protection: Prompt on Refresh", async ({ page }) => {
   // 1. Setup user
@@ -13,7 +14,8 @@ test("Navigation Protection: Prompt on Refresh", async ({ page }) => {
   // 2. Create Lobby
   await page.goto("/");
   await page.getByRole("button", { name: "Create Voyage" }).click();
-  await expect(page).toHaveURL(/\/lobby/);
+  await completeIdentifyPage(page);
+  await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
   await expect(page.getByText("Test Sailor(You)")).toBeVisible();
 
   // 3. Try to reload and expect dialog
@@ -58,7 +60,8 @@ test("Navigation Protection: Prompt on Close (simulated)", async ({ page }) => {
   // 2. Create Lobby
   await page.goto("/");
   await page.getByRole("button", { name: "Create Voyage" }).click();
-  await expect(page).toHaveURL(/\/lobby/);
+  await completeIdentifyPage(page);
+  await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
   // 3. Check if beforeunload is registered
   // We can't easily "close" the tab and check for dialog in the same way as reload in a single page context test,

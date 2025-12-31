@@ -9,6 +9,12 @@ test.use({
   },
 });
 
+// Skip on non-Chromium browsers as camera permissions aren't supported
+test.skip(
+  ({ browserName }) => browserName !== "chromium",
+  "Camera permissions only work in Chromium",
+);
+
 test("verify qr code modal in lobby", async ({ page }) => {
   // Go to homepage
   await page.goto("/en");

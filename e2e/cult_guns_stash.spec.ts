@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { completeIdentifyPage } from "./helpers";
 
 test.describe("Cult Guns Stash Flow", () => {
   test.setTimeout(120000); // Longer timeout for multiplayer tests
@@ -16,6 +17,7 @@ test.describe("Cult Guns Stash Flow", () => {
     });
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+    await completeIdentifyPage(hostPage);
     await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
     // Get the room code
@@ -40,6 +42,7 @@ test.describe("Cult Guns Stash Flow", () => {
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
       await page.getByRole("button", { name: "Board Ship" }).click();
+      await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       players.push({ context, page, name: playerName });
     }
@@ -115,6 +118,7 @@ test.describe("Cult Guns Stash Flow", () => {
     });
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+    await completeIdentifyPage(hostPage);
     await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
     const codeElement = hostPage.locator("p.font-mono");
@@ -138,6 +142,7 @@ test.describe("Cult Guns Stash Flow", () => {
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
       await page.getByRole("button", { name: "Board Ship" }).click();
+      await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       players.push({ context, page, name: playerName });
     }

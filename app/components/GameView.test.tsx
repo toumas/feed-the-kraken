@@ -220,7 +220,9 @@ describe("GameView", () => {
     );
 
     // Check for modal title
-    expect(screen.getByRole("heading", { name: "Conversion to Cult" })).toBeDefined();
+    expect(
+      screen.getByRole("heading", { name: "Conversion to Cult" }),
+    ).toBeDefined();
     expect(
       screen.getByText(
         "A ritual has begun. All players must accept to proceed.",

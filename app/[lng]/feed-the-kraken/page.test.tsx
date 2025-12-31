@@ -100,7 +100,7 @@ describe("FeedTheKrakenPage", () => {
     render(<FeedTheKrakenPage />);
 
     const submitButton = screen.getByRole("button", {
-      name: "Feed The Kraken",
+      name: "Feed to Kraken",
     }) as HTMLButtonElement;
     // Button is technically enabled to allow clicking for error feedback
     expect(submitButton.disabled).toBe(false);
@@ -125,7 +125,7 @@ describe("FeedTheKrakenPage", () => {
     fireEvent.click(screen.getByText("Sailor"));
 
     // Click submit
-    fireEvent.click(screen.getByRole("button", { name: "Feed The Kraken" }));
+    fireEvent.click(screen.getByRole("button", { name: "Feed to Kraken" }));
 
     expect(mockHandleFeedTheKrakenRequest).toHaveBeenCalledWith("p2");
   });
@@ -188,7 +188,7 @@ describe("FeedTheKrakenPage", () => {
     fireEvent.click(screen.getByText("Unconvertible Player"));
 
     // Click submit
-    fireEvent.click(screen.getByRole("button", { name: "Feed The Kraken" }));
+    fireEvent.click(screen.getByRole("button", { name: "Feed to Kraken" }));
 
     expect(mockHandleFeedTheKrakenRequest).toHaveBeenCalledWith("p2");
   });

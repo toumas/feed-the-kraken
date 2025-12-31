@@ -91,7 +91,7 @@ export default function CultCabinSearchPage() {
           <div className="flex items-center gap-3 pb-4 border-b border-slate-800">
             <Eye className="w-6 h-6 text-amber-500" />
             <h1 className="text-xl font-bold text-white">
-              {t("cabinSearch.title")}
+              {t("cabinSearch.title")} ({t("cabinSearch.cult")})
             </h1>
           </div>
 
@@ -246,7 +246,7 @@ export default function CultCabinSearchPage() {
             <div className="flex items-center justify-between">
               <h1 className="text-xl font-bold text-amber-500 uppercase tracking-wider flex items-center gap-2">
                 <Eye className="w-6 h-6" />
-                {t("cabinSearch.title")}
+                {t("cabinSearch.title")} ({t("cabinSearch.cult")})
               </h1>
               <div className="flex items-center gap-2 text-2xl font-mono font-bold text-white bg-slate-900 px-4 py-2 rounded-lg border border-slate-800">
                 <Clock className="w-5 h-5 text-slate-400" />

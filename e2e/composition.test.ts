@@ -1,14 +1,21 @@
 import { expect, test } from "@playwright/test";
+import { completeIdentifyPage } from "./helpers";
 
 test("Team Composition component appears in game", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("kraken_player_name", "Captain Test");
+    localStorage.setItem(
+      "kraken_player_photo",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    );
+  });
   await page.goto("/");
   // Create a voyage
   await page.click("text=Create Voyage");
-  // Fill profile
-  await page.fill('input[type="text"]', "Captain Test");
-  // Bypass photo using the special name trick we added (or just rely on the component being present)
-  // In our test environment, we might need to be careful.
-  await page.click("text=Save Profile");
+  await completeIdentifyPage(page);
+
+  // Wait for lobby
+  await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
   // Add bots until we have 5 players
   for (let i = 0; i < 4; i++) {

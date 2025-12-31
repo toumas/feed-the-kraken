@@ -132,7 +132,9 @@
     "pending": "Odotetaan..."
   },
   "feedTheKraken": {
+    "submit": "Syötä Krakenille",
     "title": "Ruoki Kraken",
+    "resultTitle": "Kraken on kylläinen!",
     "selectVictim": "Valitse uhri Krakenille",
     "confirmation": "Haluatko varmasti syöttää pelaajan {{name}} Krakenille?",
     "result": "{{name}} syötettiin Krakenille!",
@@ -143,6 +145,7 @@
   },
   "flogging": {
     "title": "Ruoski",
+    "resultTitle": "Ruoskinnan tulos",
     "selectTarget": "Valitse ruoskittava henkilöstön jäsen",
     "alreadyRevealed": "Ruoskittu jo kertaalleen",
     "flogPlayer": "Ruoski pelaaja",
@@ -154,6 +157,8 @@
     "used": "Käytetty"
   },
   "cabinSearch": {
+    "interrupted": "Hytin tarkastus keskeytyi!",
+    "cancelled": "Toiminto keskeytyi pelaajan toiminnan takia.",
     "title": "Hytin tarkastus",
     "converted": "Käännytetty kulttiin",
     "alreadyClaimed": "Tämä rooli on jo varattu toiselle pelaajalle.",
@@ -178,6 +183,7 @@
     "foundCard": "{{name}}"
   },
   "conversion": {
+    "interrupted": "Rituaali keskeytyi!",
     "title": "Liitä kulttiin",
     "selectTarget": "Valitse kulttiin liitettävä henkilöstön jäsen",
     "success": "{{name}} on liitetty kulttiin!",

@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { withRoleRevealed } from "./helpers";
+import { completeIdentifyPage, withRoleRevealed } from "./helpers";
 
 test.describe("Cult Role Visibility in 11-Player Games", () => {
   test.setTimeout(180000); // 11 players takes time
@@ -19,6 +19,7 @@ test.describe("Cult Role Visibility in 11-Player Games", () => {
     });
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+    await completeIdentifyPage(hostPage);
     await hostPage.getByRole("button", { name: "Manual" }).click();
     const code = await hostPage.locator("p.font-mono").innerText();
 
@@ -39,7 +40,8 @@ test.describe("Cult Role Visibility in 11-Player Games", () => {
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
       await page.getByRole("button", { name: "Board Ship" }).click();
-      await expect(page).toHaveURL(/\/lobby/);
+      await completeIdentifyPage(page);
+      await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       players.push({ page, name });
     }
 
@@ -114,6 +116,7 @@ test.describe("Cult Role Visibility in 11-Player Games", () => {
     });
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+    await completeIdentifyPage(hostPage);
     await hostPage.getByRole("button", { name: "Manual" }).click();
     const code = await hostPage.locator("p.font-mono").innerText();
 
@@ -134,7 +137,8 @@ test.describe("Cult Role Visibility in 11-Player Games", () => {
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
       await page.getByRole("button", { name: "Board Ship" }).click();
-      await expect(page).toHaveURL(/\/lobby/);
+      await completeIdentifyPage(page);
+      await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       players.push({ page, name });
     }
 

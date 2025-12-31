@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { checkRoleVisible } from "./helpers";
+import { checkRoleVisible, completeIdentifyPage } from "./helpers";
 
 test.describe("Manual Role Selection", () => {
   test("5 Players: Success with 3 Sailors, 1 Pirate, 1 Cult Leader", async ({
@@ -17,7 +17,8 @@ test.describe("Manual Role Selection", () => {
     });
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/lobby/);
+    await completeIdentifyPage(hostPage);
+    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
 
     // Set to manual distribution
     await hostPage.getByRole("button", { name: "Manual" }).click();
@@ -42,7 +43,8 @@ test.describe("Manual Role Selection", () => {
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
       await page.getByRole("button", { name: "Board Ship" }).click();
-      await expect(page).toHaveURL(/\/lobby/);
+      await completeIdentifyPage(page);
+      await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       players.push({ page, name: playerName });
     }
 
@@ -95,6 +97,8 @@ test.describe("Manual Role Selection", () => {
     });
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+    await completeIdentifyPage(hostPage);
+    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
     await hostPage.getByRole("button", { name: "Manual" }).click();
     const code = await hostPage.locator("p.font-mono").innerText();
 
@@ -116,14 +120,18 @@ test.describe("Manual Role Selection", () => {
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
       await page.getByRole("button", { name: "Board Ship" }).click();
+      await completeIdentifyPage(page);
+      await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       players.push(page);
     }
 
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
+    await expect(hostPage).toHaveURL(/\/role-selection/, { timeout: 15000 });
 
     // 2. Everyone picks Cult Leader
     const allPages = [hostPage, ...players];
     for (const p of allPages) {
+      await expect(p).toHaveURL(/\/role-selection/, { timeout: 15000 });
       await p.getByRole("button", { name: /^Cult Leader/ }).click();
       await p.getByRole("button", { name: "Confirm", exact: true }).click();
     }
@@ -148,6 +156,8 @@ test.describe("Manual Role Selection", () => {
     });
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+    await completeIdentifyPage(hostPage);
+    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
     await hostPage.getByRole("button", { name: "Manual" }).click();
 
     const code = await hostPage.locator("p.font-mono").innerText();
@@ -170,6 +180,8 @@ test.describe("Manual Role Selection", () => {
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
       await page.getByRole("button", { name: "Board Ship" }).click();
+      await completeIdentifyPage(page);
+      await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       players.push(page);
     }
 

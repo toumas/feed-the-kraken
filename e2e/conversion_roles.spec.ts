@@ -311,7 +311,7 @@ test.describe("Conversion Role Display", () => {
     await expect(
       targetSailor.page.getByText("wants to search your cabin"),
     ).toBeVisible({ timeout: 10000 });
-    await targetSailor.page.getByRole("button", { name: "Allow" }).click();
+    await targetSailor.page.getByRole("button", { name: "Accept" }).click();
 
     // 7. Verify the cabin search result shows original Sailor role AND Converted badge
     // Ensure we stay on the cabin-search page

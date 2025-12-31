@@ -66,7 +66,7 @@ export default function FeedTheKrakenPage() {
 
       <main className="relative z-10 max-w-md mx-auto w-full flex-1 flex flex-col">
         <GameHeader
-          title={t("feedTheKraken.title")}
+          title={t("feedTheKraken.resultTitle")}
           icon={<Skull className="w-5 h-5 text-red-500" />}
         />
 
@@ -88,7 +88,7 @@ export default function FeedTheKrakenPage() {
               />
               <PlayerSelectionList.Actions>
                 <PlayerSelectionList.Submit onSubmit={handlePlayerSelect}>
-                  {t("feedTheKraken.title")}
+                  {t("feedTheKraken.submit")}
                 </PlayerSelectionList.Submit>
                 <PlayerSelectionList.Cancel
                   onCancel={() => router.push("/game")}
