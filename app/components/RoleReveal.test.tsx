@@ -140,8 +140,6 @@ describe("RoleReveal", () => {
     // Custom hidden content should be visible
     expect(screen.getByText("Custom Hidden Content")).toBeDefined();
     // The reveal button should still be present
-    expect(
-      screen.getByText("Tap 5 times to reveal your role."),
-    ).toBeDefined();
+    expect(screen.getByText("Tap 5 times to reveal your role.")).toBeDefined();
   });
 });

@@ -15,14 +15,6 @@ export const completeIdentifyPage = async (page: Page) => {
 };
 
 /**
- * Gets the role reveal button using a stable selector.
- * Uses the button with touch-none class which is specific to the RoleReveal.Canvas component.
- */
-const getRoleRevealButton = (page: Page) => {
-  return page.locator("button.touch-none");
-};
-
-/**
  * Clicks the role reveal button 5 times to reveal the player's role,
  * then checks if the specified text is visible, then clicks once to hide.
  */
@@ -30,23 +22,27 @@ export const checkRoleVisible = async (
   page: Page,
   roleText: string = "Cult Leader",
 ) => {
-  const revealBtn = getRoleRevealButton(page);
+  // Find the reveal button using getByRole with exact name
+  const revealBtn = page.getByRole("button", { name: "Tap 5 times to reveal" });
   try {
-    await revealBtn.waitFor({ state: "attached", timeout: 2000 });
+    await revealBtn.waitFor({ state: "visible", timeout: 5000 });
   } catch {
     return false;
   }
 
-  // Click 5 times with force:true and longer delays to ensure React processes each click
+  // Click 5 times (no delay needed)
   for (let i = 0; i < 5; i++) {
-    await revealBtn.click({ force: true });
-    await page.waitForTimeout(300);
+    await revealBtn.click();
   }
+
+  // Wait for the reveal animation
+  await page.waitForTimeout(300);
 
   const isVisible = await page.getByText(roleText, { exact: true }).isVisible();
 
-  // Click once to hide
-  await revealBtn.click({ force: true });
+  // Click the hide button
+  const hideBtn = page.getByRole("button", { name: "Tap once to hide" });
+  await hideBtn.click();
 
   return isVisible;
 };
@@ -59,23 +55,27 @@ export const withRoleRevealed = async <T>(
   page: Page,
   callback: () => Promise<T>,
 ): Promise<T | null> => {
-  const revealBtn = getRoleRevealButton(page);
+  // Find the reveal button using getByRole with exact name
+  const revealBtn = page.getByRole("button", { name: "Tap 5 times to reveal" });
   try {
-    await revealBtn.waitFor({ state: "attached", timeout: 2000 });
+    await revealBtn.waitFor({ state: "visible", timeout: 5000 });
   } catch {
     return null;
   }
 
-  // Click 5 times with force:true and longer delays to ensure React processes each click
+  // Click 5 times (no delay needed)
   for (let i = 0; i < 5; i++) {
-    await revealBtn.click({ force: true });
-    await page.waitForTimeout(300);
+    await revealBtn.click();
   }
+
+  // Wait for the reveal animation
+  await page.waitForTimeout(300);
 
   const result = await callback();
 
-  // Click once to hide
-  await revealBtn.click({ force: true });
+  // Click the hide button
+  const hideBtn = page.getByRole("button", { name: "Tap once to hide" });
+  await hideBtn.click();
 
   return result;
 };

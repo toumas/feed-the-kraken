@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
+import { ConnectionStatusBanner } from "../components/ConnectionStatusBanner";
 import { GameProvider } from "../context/GameContext";
 import { languages } from "../i18n/settings";
 
@@ -36,7 +37,10 @@ export default async function LngLayout({ children, params }: LayoutProps) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <GameProvider>{children}</GameProvider>
+        <GameProvider>
+          <ConnectionStatusBanner />
+          {children}
+        </GameProvider>
       </body>
     </html>
   );

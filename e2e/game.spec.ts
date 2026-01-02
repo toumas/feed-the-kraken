@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { withRoleRevealed } from "./helpers";
 
 test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
   // 1. Host creates lobby
@@ -68,20 +69,25 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
   await startBtn.click();
   await expect(hostPage).toHaveURL(/\/game/);
 
-  // 4. Verify roles
+  // 4. Verify roles using withRoleRevealed
   // Host role
-  const hostRoleTitle = hostPage.locator("h2.text-4xl");
-  await expect(hostRoleTitle).toBeVisible();
-  const hostRole = await hostRoleTitle.innerText();
+  const hostRole = await withRoleRevealed(hostPage, async () => {
+    const hostRoleTitle = hostPage.locator("h2.text-4xl");
+    await expect(hostRoleTitle).toBeVisible();
+    return await hostRoleTitle.innerText();
+  });
 
-  const allRoles = [hostRole];
+  expect(hostRole).toBeDefined();
+  const allRoles = [hostRole as string];
 
   for (const p of players) {
-    const roleTitle = p.page.locator("h2.text-4xl");
-    await expect(roleTitle).toBeVisible();
-    const role = await roleTitle.innerText();
-
-    allRoles.push(role);
+    const role = await withRoleRevealed(p.page, async () => {
+      const roleTitle = p.page.locator("h2.text-4xl");
+      await expect(roleTitle).toBeVisible();
+      return await roleTitle.innerText();
+    });
+    expect(role).toBeDefined();
+    allRoles.push(role as string);
   }
 
   // Verify distribution

@@ -317,17 +317,11 @@ test.describe("Conversion Role Display", () => {
     // Ensure we stay on the cabin-search page
     await expect(searcherSailor.page).toHaveURL(/\/cabin-search/);
 
-    // Wait for the result overlay to appear with sufficient timeout
-    const resultOverlay = searcherSailor.page
+    // Wait for the result overlay to appear - find by the reveal button
+    const revealBtn = searcherSailor.page
       .locator(".fixed")
-      .filter({ hasText: "Cabin Searched" });
-    await expect(resultOverlay).toBeVisible({ timeout: 15000 });
-
-    // Find the reveal button within the overlay (it contains "Cabin Searched" text, not "Role Hidden")
-    const revealBtn = resultOverlay
-      .locator("button")
-      .filter({ hasText: "Tap 5 times" });
-    await expect(revealBtn).toBeVisible({ timeout: 5000 });
+      .getByRole("button", { name: "Tap 5 times to reveal" });
+    await expect(revealBtn).toBeVisible({ timeout: 15000 });
 
     // Click 5 times to reveal
     for (let i = 0; i < 5; i++) {
@@ -335,13 +329,17 @@ test.describe("Conversion Role Display", () => {
     }
 
     // Should show original role (Sailor) and Converted to Cult badge
+    const resultOverlay = searcherSailor.page.locator(".fixed");
     await expect(resultOverlay.getByText("Loyal Sailor")).toBeVisible({
       timeout: 3000,
     });
     await expect(resultOverlay.getByText("Converted to Cult")).toBeVisible();
 
-    // Click once to hide
-    await revealBtn.click();
+    // Click the hide button to hide
+    const hideBtn = resultOverlay.getByRole("button", {
+      name: "Tap once to hide",
+    });
+    await hideBtn.click();
 
     // Cleanup
     await hostContext.close();

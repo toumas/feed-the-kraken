@@ -1,6 +1,6 @@
 "use client";
 
-import PartySocket from "partysocket";
+import usePartySocket from "partysocket/react";
 import {
   createContext,
   useCallback,
@@ -176,9 +176,35 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [myRole, setMyRole] = useState<Role | null>(null);
 
   // PartyKit connection
-  const [socket, setSocket] = useState<PartySocket | null>(null);
   const [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus>("disconnected");
+
+  // Current lobby code for the usePartySocket hook
+  const [currentLobbyCode, setCurrentLobbyCode] = useState<string | null>(
+    () => {
+      if (typeof window !== "undefined") {
+        return localStorage.getItem("kraken_lobby_code");
+      }
+      return null;
+    },
+  );
+
+  // Refs for socket handlers (avoid stale closures)
+  const myPlayerIdRef = useRef(myPlayerId);
+  const myNameRef = useRef(myName);
+  const myPhotoRef = useRef(myPhoto);
+  const tRef = useRef(t);
+  // Track whether next connection should be CREATE or JOIN
+  const pendingMessageTypeRef = useRef<"CREATE_LOBBY" | "JOIN_LOBBY">(
+    "JOIN_LOBBY",
+  );
+
+  useEffect(() => {
+    myPlayerIdRef.current = myPlayerId;
+    myNameRef.current = myName;
+    myPhotoRef.current = myPhoto;
+    tRef.current = t;
+  }, [myPlayerId, myName, myPhoto, t]);
 
   // Cabin Search State
   const [cabinSearchPrompt, setCabinSearchPrompt] = useState<{
@@ -295,174 +321,172 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   } | null>(null);
   const [isOffWithTonguePending, setIsOffWithTonguePending] = useState(false);
 
+  // --- Message Handler (uses refs to avoid stale closures) ---
+  const handleSocketMessage = useCallback((event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      console.log("GameContext: Received message:", data.type, data);
+      const currentT = tRef.current;
+      const currentPlayerId = myPlayerIdRef.current;
+
+      switch (data.type) {
+        case "LOBBY_UPDATE":
+          console.log(
+            "GameContext: Received LOBBY_UPDATE, status:",
+            data.lobby.status,
+          );
+          setLobby(data.lobby);
+          if (data.lobby?.status === "PLAYING") {
+            if (data.lobby.assignments?.[currentPlayerId]) {
+              setMyRole(data.lobby.assignments[currentPlayerId]);
+            }
+          }
+          break;
+        case "GAME_STARTED":
+          if (data.assignments?.[currentPlayerId]) {
+            setMyRole(data.assignments[currentPlayerId]);
+          }
+          break;
+        case "CABIN_SEARCH_PROMPT":
+          setCabinSearchPrompt({
+            searcherId: data.searcherId,
+            searcherName: data.searcherName,
+          });
+          break;
+        case "CABIN_SEARCH_RESULT":
+          setCabinSearchResult({
+            targetPlayerId: data.targetPlayerId,
+            role: data.role,
+            originalRole: data.originalRole,
+          });
+          setIsCabinSearchPending(false);
+          break;
+        case "CABIN_SEARCH_DENIED":
+          setIsCabinSearchPending(false);
+          setError(currentT("errors.cabinSearchDenied"));
+          setTimeout(() => setError(null), 3000);
+          break;
+        case "ERROR": {
+          // Parse potential parameters: "key|param1:val1|param2:val2"
+          const [key, ...paramStrings] = data.message.split("|");
+          const params: Record<string, string> = {};
+          paramStrings.forEach((p: string) => {
+            const [k, v] = p.split(":");
+            if (k && v) params[k] = v;
+          });
+          setError(currentT(key, params));
+          setTimeout(() => setError(null), 3000);
+          break;
+        }
+        case "FLOGGING_CONFIRMATION_REQUEST":
+          setFloggingConfirmationPrompt({
+            hostId: data.hostId,
+            hostName: data.hostName,
+          });
+          break;
+        case "FLOGGING_REVEAL":
+          setFloggingReveal({
+            targetPlayerId: data.targetPlayerId,
+            revealedRole: data.revealedRole,
+          });
+          break;
+        case "FLOGGING_DENIED":
+          setError(currentT("errors.floggingDenied"));
+          setTimeout(() => setError(null), 3000);
+          break;
+
+        case "CONVERSION_RESULT":
+          // Handled by lobby state update mostly, but could trigger toast here if needed
+          break;
+
+        // Feed the Kraken messages
+        case "FEED_THE_KRAKEN_PROMPT":
+          setFeedTheKrakenPrompt({
+            captainId: data.captainId,
+            captainName: data.captainName,
+          });
+          break;
+        case "FEED_THE_KRAKEN_RESULT":
+          setFeedTheKrakenResult({
+            targetPlayerId: data.targetPlayerId,
+            cultVictory: data.cultVictory,
+          });
+          setIsFeedTheKrakenPending(false);
+          break;
+        case "FEED_THE_KRAKEN_DENIED":
+          setIsFeedTheKrakenPending(false);
+          setError(currentT("errors.feedTheKrakenDenied"));
+          setTimeout(() => setError(null), 3000);
+          break;
+
+        // Off with the Tongue messages
+        case "OFF_WITH_TONGUE_PROMPT":
+          setOffWithTonguePrompt({
+            captainId: data.captainId,
+            captainName: data.captainName,
+          });
+          break;
+        case "OFF_WITH_TONGUE_RESULT":
+          setIsOffWithTonguePending(false);
+          break;
+        case "OFF_WITH_TONGUE_DENIED":
+          setIsOffWithTonguePending(false);
+          setError(currentT("errors.offWithTongueDenied"));
+          setTimeout(() => setError(null), 3000);
+          break;
+      }
+    } catch (error) {
+      console.error("Error parsing message:", error);
+    }
+  }, []);
+
+  // --- usePartySocket Hook (handles auto-reconnect) ---
+  const socket = usePartySocket({
+    host: process.env.NEXT_PUBLIC_PARTYKIT_HOST || "localhost:1999",
+    room: currentLobbyCode || "__disconnected__",
+    startClosed: !currentLobbyCode,
+
+    onOpen() {
+      console.log("Socket connected, sending", pendingMessageTypeRef.current);
+      setConnectionStatus("connected");
+
+      // Send the appropriate message type (CREATE_LOBBY or JOIN_LOBBY)
+      socket.send(
+        JSON.stringify({
+          type: pendingMessageTypeRef.current,
+          playerId: myPlayerIdRef.current,
+          playerName: myNameRef.current || tRef.current("lobby.newSailor"),
+          playerPhoto: myPhotoRef.current,
+        }),
+      );
+      // Reset to JOIN for subsequent reconnects
+      pendingMessageTypeRef.current = "JOIN_LOBBY";
+    },
+
+    onMessage: handleSocketMessage,
+
+    onClose() {
+      console.log("Socket disconnected");
+      setConnectionStatus("disconnected");
+    },
+
+    onError(event) {
+      console.error("Socket error:", event);
+      setConnectionStatus("error");
+    },
+  });
+
   // --- Actions ---
 
-  const connectToLobby = useCallback(
-    (lobbyCode: string, initialPayload?: MessagePayload) => {
-      if (socket) {
-        socket.close();
-      }
+  const connectToLobby = useCallback((lobbyCode: string) => {
+    // Set the lobby code - the usePartySocket hook will auto-connect
+    setCurrentLobbyCode(lobbyCode);
+    localStorage.setItem("kraken_lobby_code", lobbyCode);
+    setConnectionStatus("connecting");
+  }, []);
 
-      setConnectionStatus("connecting");
-      const newSocket = new PartySocket({
-        host: process.env.NEXT_PUBLIC_PARTYKIT_HOST || "localhost:1999",
-        room: lobbyCode,
-      });
-
-      newSocket.onopen = () => {
-        setConnectionStatus("connected");
-        if (initialPayload) {
-          try {
-            newSocket.send(JSON.stringify(initialPayload));
-          } catch (err) {
-            console.error("Failed to send initial payload:", err);
-          }
-        }
-      };
-
-      newSocket.onclose = () => {
-        setConnectionStatus("disconnected");
-      };
-
-      newSocket.onerror = () => {
-        setConnectionStatus("error");
-      };
-
-      newSocket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log("GameContext: Received message:", data.type, data);
-          switch (data.type) {
-            case "LOBBY_UPDATE":
-              console.log(
-                "GameContext: Received LOBBY_UPDATE, status:",
-                data.lobby.status,
-              );
-              setLobby(data.lobby);
-              if (data.lobby?.status === "PLAYING") {
-                if (data.lobby.assignments?.[myPlayerId]) {
-                  setMyRole(data.lobby.assignments[myPlayerId]);
-                }
-              }
-              break;
-            case "GAME_STARTED":
-              if (data.assignments?.[myPlayerId]) {
-                setMyRole(data.assignments[myPlayerId]);
-              }
-              break;
-            case "CABIN_SEARCH_PROMPT":
-              setCabinSearchPrompt({
-                searcherId: data.searcherId,
-                searcherName: data.searcherName,
-              });
-              break;
-            case "CABIN_SEARCH_RESULT":
-              setCabinSearchResult({
-                targetPlayerId: data.targetPlayerId,
-                role: data.role,
-                originalRole: data.originalRole,
-              });
-              setIsCabinSearchPending(false);
-              break;
-            case "CABIN_SEARCH_DENIED":
-              setIsCabinSearchPending(false);
-              setError(t("errors.cabinSearchDenied"));
-              setTimeout(() => setError(null), 3000);
-              break;
-            case "ERROR": {
-              // Parse potential parameters: "key|param1:val1|param2:val2"
-              const [key, ...paramStrings] = data.message.split("|");
-              const params: Record<string, string> = {};
-              paramStrings.forEach((p: string) => {
-                const [k, v] = p.split(":");
-                if (k && v) params[k] = v;
-              });
-              setError(t(key, params));
-              setTimeout(() => setError(null), 3000);
-              break;
-            }
-            case "FLOGGING_CONFIRMATION_REQUEST":
-              setFloggingConfirmationPrompt({
-                hostId: data.hostId,
-                hostName: data.hostName,
-              });
-              break;
-            case "FLOGGING_REVEAL":
-              setFloggingReveal({
-                targetPlayerId: data.targetPlayerId,
-                revealedRole: data.revealedRole,
-              });
-              break;
-            case "FLOGGING_DENIED":
-              setError(t("errors.floggingDenied"));
-              setTimeout(() => setError(null), 3000);
-              break;
-
-            case "CONVERSION_RESULT":
-              // Handled by lobby state update mostly, but could trigger toast here if needed
-              break;
-
-            // Feed the Kraken messages
-            case "FEED_THE_KRAKEN_PROMPT":
-              setFeedTheKrakenPrompt({
-                captainId: data.captainId,
-                captainName: data.captainName,
-              });
-              break;
-            case "FEED_THE_KRAKEN_RESULT":
-              setFeedTheKrakenResult({
-                targetPlayerId: data.targetPlayerId,
-                cultVictory: data.cultVictory,
-              });
-              setIsFeedTheKrakenPending(false);
-              break;
-            case "FEED_THE_KRAKEN_DENIED":
-              setIsFeedTheKrakenPending(false);
-              setError(t("errors.feedTheKrakenDenied"));
-              setTimeout(() => setError(null), 3000);
-              break;
-
-            // Off with the Tongue messages
-            case "OFF_WITH_TONGUE_PROMPT":
-              setOffWithTonguePrompt({
-                captainId: data.captainId,
-                captainName: data.captainName,
-              });
-              break;
-            case "OFF_WITH_TONGUE_RESULT":
-              setIsOffWithTonguePending(false);
-              break;
-            case "OFF_WITH_TONGUE_DENIED":
-              setIsOffWithTonguePending(false);
-              setError(t("errors.offWithTongueDenied"));
-              setTimeout(() => setError(null), 3000);
-              break;
-          }
-        } catch (error) {
-          console.error("Error parsing message:", error);
-        }
-      };
-
-      setSocket(newSocket);
-    },
-    [myPlayerId, socket, t],
-  );
-
-  // Auto-reconnect on mount
-  useEffect(() => {
-    if (socket) return;
-    if (typeof window !== "undefined") {
-      const savedCode = localStorage.getItem("kraken_lobby_code");
-      if (savedCode) {
-        connectToLobby(savedCode, {
-          type: "JOIN_LOBBY",
-          playerId: myPlayerId,
-          playerName: myName,
-          playerPhoto: myPhoto,
-        });
-      }
-    }
-  }, [connectToLobby, myName, myPhoto, myPlayerId, socket]);
+  // Note: Auto-reconnect is now handled by usePartySocket hook.
+  // The lobby code is restored from localStorage in the currentLobbyCode state initializer.
 
   // Refs for event listeners to access latest state without re-binding
   const lobbyRef = useRef(lobby);
@@ -486,14 +510,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
-  const disconnectFromLobby = () => {
-    if (socket) {
-      socket.close();
-      setSocket(null);
-    }
+  const disconnectFromLobby = useCallback(() => {
+    setCurrentLobbyCode(null);
+    localStorage.removeItem("kraken_lobby_code");
     setConnectionStatus("disconnected");
     setLobby(null);
-  };
+    if (socket) {
+      socket.close();
+    }
+  }, [socket]);
 
   const updateMyProfile = (name: string, photoUrl: string | null) => {
     setMyName(name);
@@ -526,13 +551,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const nameToUse = overrideName || myName;
     const photoToUse = overridePhoto !== undefined ? overridePhoto : myPhoto;
 
-    connectToLobby(newCode, {
-      type: "CREATE_LOBBY",
-      playerId: myPlayerId,
-      playerName:
-        nameToUse === t("lobby.newSailor") ? t("lobby.host") : nameToUse,
-      playerPhoto: photoToUse,
-    });
+    // Set message type to CREATE for this connection
+    pendingMessageTypeRef.current = "CREATE_LOBBY";
+    // Update refs with the values to use
+    if (nameToUse)
+      myNameRef.current =
+        nameToUse === t("lobby.newSailor") ? t("lobby.host") : nameToUse;
+    if (photoToUse !== undefined) myPhotoRef.current = photoToUse;
+
+    connectToLobby(newCode);
 
     localStorage.setItem("kraken_lobby_code", newCode);
     setError(null);
@@ -551,12 +578,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const nameToUse = overrideName || myName;
     const photoToUse = overridePhoto !== undefined ? overridePhoto : myPhoto;
 
-    connectToLobby(codeEntered.toUpperCase(), {
-      type: "JOIN_LOBBY",
-      playerId: myPlayerId,
-      playerName: nameToUse,
-      playerPhoto: photoToUse,
-    });
+    // Set message type to JOIN for this connection
+    pendingMessageTypeRef.current = "JOIN_LOBBY";
+    // Update refs with the values to use
+    if (nameToUse) myNameRef.current = nameToUse;
+    if (photoToUse !== undefined) myPhotoRef.current = photoToUse;
+
+    connectToLobby(codeEntered.toUpperCase());
 
     localStorage.setItem("kraken_lobby_code", codeEntered.toUpperCase());
     setError(null);

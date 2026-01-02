@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { completeIdentifyPage } from "./helpers";
+import { completeIdentifyPage, withRoleRevealed } from "./helpers";
 
 test("Game persistence across reloads", async ({ page }) => {
   // 1. Host creates a lobby
@@ -33,20 +33,32 @@ test("Game persistence across reloads", async ({ page }) => {
 
   // 4. Verify Game Started and Role Assigned
   await expect(page.getByText("Crew Status")).toBeVisible();
-  // Check for any role title
+
+  // Reveal role to check it was assigned
   const roleTitles = ["Loyal Sailor", "Pirate", "Cult Leader", "Cultist"];
-  const roleLocator = page
-    .locator("h2")
-    .filter({ hasText: new RegExp(roleTitles.join("|")) });
-  await expect(roleLocator).toBeVisible();
-  const assignedRole = await roleLocator.innerText();
+  const assignedRole = await withRoleRevealed(page, async () => {
+    const roleLocator = page
+      .locator("h2")
+      .filter({ hasText: new RegExp(roleTitles.join("|")) });
+    await expect(roleLocator).toBeVisible();
+    return await roleLocator.innerText();
+  });
+
+  expect(assignedRole).toBeTruthy();
 
   // 5. Reload Page
   await page.reload();
 
   // 6. Verify back in Game with same Role
   await expect(page.getByText("Crew Status")).toBeVisible();
-  await expect(
-    page.locator("h2").filter({ hasText: assignedRole }),
-  ).toBeVisible({ timeout: 10000 });
+
+  // Reveal role again to verify same role after reload
+  if (typeof assignedRole !== "string") {
+    throw new Error("Expected assignedRole to be defined");
+  }
+  await withRoleRevealed(page, async () => {
+    await expect(
+      page.locator("h2").filter({ hasText: assignedRole }),
+    ).toBeVisible({ timeout: 10000 });
+  });
 });

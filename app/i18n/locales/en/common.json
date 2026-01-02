@@ -246,6 +246,11 @@
     "hideInstruction": "Tap once to hide your role.",
     "warning": "Make sure nobody is watching!"
   },
+  "connection": {
+    "reconnecting": "Reconnecting...",
+    "disconnected": "Connection lost. Reconnecting...",
+    "error": "Connection error. Please refresh the page."
+  },
   "errors": {
     "connectionLost": "Connection lost. Reconnecting...",
     "invalidCode": "Invalid room code format.",

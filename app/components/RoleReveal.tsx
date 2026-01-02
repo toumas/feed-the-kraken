@@ -152,9 +152,7 @@ function Hidden({ children, className }: HiddenProps) {
           ))}
         </div>
       </button>
-      <p className="text-sm text-slate-500 mt-3">
-        {t("roleReveal.warning")}
-      </p>
+      <p className="text-sm text-slate-500 mt-3">{t("roleReveal.warning")}</p>
     </div>
   );
 }
@@ -187,7 +185,11 @@ interface IconProps {
 }
 
 function Icon({ children, className }: IconProps) {
-  return <div className={cn("relative", className)}>{children}</div>;
+  return (
+    <div data-testid="role-icon" className={cn("relative", className)}>
+      {children}
+    </div>
+  );
 }
 
 interface TitleProps {
@@ -213,6 +215,7 @@ interface DescriptionProps {
 function Description({ children, className }: DescriptionProps) {
   return (
     <p
+      data-testid="role-description"
       className={cn(
         "text-slate-300 text-center max-w-xs text-lg font-medium",
         className,
