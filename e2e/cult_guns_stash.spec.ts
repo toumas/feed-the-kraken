@@ -82,6 +82,7 @@ test.describe("Cult Guns Stash Flow", () => {
 
     // 8. Verify non-leader sees quiz
     const nonLeaderPage = players[0].page;
+    await expect(nonLeaderPage).toHaveURL(/\/cult-guns-stash/);
     await expect(
       nonLeaderPage.getByRole("heading", { name: "Prove Your Worth" }),
     ).toBeVisible({ timeout: 10000 });

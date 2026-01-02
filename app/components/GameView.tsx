@@ -215,7 +215,10 @@ export function GameView({
           <RoleReveal.Description>{roleInfo.desc}</RoleReveal.Description>
           <RoleReveal.HideInstruction className="mt-4" />
           {myRole === "PIRATE" && lobby.assignments && (
-            <div className="mt-6 pt-6 border-t border-slate-700 w-full">
+            <div
+              data-testid="role-team-info"
+              className="mt-6 pt-6 border-t border-slate-700 w-full"
+            >
               <h3 className="text-red-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
                 {t("game.pirateCrew")}
               </h3>
@@ -260,15 +263,16 @@ export function GameView({
             lobby.assignments &&
             lobby.originalRoles &&
             lobby.originalRoles[myPlayerId] !== "CULTIST" && (
-              <div className="mt-6 pt-6 border-t border-slate-700 w-full">
+              <div
+                data-testid="role-team-info"
+                className="mt-6 pt-6 border-t border-slate-700 w-full"
+              >
                 <h3 className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
                   {t("game.yourLeader")}
                 </h3>
                 <div className="flex flex-wrap justify-center gap-3">
                   {lobby.players
-                    .filter(
-                      (p) => lobby.assignments?.[p.id] === "CULT_LEADER",
-                    )
+                    .filter((p) => lobby.assignments?.[p.id] === "CULT_LEADER")
                     .map((p) => (
                       <div
                         key={p.id}
@@ -339,7 +343,11 @@ export function GameView({
         <div className="mb-6">
           <div className="grid grid-cols-3 gap-3">
             {lobby.players.map((p) => (
-              <div key={p.id} className="flex flex-col items-center gap-1">
+              <div
+                key={p.id}
+                data-testid="sailor-card"
+                className="flex flex-col items-center gap-1"
+              >
                 <div className="relative">
                   <Avatar
                     url={p.photoUrl}

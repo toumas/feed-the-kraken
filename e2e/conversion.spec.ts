@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { completeIdentifyPage } from "./helpers";
+import { completeIdentifyPage, identifyRole } from "./helpers";
 
 test.describe("Conversion to Cult", () => {
   test.setTimeout(90000);
@@ -62,60 +62,19 @@ test.describe("Conversion to Cult", () => {
 
     // 4. Find which player is the Cult Leader
     // We need to reveal the role on each page to find who is the Cult Leader
-    let cultLeaderPage = null;
+    let cultLeaderPage: Page | null = null;
     let cultLeaderIndex = -1;
 
-    // Helper to check role
-    const checkRole = async (page: Page) => {
-      const revealBtn = page.locator("button.touch-none");
-      // Wait for button to be attached
-      await revealBtn.waitFor({ state: "attached" });
-
-      // Click 5 times via native JavaScript events using page.evaluate
-      await page.evaluate(() => {
-        const btn = document.querySelector("button.touch-none");
-        if (btn) {
-          for (let i = 0; i < 5; i++) {
-            const clickEvent = new MouseEvent("click", {
-              bubbles: true,
-              cancelable: true,
-              view: window,
-            });
-            btn.dispatchEvent(clickEvent);
-          }
-        }
-      });
-
-      // Wait for React state to update
-      await page.waitForTimeout(200);
-
-      // Check for Cult Leader text
-      const isLeader = await page.getByText("Cult Leader").isVisible();
-
-      // Click once to hide
-      await page.evaluate(() => {
-        const btn = document.querySelector("button.touch-none");
-        if (btn) {
-          const clickEvent = new MouseEvent("click", {
-            bubbles: true,
-            cancelable: true,
-            view: window,
-          });
-          btn.dispatchEvent(clickEvent);
-        }
-      });
-
-      return isLeader;
-    };
-
     // Check host first
-    if (await checkRole(hostPage)) {
+    const hostRole = await identifyRole(hostPage);
+    if (hostRole === "CULT_LEADER") {
       cultLeaderPage = hostPage;
       cultLeaderIndex = -1; // -1 indicates host
     } else {
       // Check each player
       for (let i = 0; i < players.length; i++) {
-        if (await checkRole(players[i].page)) {
+        const role = await identifyRole(players[i].page);
+        if (role === "CULT_LEADER") {
           cultLeaderPage = players[i].page;
           cultLeaderIndex = i;
           break;
@@ -362,58 +321,17 @@ test.describe("Conversion to Cult", () => {
 
     // 4. Find which player is the Cult Leader
     // We need to reveal the role on each page to find who is the Cult Leader
-    let cultLeaderPage = null;
-
-    // Helper to check role
-    const checkRole = async (page: Page) => {
-      const revealBtn = page.locator("button.touch-none");
-      // Wait for button to be attached
-      await revealBtn.waitFor({ state: "attached" });
-
-      // Click 5 times via native JavaScript events using page.evaluate
-      await page.evaluate(() => {
-        const btn = document.querySelector("button.touch-none");
-        if (btn) {
-          for (let i = 0; i < 5; i++) {
-            const clickEvent = new MouseEvent("click", {
-              bubbles: true,
-              cancelable: true,
-              view: window,
-            });
-            btn.dispatchEvent(clickEvent);
-          }
-        }
-      });
-
-      // Wait for React state to update
-      await page.waitForTimeout(200);
-
-      // Check for Cult Leader text
-      const isLeader = await page.getByText("Cult Leader").isVisible();
-
-      // Click once to hide
-      await page.evaluate(() => {
-        const btn = document.querySelector("button.touch-none");
-        if (btn) {
-          const clickEvent = new MouseEvent("click", {
-            bubbles: true,
-            cancelable: true,
-            view: window,
-          });
-          btn.dispatchEvent(clickEvent);
-        }
-      });
-
-      return isLeader;
-    };
+    let cultLeaderPage: Page | null = null;
 
     // Check host first
-    if (await checkRole(hostPage)) {
+    const hostRole = await identifyRole(hostPage);
+    if (hostRole === "CULT_LEADER") {
       cultLeaderPage = hostPage;
     } else {
       // Check each player
       for (let i = 0; i < players.length; i++) {
-        if (await checkRole(players[i].page)) {
+        const role = await identifyRole(players[i].page);
+        if (role === "CULT_LEADER") {
           cultLeaderPage = players[i].page;
           break;
         }
@@ -530,58 +448,17 @@ test.describe("Conversion to Cult", () => {
 
     // 4. Find which player is the Cult Leader
     // We need to reveal the role on each page to find who is the Cult Leader
-    let cultLeaderPage = null;
-
-    // Helper to check role
-    const checkRole = async (page: Page) => {
-      const revealBtn = page.locator("button.touch-none");
-      // Wait for button to be attached
-      await revealBtn.waitFor({ state: "attached" });
-
-      // Click 5 times via native JavaScript events using page.evaluate
-      await page.evaluate(() => {
-        const btn = document.querySelector("button.touch-none");
-        if (btn) {
-          for (let i = 0; i < 5; i++) {
-            const clickEvent = new MouseEvent("click", {
-              bubbles: true,
-              cancelable: true,
-              view: window,
-            });
-            btn.dispatchEvent(clickEvent);
-          }
-        }
-      });
-
-      // Wait for React state to update
-      await page.waitForTimeout(200);
-
-      // Check for Cult Leader text
-      const isLeader = await page.getByText("Cult Leader").isVisible();
-
-      // Click once to hide
-      await page.evaluate(() => {
-        const btn = document.querySelector("button.touch-none");
-        if (btn) {
-          const clickEvent = new MouseEvent("click", {
-            bubbles: true,
-            cancelable: true,
-            view: window,
-          });
-          btn.dispatchEvent(clickEvent);
-        }
-      });
-
-      return isLeader;
-    };
+    let cultLeaderPage: Page | null = null;
 
     // Check host first
-    if (await checkRole(hostPage)) {
+    const hostRole = await identifyRole(hostPage);
+    if (hostRole === "CULT_LEADER") {
       cultLeaderPage = hostPage;
     } else {
       // Check each player
       for (let i = 0; i < players.length; i++) {
-        if (await checkRole(players[i].page)) {
+        const role = await identifyRole(players[i].page);
+        if (role === "CULT_LEADER") {
           cultLeaderPage = players[i].page;
           break;
         }

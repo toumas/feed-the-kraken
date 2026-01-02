@@ -51,7 +51,10 @@ export function TeamComposition({ playerCount }: TeamCompositionProps) {
   const counts = getCounts();
 
   return (
-    <div className="w-full max-w-sm mx-auto mb-6 bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
+    <div
+      data-testid="team-composition"
+      className="w-full max-w-sm mx-auto mb-6 bg-slate-900 rounded-xl border border-slate-800 overflow-hidden"
+    >
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}

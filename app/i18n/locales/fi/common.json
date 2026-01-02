@@ -246,6 +246,11 @@
     "hideInstruction": "Napauta kerran piilottaaksesi roolisi.",
     "warning": "Varmista, ettei kukaan muu näe!"
   },
+  "connection": {
+    "reconnecting": "Yhdistetään uudelleen...",
+    "disconnected": "Yhteys katkesi. Yhdistetään uudelleen...",
+    "error": "Yhteysvirhe. Päivitä sivu."
+  },
   "errors": {
     "connectionLost": "Yhteys katkesi. Yhdistetään uudelleen...",
     "invalidCode": "Virheellinen huonekoodi.",

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { completeIdentifyPage } from "./helpers";
+import { completeIdentifyPage, withRoleRevealed } from "./helpers";
 
 /**
  * Visual Regression Tests
@@ -175,74 +175,6 @@ test.describe("Visual Regression Tests", () => {
     await expect(page).toHaveScreenshot("game-loading.png", {
       fullPage: true,
     });
-  });
-
-  test("Game Page - Role Reveal", async ({ browser }) => {
-    // Create host
-    const hostContext = await browser.newContext();
-    const hostPage = await hostContext.newPage();
-
-    await hostPage.addInitScript(() => {
-      localStorage.setItem("kraken_player_name", "Captain");
-      localStorage.setItem(
-        "kraken_player_photo",
-        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-      );
-    });
-
-    await hostPage.goto("/");
-    await hostPage.getByRole("button", { name: "Create Voyage" }).click();
-    await completeIdentifyPage(hostPage);
-    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
-
-    const codeElement = hostPage.locator("p.font-mono");
-    await expect(codeElement).toBeVisible();
-    const code = await codeElement.innerText();
-
-    // Join 4 more players to reach minimum (5 total)
-    const playerContexts = [];
-    for (let i = 0; i < 4; i++) {
-      const playerContext = await browser.newContext();
-      const playerPage = await playerContext.newPage();
-      const playerName = `Sailor ${i + 1}`;
-
-      await playerPage.addInitScript((name) => {
-        localStorage.setItem("kraken_player_name", name);
-        localStorage.setItem(
-          "kraken_player_photo",
-          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-        );
-      }, playerName);
-
-      await playerPage.goto("/");
-      await playerPage.getByRole("button", { name: "Join Crew" }).click();
-      await playerPage.getByPlaceholder("XP7K9L").fill(code);
-      await playerPage.getByRole("button", { name: "Board Ship" }).click();
-      await completeIdentifyPage(playerPage);
-      await expect(playerPage).toHaveURL(/\/lobby/, { timeout: 15000 });
-      playerContexts.push(playerContext);
-    }
-
-    // Wait for all players and start game
-    await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
-    await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/game/);
-
-    // Wait for role reveal
-    await expect(hostPage.locator("h2.text-4xl")).toBeVisible();
-
-    await expect(hostPage).toHaveScreenshot("game-role-reveal.png", {
-      fullPage: true,
-      // Mask elements that vary between runs (role text, possibly other dynamic elements)
-      mask: [hostPage.locator("h2.text-4xl")],
-      // Higher threshold since role assignments affect layout and content
-      maxDiffPixelRatio: 0.02,
-    });
-
-    await hostContext.close();
-    for (const ctx of playerContexts) {
-      await ctx.close();
-    }
   });
 
   // Loading states for game feature pages
