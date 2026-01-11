@@ -34,36 +34,16 @@ describe("GameView", () => {
     myRole: "SAILOR" as const,
     myPlayerId: "p1",
     onLeave: vi.fn(),
-    onCabinSearch: vi.fn(),
-    cabinSearchPrompt: null,
-    cabinSearchResult: null,
-    onCabinSearchResponse: vi.fn(),
-    onClearCabinSearchResult: vi.fn(),
-    isCabinSearchPending: false,
-
-    floggingConfirmationPrompt: null,
-    onFloggingConfirmationResponse: vi.fn(),
-    floggingReveal: null,
-    onClearFloggingReveal: vi.fn(),
     onStartConversion: vi.fn(),
-    conversionStatus: null,
-    onRespondConversion: vi.fn(),
-    isConversionDismissed: false,
-    onDismissConversion: vi.fn(),
     onStartCabinSearch: vi.fn(),
-    isCabinSearchDismissed: false,
-    onDismissCabinSearch: vi.fn(),
     onStartGunsStash: vi.fn(),
-    isGunsStashDismissed: false,
-    onDismissGunsStash: vi.fn(),
-    feedTheKrakenPrompt: null,
-    onFeedTheKrakenResponse: vi.fn(),
-    feedTheKrakenResult: null,
-    onClearFeedTheKrakenResult: vi.fn(),
-    offWithTonguePrompt: null,
-    onOffWithTongueResponse: vi.fn(),
-    onResetGame: vi.fn(),
-    onBackToLobby: vi.fn(),
+    onOpenCabinSearch: vi.fn(),
+    onOpenFeedTheKraken: vi.fn(),
+    onOpenFlogging: vi.fn(),
+    onOpenOffWithTongue: vi.fn(),
+    onOpenDenial: vi.fn(),
+    onOpenResetGame: vi.fn(),
+    onOpenBackToLobby: vi.fn(),
   };
 
   // Helper to simulate 5 taps to reveal role
@@ -77,14 +57,16 @@ describe("GameView", () => {
   it("renders role information after reveal", () => {
     render(<GameView {...defaultProps} />);
     revealRole();
-    expect(screen.getByText("Loyal Sailor")).toBeDefined();
+    expect(screen.getByText("Sailor")).toBeDefined();
     expect(screen.getByText("Steer the ship to blue area.")).toBeDefined();
   });
 
-  it("renders Denial of Command link", () => {
-    render(<GameView {...defaultProps} />);
-    const link = screen.getByText("Denial of Command").closest("a");
-    expect(link?.getAttribute("href")).toBe("/denial");
+  it("renders Denial of Command button and calls callback when clicked", () => {
+    const onOpenDenial = vi.fn();
+    render(<GameView {...defaultProps} onOpenDenial={onOpenDenial} />);
+    const button = screen.getByText("Denial of Command");
+    fireEvent.click(button);
+    expect(onOpenDenial).toHaveBeenCalled();
   });
 
   it("renders eliminated state when player is eliminated", () => {
@@ -109,64 +91,69 @@ describe("GameView", () => {
     expect(screen.queryByText("Denial of Command")).toBeNull();
   });
 
-  it("shows disabled-looking but clickable flogging link when used", () => {
+  it("shows disabled-looking but clickable flogging button when used", () => {
+    const onOpenFlogging = vi.fn();
     render(
       <GameView
         {...defaultProps}
         lobby={{ ...mockLobby, isFloggingUsed: true }}
+        onOpenFlogging={onOpenFlogging}
       />,
     );
-    const link = screen.getByText("Flogging (Used)").closest("a");
-    expect(link).toBeDefined();
-    expect(link?.getAttribute("href")).toBe("/flogging");
-    expect(link?.className).toContain("bg-slate-800/50");
-    expect(link?.className).toContain("text-slate-500");
+    const button = screen.getByText("Flogging (Used)");
+    expect(button).toBeDefined();
+    expect(button.className).toContain("bg-slate-800/50");
+    expect(button.className).toContain("text-slate-500");
+    fireEvent.click(button);
+    expect(onOpenFlogging).toHaveBeenCalled();
   });
 
-  it("calls onLeave when End Session is confirmed", () => {
+  it("renders End Session button", () => {
+    render(<GameView {...defaultProps} />);
+    revealRole();
+    const endSessionButton = screen.getByRole("button", {
+      name: /End Session/i,
+    });
+    expect(endSessionButton).toBeDefined();
+  });
+
+  it("shows End Session modal for eliminated player", () => {
     const onLeave = vi.fn();
-    // Mock confirm to return true
-    // Note: In the new implementation, we use a custom modal instead of window.confirm
-    // So we need to click the "End Session" button, then the "Leave" button in the modal.
+    const eliminatedLobby: LobbyState = {
+      ...mockLobby,
+      players: [
+        {
+          ...mockLobby.players[0],
+          isEliminated: true,
+        },
+      ],
+    };
 
-    render(<GameView {...defaultProps} onLeave={onLeave} />);
+    render(
+      <GameView {...defaultProps} lobby={eliminatedLobby} onLeave={onLeave} />,
+    );
 
-    fireEvent.click(screen.getByText("End Session?"));
+    // Click Return to Shore to show the End Session modal
+    fireEvent.click(screen.getByText("Return to Shore"));
 
-    // Check if modal appears
-    expect(
-      screen.getByText(
-        "Are you sure you want to leave the game? You won't be able to rejoin with the same role.",
-      ),
-    ).toBeDefined();
+    // Modal should appear
+    const leaveButton = screen.getByRole("button", { name: /Leave/i });
+    expect(leaveButton).toBeDefined();
 
-    // Click confirm
-    fireEvent.click(screen.getByText("Leave"));
-
+    // Click Leave
+    fireEvent.click(leaveButton);
     expect(onLeave).toHaveBeenCalled();
   });
 
-  it("does not call onLeave when End Session is cancelled", () => {
-    const onLeave = vi.fn();
-
-    render(<GameView {...defaultProps} onLeave={onLeave} />);
-
-    fireEvent.click(screen.getByText("End Session?"));
-
-    // Click cancel (Stay)
-    fireEvent.click(screen.getByText("Stay"));
-
-    expect(onLeave).not.toHaveBeenCalled();
-  });
-
-  // ... (keep pirate tests)
-
-  // ... (keep prompt test)
-
-  it("renders Cabin Search link", () => {
-    render(<GameView {...defaultProps} />);
-    const link = screen.getByText("Cabin Search").closest("a");
-    expect(link?.getAttribute("href")).toBe("/cabin-search");
+  it("renders Cabin Search button and calls callback when clicked", () => {
+    const onOpenCabinSearch = vi.fn();
+    render(
+      <GameView {...defaultProps} onOpenCabinSearch={onOpenCabinSearch} />,
+    );
+    revealRole();
+    const button = screen.getByRole("button", { name: "Cabin Search" });
+    fireEvent.click(button);
+    expect(onOpenCabinSearch).toHaveBeenCalled();
   });
 
   it("renders Conversion to Cult button", () => {
@@ -191,149 +178,6 @@ describe("GameView", () => {
 
     fireEvent.click(screen.getByText("Conversion to Cult"));
     expect(mockOnStartConversion).toHaveBeenCalled();
-  });
-
-  it("shows conversion modal when status is PENDING", () => {
-    const conversionStatus = {
-      initiatorId: "p1",
-      responses: { p1: true, p2: false },
-      state: "PENDING" as const,
-    };
-
-    render(
-      <GameView
-        {...defaultProps}
-        lobby={{
-          ...mockLobby,
-          players: [
-            ...mockLobby.players,
-            {
-              id: "p2",
-              name: "Player 2",
-              photoUrl: null,
-              isHost: false,
-              isReady: true,
-              isOnline: true,
-              isEliminated: false,
-              isUnconvertible: false,
-              notRole: null,
-              joinedAt: Date.now(),
-              hasTongue: true,
-            },
-          ],
-          status: "PLAYING",
-          conversionStatus,
-        }}
-        conversionStatus={conversionStatus}
-      />,
-    );
-
-    // Check for modal title
-    expect(
-      screen.getByRole("heading", { name: "Conversion to Cult" }),
-    ).toBeDefined();
-    expect(
-      screen.getByText(
-        "A ritual has begun. All players must accept to proceed.",
-      ),
-    ).toBeDefined();
-    expect(screen.getAllByText("Accepted")).toBeDefined(); // p1 status
-    expect(screen.getAllByText(/Pending/i)).toBeDefined(); // p2 status
-  });
-
-  it("shows Accept/Decline buttons when player has not responded", () => {
-    const conversionStatus = {
-      initiatorId: "p2",
-      responses: { p2: true }, // p1 (me) hasn't responded
-      state: "PENDING" as const,
-    };
-    const mockOnRespondConversion = vi.fn();
-
-    render(
-      <GameView
-        {...defaultProps}
-        lobby={{
-          ...mockLobby,
-          status: "PLAYING",
-          conversionStatus,
-        }}
-        conversionStatus={conversionStatus}
-        onRespondConversion={mockOnRespondConversion}
-      />,
-    );
-
-    const acceptButton = screen.getByText("Accept");
-    const declineButton = screen.getByText("Decline");
-
-    expect(acceptButton).toBeDefined();
-    expect(declineButton).toBeDefined();
-
-    fireEvent.click(acceptButton);
-    expect(mockOnRespondConversion).toHaveBeenCalledWith(true);
-
-    fireEvent.click(declineButton);
-    expect(mockOnRespondConversion).toHaveBeenCalledWith(false);
-  });
-
-  it("shows waiting state and change vote buttons when player has accepted", () => {
-    const conversionStatus = {
-      initiatorId: "p2",
-      responses: { p2: true, p1: true }, // p1 (me) has accepted
-      state: "PENDING" as const,
-    };
-    const mockOnRespondConversion = vi.fn();
-
-    render(
-      <GameView
-        {...defaultProps}
-        lobby={{
-          ...mockLobby,
-          status: "PLAYING",
-          conversionStatus,
-        }}
-        conversionStatus={conversionStatus}
-        onRespondConversion={mockOnRespondConversion}
-      />,
-    );
-
-    expect(screen.getByText("Waiting for others...")).toBeDefined();
-
-    // Check for "Decline" (was "Change Vote to Decline")
-    const declineButton = screen.getByText("Decline");
-    expect(declineButton).toBeDefined();
-
-    // Check for disabled "Accepted" button
-    // "Accepted" appears in the status list and on the button.
-    // We want the button specifically.
-    const acceptedButton = screen.getByRole("button", { name: "Accepted" });
-    expect(acceptedButton).toBeDefined();
-    // Note: checking cursor-not-allowed style is hard in jsdom, but we verified presence
-
-    fireEvent.click(declineButton);
-    expect(mockOnRespondConversion).toHaveBeenCalledWith(false);
-  });
-
-  it("shows cancellation message when state is CANCELLED", () => {
-    const conversionStatus = {
-      initiatorId: "p1",
-      responses: { p1: true },
-      state: "CANCELLED" as const,
-    };
-
-    render(
-      <GameView
-        {...defaultProps}
-        lobby={{
-          ...mockLobby,
-          status: "PLAYING",
-          conversionStatus,
-        }}
-        conversionStatus={conversionStatus}
-      />,
-    );
-
-    expect(screen.getByText("The ritual was interrupted!")).toBeDefined();
-    expect(screen.getByText("Done")).toBeDefined();
   });
 
   // --- Converted Player Role Display Tests ---

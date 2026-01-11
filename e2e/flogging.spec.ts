@@ -48,14 +48,21 @@ test("Flogging Flow: Host flogs Player 1", async ({ browser }) => {
   // 3. Start Game
   await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
   await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-  await expect(hostPage).toHaveURL(/\/game/, { timeout: 10000 });
+  await expect(hostPage.getByText("Crew Status")).toBeVisible({
+    timeout: 10000,
+  });
 
   // 4. Host initiates Flogging on Player 1
-  await hostPage.getByRole("link", { name: "Flogging" }).click();
-  await expect(hostPage).toHaveURL(/\/flogging/);
+  await hostPage.getByRole("button", { name: "Flogging" }).click();
+  await expect(
+    hostPage.getByRole("heading", { name: "Flogging" }),
+  ).toBeVisible();
 
   // Select Player 1
-  await hostPage.getByText("Player 1").click();
+  await hostPage
+    .getByText("Player 1", { exact: true })
+    .filter({ visible: true })
+    .click();
   await hostPage.getByRole("button", { name: "Flog Player" }).click();
 
   // Verify pending state on Host
@@ -72,7 +79,10 @@ test("Flogging Flow: Host flogs Player 1", async ({ browser }) => {
   await player1Page.getByRole("button", { name: "Accept" }).click();
 
   // 6. Host sees reveal
-  await expect(hostPage).toHaveURL(/\/game/); // Should redirect back to game
+  // Flogging result is shown in FloggingView
+  await expect(
+    hostPage.getByRole("heading", { name: "Flogging Result" }),
+  ).toBeVisible({ timeout: 10000 });
   await expect(
     hostPage.getByRole("heading", { name: "Flogging Result" }),
   ).toBeVisible({ timeout: 10000 });
@@ -135,14 +145,19 @@ test("Flogging Flow: Player 1 denies flogging", async ({ browser }) => {
   // 4. Start Game
   await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
   await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-  await expect(hostPage).toHaveURL(/\/game/);
+  await expect(hostPage.getByText("Crew Status")).toBeVisible();
 
   // 5. Host initiates Flogging on Player 1
-  await hostPage.getByRole("link", { name: "Flogging" }).click();
-  await expect(hostPage).toHaveURL(/\/flogging/);
+  await hostPage.getByRole("button", { name: "Flogging" }).click();
+  await expect(
+    hostPage.getByRole("heading", { name: "Flogging" }),
+  ).toBeVisible();
 
   // Select Player 1
-  await hostPage.getByText("Player 1").click();
+  await hostPage
+    .getByText("Player 1", { exact: true })
+    .filter({ visible: true })
+    .click();
   await hostPage.getByRole("button", { name: "Flog Player" }).click();
 
   // Verify pending state on Host
@@ -207,14 +222,19 @@ test("Flogging Flow: Restriction (Once per game)", async ({ browser }) => {
   // 4. Start Game
   await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
   await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-  await expect(hostPage).toHaveURL(/\/game/);
+  await expect(hostPage.getByText("Crew Status")).toBeVisible();
 
   // 5. Host initiates Flogging on Player 1
-  await hostPage.getByRole("link", { name: "Flogging" }).click();
-  await expect(hostPage).toHaveURL(/\/flogging/);
+  await hostPage.getByRole("button", { name: "Flogging" }).click();
+  await expect(
+    hostPage.getByRole("heading", { name: "Flogging" }),
+  ).toBeVisible();
 
   // Select Player 1
-  await hostPage.getByText("Player 1").click();
+  await hostPage
+    .getByText("Player 1", { exact: true })
+    .filter({ visible: true })
+    .click();
   await hostPage.getByRole("button", { name: "Flog Player" }).click();
 
   // 6. Player 1 confirms
@@ -234,24 +254,15 @@ test("Flogging Flow: Restriction (Once per game)", async ({ browser }) => {
 
   // 8. Verify restriction
   // Link should be clickable but look disabled
-  const floggingLink = hostPage.getByRole("link", { name: "Flogging (Used)" });
+  const floggingLink = hostPage.getByRole("button", {
+    name: "Flogging (Used)",
+  });
   await expect(floggingLink).toBeVisible();
   await expect(floggingLink).toHaveClass(/bg-slate-800\/50/); // Check for disabled style
 
-  // Clicking it should redirect (and show alert)
-  // We explicitly wait for the dialog to ensure the navigation/check actually happened
-  // because we are already on /game, so toHaveURL(/game) would pass immediately otherwise.
-  const dialogPromise = hostPage.waitForEvent("dialog");
-  await floggingLink.click();
-  const dialog = await dialogPromise;
-  await dialog.accept();
+  // Clicking it should trigger an alert (since it's already used)
+  hostPage.once("dialog", (dialog) => dialog.accept());
+  await floggingLink.click({ noWaitAfter: true });
 
-  await expect(hostPage).toHaveURL(/\/game/);
-
-  // Give WebKit a moment to settle
-  await hostPage.waitForTimeout(500);
-
-  // Direct access should redirect
-  await hostPage.goto("/flogging");
-  await expect(hostPage).toHaveURL(/\/game/);
+  await expect(hostPage.getByText("Crew Status")).toBeVisible();
 });

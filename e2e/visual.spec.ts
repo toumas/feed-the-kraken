@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { completeIdentifyPage, withRoleRevealed } from "./helpers";
+import { completeIdentifyPage } from "./helpers";
 
 /**
  * Visual Regression Tests
@@ -98,7 +98,9 @@ test.describe("Visual Regression Tests", () => {
     await completeIdentifyPage(hostPage);
 
     // Wait for lobby to load
-    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+      timeout: 15000,
+    });
     await expect(hostPage.getByText("Captain(You)")).toBeVisible();
     await expect(hostPage.locator("p.font-mono")).toBeVisible(); // Ship code
 
@@ -125,7 +127,9 @@ test.describe("Visual Regression Tests", () => {
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
     await completeIdentifyPage(hostPage);
-    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+      timeout: 15000,
+    });
 
     // Get the room code
     const codeElement = hostPage.locator("p.font-mono");
@@ -151,7 +155,9 @@ test.describe("Visual Regression Tests", () => {
       await playerPage.getByPlaceholder("XP7K9L").fill(code);
       await playerPage.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(playerPage);
-      await expect(playerPage).toHaveURL(/\/lobby/, { timeout: 15000 });
+      await expect(playerPage.getByText("Crew Manifest")).toBeVisible({
+        timeout: 15000,
+      });
 
       // Don't close context yet - keep players connected
     }
@@ -177,48 +183,8 @@ test.describe("Visual Regression Tests", () => {
     });
   });
 
-  // Loading states for game feature pages
-  test("Flogging Page - Loading", async ({ page }) => {
-    await page.goto("/flogging");
-    await expect(page.getByText("Loading game...")).toBeVisible();
-    await expect(page).toHaveScreenshot("flogging-loading.png", {
-      fullPage: true,
-    });
-  });
-
-  test("Denial Page - Loading", async ({ page }) => {
-    await page.goto("/denial");
-    await expect(page.getByText("Loading game...")).toBeVisible();
-    await expect(page).toHaveScreenshot("denial-loading.png", {
-      fullPage: true,
-    });
-  });
-
-  test("Cabin Search Page - Loading", async ({ page }) => {
-    await page.goto("/cabin-search");
-    await expect(page.getByText("Loading game...")).toBeVisible();
-    await expect(page).toHaveScreenshot("cabin-search-loading.png", {
-      fullPage: true,
-    });
-  });
-
-  test("Conversion Page - Loading", async ({ page }) => {
-    await page.goto("/conversion");
-    await expect(page.getByText("Loading game...")).toBeVisible();
-    await expect(page).toHaveScreenshot("conversion-loading.png", {
-      fullPage: true,
-    });
-  });
-
-  test("Cult Cabin Search Page - Loading", async ({ page }) => {
-    await page.goto("/cult-cabin-search");
-    await expect(page.getByText("Loading game...")).toBeVisible();
-    await expect(page).toHaveScreenshot("cult-cabin-search-loading.png", {
-      fullPage: true,
-    });
-  });
-
-  // Note: Cult Guns Stash page redirects to /game without a loading state when not in an active stash
+  // Note: Game feature views (flogging, denial, cabin search, etc.) are now all served from /game
+  // Their visual states are tested in the "Action Flow Visual Tests" section below
 });
 
 /**
@@ -244,7 +210,9 @@ test.describe("Action Flow Visual Tests", () => {
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
     await completeIdentifyPage(hostPage);
-    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+      timeout: 15000,
+    });
 
     // Add 4 bots to reach minimum players
     for (let i = 0; i < 4; i++) {
@@ -254,11 +222,13 @@ test.describe("Action Flow Visual Tests", () => {
 
     // Start game
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/game/);
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible();
 
     // Navigate to flogging page
-    await hostPage.getByRole("link", { name: /Flogging/ }).click();
-    await expect(hostPage).toHaveURL(/\/flogging/);
+    await hostPage.getByText(/Flogging/).click();
+    await expect(
+      hostPage.getByRole("heading", { name: "Flogging" }),
+    ).toBeVisible();
 
     // Wait for player list to load
     await expect(
@@ -290,7 +260,9 @@ test.describe("Action Flow Visual Tests", () => {
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
     await completeIdentifyPage(hostPage);
-    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+      timeout: 15000,
+    });
 
     // Add 4 bots to reach minimum players
     for (let i = 0; i < 4; i++) {
@@ -300,11 +272,13 @@ test.describe("Action Flow Visual Tests", () => {
 
     // Start game
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/game/);
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible();
 
     // Navigate to cabin search page
-    await hostPage.getByRole("link", { name: "Cabin Search" }).click();
-    await expect(hostPage).toHaveURL(/\/cabin-search/);
+    await hostPage.getByText("Cabin Search", { exact: true }).click();
+    await expect(
+      hostPage.getByRole("heading", { name: "Cabin Search" }),
+    ).toBeVisible();
 
     // Wait for player list to load
     await expect(
@@ -339,7 +313,9 @@ test.describe("Action Flow Visual Tests", () => {
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
     await completeIdentifyPage(hostPage);
-    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+      timeout: 15000,
+    });
 
     // Add 4 bots to reach minimum players
     for (let i = 0; i < 4; i++) {
@@ -349,11 +325,13 @@ test.describe("Action Flow Visual Tests", () => {
 
     // Start game
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/game/);
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible();
 
     // Navigate to denial page
-    await hostPage.getByRole("link", { name: /Denial of Command/ }).click();
-    await expect(hostPage).toHaveURL(/\/denial/);
+    await hostPage.getByRole("button", { name: "Denial of Command" }).click();
+    await expect(
+      hostPage.getByRole("heading", { name: "Denial of Command" }).last(),
+    ).toBeVisible();
 
     // Wait for confirmation UI to load
     await expect(
@@ -383,7 +361,9 @@ test.describe("Action Flow Visual Tests", () => {
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
     await completeIdentifyPage(hostPage);
-    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+      timeout: 15000,
+    });
 
     // Add 4 bots to reach minimum players
     for (let i = 0; i < 4; i++) {
@@ -393,11 +373,11 @@ test.describe("Action Flow Visual Tests", () => {
 
     // Start game
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/game/);
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible();
 
     // Wait for game page with action buttons
     await expect(
-      hostPage.getByRole("link", { name: /Flogging/ }),
+      hostPage.getByRole("button", { name: "Flogging" }),
     ).toBeVisible();
 
     await expect(hostPage).toHaveScreenshot("game-action-buttons.png", {

@@ -32,7 +32,9 @@
     "saveProfile": "Save Profile",
     "openCamera": "Open Camera",
     "removePhoto": "Remove Photo",
-    "cameraDenied": "Camera access denied. You can continue without a photo.",
+    "cameraDenied": "Camera access denied. You cannot continue without a photo.",
+    "cameraDeniedHelp": "Camera access denied. On iOS: go to Settings → Safari → Camera and set to 'Allow'. Then refresh this page.",
+    "cameraNotSupported": "Camera is not supported on this device or browser.",
     "photoRequired": "Please take a photo to continue.",
     "nameRequired": "Please enter your name."
   },
@@ -63,10 +65,11 @@
     "abandonShip": "Abandon Ship",
     "minPlayers": "Need at least {{min}} sailors to depart!",
     "showQRCode": "Show QR Code",
-    "scanToJoin": "Scan to Join"
+    "scanToJoin": "Scan to Join",
+    "kickPlayer": "Remove player"
   },
   "roles": {
-    "SAILOR": "Loyal Sailor",
+    "SAILOR": "Sailor",
     "SAILOR_DESC": "Steer the ship to blue area.",
     "PIRATE": "Pirate",
     "PIRATE_DESC": "Steer the ship to red area.",
@@ -133,13 +136,15 @@
   },
   "feedTheKraken": {
     "submit": "Feed to Kraken",
-    "title": "Feed The Kraken",
+    "title": "Feed the Kraken",
     "resultTitle": "Fed to the Kraken",
     "selectVictim": "Select a victim to feed to the Kraken",
     "confirmation": "Are you sure you want to feed {{name}} to the Kraken?",
     "result": "{{name}} has been fed to the Kraken!",
     "request": "has chosen to feed you to the Kraken. Do you accept your fate?",
     "acceptFate": "Accept Fate",
+    "waitingConfirmation": "Waiting for Confirmation",
+    "waitingConfirmationDesc": "The sailor must accept their fate...",
     "cultWins": "CULT WINS!",
     "cultWinsDesc": "The Cult Leader was fed to the Kraken! The Cult Leader and all Cultists immediately win the game."
   },
@@ -213,12 +218,14 @@
     "alreadyAccepted": "You have already accepted the ritual."
   },
   "offWithTongue": {
-    "title": "Off With The Tongue",
+    "title": "Off with the Tongue",
     "selectTarget": "Select a crew member to silence",
     "request": "wants to silence you.",
     "requestDesc": "If you accept, you can no longer articulate words (but can make sounds and gesticulate) and can no longer become captain.",
     "alreadySilenced": "Already silenced",
-    "silenceSailor": "Silence Sailor"
+    "silenceSailor": "Silence Sailor",
+    "waitingConfirmation": "Waiting for Confirmation",
+    "waitingConfirmationDesc": "The sailor must accept being silenced..."
   },
   "cultGunsStash": {
     "title": "Cult's Guns Stash",
@@ -274,7 +281,8 @@
     "roleNotAvailableForCount": "This role is not available for this player count.",
     "selectRoleFirst": "Please select a role first.",
     "floggingAlreadyUsed": "Flogging has already been used this game.",
-    "playerCancelledSelection": "{{name}} cancelled role selection."
+    "playerCancelledSelection": "{{name}} cancelled role selection.",
+    "youWereKicked": "You were removed from the lobby by the host."
   },
   "denial": {
     "title": "Denial of Command",

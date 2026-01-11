@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -17,6 +18,7 @@ import {
   MIN_PLAYERS,
   type Role,
 } from "../types";
+import { useGameHandlers } from "./useGameHandlers";
 
 export interface GameContextValue {
   // User State
@@ -40,6 +42,7 @@ export interface GameContextValue {
   leaveLobby: () => void;
   startGame: () => void;
   addBotPlayer: () => void;
+  kickPlayer: (targetPlayerId: string) => void;
 
   // Game Actions
   handleDenialOfCommand: () => void;
@@ -198,6 +201,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const pendingMessageTypeRef = useRef<"CREATE_LOBBY" | "JOIN_LOBBY">(
     "JOIN_LOBBY",
   );
+  // Track whether player was ever in the lobby (to detect kicks vs initial join)
+  const wasInLobbyRef = useRef(false);
 
   useEffect(() => {
     myPlayerIdRef.current = myPlayerId;
@@ -207,26 +212,116 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [myPlayerId, myName, myPhoto, t]);
 
   // Cabin Search State
-  const [cabinSearchPrompt, setCabinSearchPrompt] = useState<{
-    searcherId: string;
-    searcherName: string;
-  } | null>(null);
-  const [cabinSearchResult, setCabinSearchResult] = useState<{
-    targetPlayerId: string;
-    role: Role;
-    originalRole?: Role;
-  } | null>(null);
-  const [isCabinSearchPending, setIsCabinSearchPending] = useState(false);
+  // Cabin Search State
+  // We need local dismissal for the result modal (for the searcher)
+  const [isCabinSearchResultDismissed, setIsCabinSearchResultDismissed] =
+    useState(() => {
+      if (typeof window !== "undefined") {
+        return localStorage.getItem("kraken_cabin_search_dismissed") === "true";
+      }
+      return false;
+    });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "kraken_cabin_search_dismissed",
+        String(isCabinSearchResultDismissed),
+      );
+    }
+  }, [isCabinSearchResultDismissed]);
+
+  // Reset dismissal when a new search starts
+  useEffect(() => {
+    if (lobby?.captainCabinSearchStatus?.state === "PENDING") {
+      setIsCabinSearchResultDismissed(false);
+    }
+  }, [lobby?.captainCabinSearchStatus?.state]);
+
+  const cabinSearchPrompt = useMemo(() => {
+    if (
+      lobby?.captainCabinSearchStatus?.state === "PENDING" &&
+      lobby?.captainCabinSearchStatus?.targetPlayerId === myPlayerId
+    ) {
+      const searcher = lobby.players.find(
+        (p) => p.id === lobby.captainCabinSearchStatus?.searcherId,
+      );
+      return {
+        searcherId: lobby.captainCabinSearchStatus.searcherId,
+        searcherName: searcher?.name || "The Captain",
+      };
+    }
+    return null;
+  }, [
+    lobby?.captainCabinSearchStatus?.state,
+    lobby?.captainCabinSearchStatus?.targetPlayerId,
+    lobby?.captainCabinSearchStatus?.searcherId,
+    lobby?.players,
+    myPlayerId,
+  ]);
+
+  const cabinSearchResult = useMemo(() => {
+    if (
+      lobby?.captainCabinSearchStatus?.state === "COMPLETED" &&
+      lobby?.captainCabinSearchStatus?.searcherId === myPlayerId &&
+      !isCabinSearchResultDismissed &&
+      lobby?.captainCabinSearchStatus?.result
+    ) {
+      return {
+        targetPlayerId: lobby.captainCabinSearchStatus.targetPlayerId,
+        role: lobby.captainCabinSearchStatus.result.role,
+        originalRole: lobby.captainCabinSearchStatus.result.originalRole,
+      };
+    }
+    return null;
+  }, [
+    lobby?.captainCabinSearchStatus?.state,
+    lobby?.captainCabinSearchStatus?.searcherId,
+    lobby?.captainCabinSearchStatus?.result,
+    isCabinSearchResultDismissed,
+    myPlayerId,
+    lobby?.captainCabinSearchStatus?.targetPlayerId,
+  ]);
+
+  const isCabinSearchPending =
+    lobby?.captainCabinSearchStatus?.state === "PENDING" &&
+    lobby?.captainCabinSearchStatus?.searcherId === myPlayerId;
+
+  const clearCabinSearchResult = useCallback(() => {
+    setIsCabinSearchResultDismissed(true);
+  }, []);
 
   // Flogging State
-  const [floggingConfirmationPrompt, setFloggingConfirmationPrompt] = useState<{
-    hostId: string;
-    hostName: string;
-  } | null>(null);
-  const [floggingReveal, setFloggingReveal] = useState<{
-    targetPlayerId: string;
-    revealedRole: Role;
-  } | null>(null);
+  // Flogging Confirmation is derived from lobby.floggingStatus
+  const floggingConfirmationPrompt = useMemo(() => {
+    if (
+      lobby?.floggingStatus?.state === "PENDING" &&
+      lobby?.floggingStatus?.targetPlayerId === myPlayerId
+    ) {
+      const host = lobby.players.find(
+        (p) => p.id === lobby.floggingStatus?.initiatorId,
+      );
+      return {
+        hostId: lobby.floggingStatus.initiatorId,
+        hostName: host?.name || "The Captain",
+      };
+    }
+    return null;
+  }, [
+    lobby?.floggingStatus?.state,
+    lobby?.floggingStatus?.targetPlayerId,
+    lobby?.floggingStatus?.initiatorId,
+    lobby?.players,
+    myPlayerId,
+  ]);
+
+  // Flogging reveal is derived from lobby state, but we track dismissal locally
+  const [isFloggingDismissed, setIsFloggingDismissed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("kraken_flogging_dismissed") === "true";
+    }
+    return false;
+  });
   const [isConversionDismissed, setIsConversionDismissed] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("kraken_conversion_dismissed") === "true";
@@ -264,13 +359,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isCabinSearchDismissed]);
 
-  // Reset dismissed state when conversion starts
+  // Reset dismissed state when conversion starts (server-side trigger)
   useEffect(() => {
     if (
       lobby?.conversionStatus?.state === "PENDING" ||
       lobby?.conversionStatus?.state === "ACTIVE"
     ) {
       setIsConversionDismissed(false);
+      // Cross-dismiss: hide other ritual views when server starts a new ritual
+      setIsCabinSearchDismissed(true);
+      setIsGunsStashDismissed(true);
     }
   }, [lobby?.conversionStatus?.state]);
 
@@ -281,6 +379,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       lobby?.cabinSearchStatus?.state === "ACTIVE"
     ) {
       setIsCabinSearchDismissed(false);
+      // Cross-dismiss: hide other ritual views when server starts a new ritual
+      setIsConversionDismissed(true);
+      setIsGunsStashDismissed(true);
     }
   }, [lobby?.cabinSearchStatus?.state]);
 
@@ -293,79 +394,257 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isGunsStashDismissed]);
 
-  // Reset dismissal when a new guns stash starts
+  // Reset dismissal when a new guns stash starts or updates
   useEffect(() => {
     if (
       lobby?.gunsStashStatus?.state === "WAITING_FOR_PLAYERS" ||
-      lobby?.gunsStashStatus?.state === "DISTRIBUTION"
+      lobby?.gunsStashStatus?.state === "DISTRIBUTION" ||
+      lobby?.gunsStashStatus?.state === "COMPLETED"
     ) {
       setIsGunsStashDismissed(false);
+      // Cross-dismiss: hide other ritual views when server starts a new ritual
+      setIsConversionDismissed(true);
+      setIsCabinSearchDismissed(true);
     }
   }, [lobby?.gunsStashStatus?.state]);
 
-  // Feed the Kraken State
-  const [feedTheKrakenPrompt, setFeedTheKrakenPrompt] = useState<{
-    captainId: string;
-    captainName: string;
-  } | null>(null);
-  const [feedTheKrakenResult, setFeedTheKrakenResult] = useState<{
-    targetPlayerId: string;
-    cultVictory: boolean;
-  } | null>(null);
-  const [isFeedTheKrakenPending, setIsFeedTheKrakenPending] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "kraken_flogging_dismissed",
+        String(isFloggingDismissed),
+      );
+    }
+  }, [isFloggingDismissed]);
 
-  // Off with the Tongue State
-  const [offWithTonguePrompt, setOffWithTonguePrompt] = useState<{
-    captainId: string;
-    captainName: string;
-  } | null>(null);
-  const [isOffWithTonguePending, setIsOffWithTonguePending] = useState(false);
+  // Reset dismissal when a new flogging starts
+  useEffect(() => {
+    if (lobby?.floggingStatus?.state === "PENDING") {
+      setIsFloggingDismissed(false);
+    }
+  }, [lobby?.floggingStatus?.state]);
+
+  // Derive floggingReveal from lobby state
+  const floggingReveal =
+    lobby?.floggingStatus?.state === "COMPLETED" &&
+    lobby?.floggingStatus?.result?.notRole &&
+    !isFloggingDismissed
+      ? {
+          targetPlayerId: lobby.floggingStatus.targetPlayerId,
+          revealedRole: lobby.floggingStatus.result.notRole,
+        }
+      : null;
+
+  const clearFloggingReveal = useCallback(() => {
+    setIsFloggingDismissed(true);
+  }, []);
+
+  // Feed the Kraken State
+  // We need local dismissal for the result modal
+  const [isFeedTheKrakenResultDismissed, setIsFeedTheKrakenResultDismissed] =
+    useState(() => {
+      if (typeof window !== "undefined") {
+        return (
+          localStorage.getItem("kraken_feed_the_kraken_dismissed") === "true"
+        );
+      }
+      return false;
+    });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "kraken_feed_the_kraken_dismissed",
+        String(isFeedTheKrakenResultDismissed),
+      );
+    }
+  }, [isFeedTheKrakenResultDismissed]);
+
+  // Reset dismissal when a new action starts
+  useEffect(() => {
+    if (lobby?.feedTheKrakenStatus?.state === "PENDING") {
+      setIsFeedTheKrakenResultDismissed(false);
+    }
+  }, [lobby?.feedTheKrakenStatus?.state]);
+
+  const feedTheKrakenPrompt = useMemo(() => {
+    if (
+      lobby?.feedTheKrakenStatus?.state === "PENDING" &&
+      lobby?.feedTheKrakenStatus?.targetPlayerId === myPlayerId
+    ) {
+      const captain = lobby.players.find(
+        (p) => p.id === lobby.feedTheKrakenStatus?.initiatorId,
+      );
+      return {
+        captainId: lobby.feedTheKrakenStatus.initiatorId,
+        captainName: captain?.name || "The Captain",
+      };
+    }
+    return null;
+  }, [
+    lobby?.feedTheKrakenStatus?.state,
+    lobby?.feedTheKrakenStatus?.targetPlayerId,
+    lobby?.feedTheKrakenStatus?.initiatorId,
+    lobby?.players,
+    myPlayerId,
+  ]);
+
+  const feedTheKrakenResult = useMemo(() => {
+    if (
+      lobby?.feedTheKrakenStatus?.state === "COMPLETED" &&
+      lobby?.feedTheKrakenStatus?.result &&
+      !isFeedTheKrakenResultDismissed
+    ) {
+      return lobby.feedTheKrakenStatus.result;
+    }
+    return null;
+  }, [
+    lobby?.feedTheKrakenStatus?.state,
+    lobby?.feedTheKrakenStatus?.result,
+    isFeedTheKrakenResultDismissed,
+  ]);
+
+  const isFeedTheKrakenPending =
+    lobby?.feedTheKrakenStatus?.state === "PENDING" &&
+    lobby?.feedTheKrakenStatus?.initiatorId === myPlayerId;
+
+  const clearFeedTheKrakenResult = useCallback(() => {
+    setIsFeedTheKrakenResultDismissed(true);
+  }, []);
+
+  // Off with the Tongue State (Derived)
+  const offWithTonguePrompt = useMemo(() => {
+    if (
+      lobby?.offWithTongueStatus?.state === "PENDING" &&
+      lobby?.offWithTongueStatus?.targetPlayerId === myPlayerId
+    ) {
+      const captain = lobby.players.find(
+        (p) => p.id === lobby.offWithTongueStatus?.initiatorId,
+      );
+      return {
+        captainId: lobby.offWithTongueStatus.initiatorId,
+        captainName: captain?.name || "The Captain",
+      };
+    }
+    return null;
+  }, [
+    lobby?.offWithTongueStatus?.state,
+    lobby?.offWithTongueStatus?.targetPlayerId,
+    lobby?.offWithTongueStatus?.initiatorId,
+    lobby?.players,
+    myPlayerId,
+  ]);
+
+  const isOffWithTonguePending =
+    lobby?.offWithTongueStatus?.state === "PENDING" &&
+    lobby?.offWithTongueStatus?.initiatorId === myPlayerId;
 
   // --- Message Handler (uses refs to avoid stale closures) ---
   const handleSocketMessage = useCallback((event: MessageEvent) => {
     try {
       const data = JSON.parse(event.data);
-      console.log("GameContext: Received message:", data.type, data);
       const currentT = tRef.current;
       const currentPlayerId = myPlayerIdRef.current;
 
+      // TODO: Flogging result displays even when Cult's Guns Stash is active and should be displayed
       switch (data.type) {
-        case "LOBBY_UPDATE":
-          console.log(
-            "GameContext: Received LOBBY_UPDATE, status:",
-            data.lobby.status,
-          );
-          setLobby(data.lobby);
-          if (data.lobby?.status === "PLAYING") {
-            if (data.lobby.assignments?.[currentPlayerId]) {
-              setMyRole(data.lobby.assignments[currentPlayerId]);
+        case "STATE_UPDATE":
+          // Handle new XState snapshot format
+          if (data.snapshot?.context) {
+            // Convert snapshot context to LobbyState format
+            const ctx = data.snapshot.context;
+            const stateValue = data.snapshot.value;
+            let status: "WAITING" | "PLAYING" = "WAITING";
+
+            if (typeof stateValue === "string") {
+              // Handle string state values (e.g. "playing")
+              if (stateValue === "playing") status = "PLAYING";
+              else if (stateValue === "lobby") status = "WAITING";
+            } else if (typeof stateValue === "object" && stateValue !== null) {
+              // Handle object state values (e.g. { playing: "idle" })
+              if ("lobby" in stateValue) status = "WAITING";
+              else if ("playing" in stateValue) status = "PLAYING";
+            }
+
+            // Detect game start logic moved to GAME_STARTED handler
+
+            const lobbyFromSnapshot = {
+              code: ctx.code || "",
+              players: ctx.players || [],
+              status: status as "WAITING" | "PLAYING",
+              assignments: ctx.assignments,
+              originalRoles: ctx.originalRoles,
+              roleDistributionMode: ctx.roleDistributionMode,
+              roleSelectionStatus: ctx.roleSelectionStatus,
+              conversionStatus: ctx.conversionStatus,
+              conversionCount: ctx.conversionCount,
+              convertedPlayerIds: ctx.convertedPlayerIds || [],
+              cabinSearchStatus: ctx.cabinSearchStatus,
+              captainCabinSearchStatus: ctx.captainCabinSearchStatus,
+              gunsStashStatus: ctx.gunsStashStatus,
+              isFloggingUsed: ctx.isFloggingUsed,
+              floggingStatus: ctx.floggingStatus,
+              feedTheKrakenStatus: ctx.feedTheKrakenStatus,
+              offWithTongueStatus: ctx.offWithTongueStatus,
+            };
+
+            // Detect if current player was kicked (lobby exists but player not in list)
+            const isStillInLobby = ctx.players?.some(
+              (p: { id: string }) => p.id === currentPlayerId,
+            );
+
+            // Only trigger kick detection if player was previously in the lobby
+            if (
+              wasInLobbyRef.current &&
+              ctx.code &&
+              ctx.players?.length > 0 &&
+              !isStillInLobby &&
+              status === "WAITING"
+            ) {
+              // Clear lobby state
+              localStorage.removeItem("kraken_lobby_code");
+              // Store kick message to show on home page
+              localStorage.setItem(
+                "kraken_kick_message",
+                currentT("errors.youWereKicked"),
+              );
+              // Reset the flag
+              wasInLobbyRef.current = false;
+              // Clear lobbyRef to prevent beforeunload dialog
+              lobbyRef.current = null;
+              // Force navigate to home page (unmounts socket)
+              window.location.href = "/";
+              return; // Don't process further
+            }
+
+            // Track that player has joined the lobby
+            if (isStillInLobby) {
+              wasInLobbyRef.current = true;
+            }
+
+            setLobby(lobbyFromSnapshot);
+            if (status === "PLAYING" && ctx.assignments?.[currentPlayerId]) {
+              setMyRole(ctx.assignments[currentPlayerId]);
             }
           }
+
           break;
         case "GAME_STARTED":
-          if (data.assignments?.[currentPlayerId]) {
-            setMyRole(data.assignments[currentPlayerId]);
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("kraken_cabin_search_dismissed");
+            localStorage.removeItem("kraken_conversion_dismissed");
+            localStorage.removeItem("kraken_guns_stash_dismissed");
+            localStorage.removeItem("kraken_flogging_dismissed");
+            localStorage.removeItem("kraken_feed_the_kraken_dismissed");
           }
+          setIsCabinSearchResultDismissed(false);
+          setIsConversionDismissed(false);
+          setIsCabinSearchDismissed(false);
+          setIsGunsStashDismissed(false);
+          setIsFloggingDismissed(false);
+          setIsFeedTheKrakenResultDismissed(false);
           break;
-        case "CABIN_SEARCH_PROMPT":
-          setCabinSearchPrompt({
-            searcherId: data.searcherId,
-            searcherName: data.searcherName,
-          });
-          break;
-        case "CABIN_SEARCH_RESULT":
-          setCabinSearchResult({
-            targetPlayerId: data.targetPlayerId,
-            role: data.role,
-            originalRole: data.originalRole,
-          });
-          setIsCabinSearchPending(false);
-          break;
-        case "CABIN_SEARCH_DENIED":
-          setIsCabinSearchPending(false);
-          setError(currentT("errors.cabinSearchDenied"));
-          setTimeout(() => setError(null), 3000);
-          break;
+
         case "ERROR": {
           // Parse potential parameters: "key|param1:val1|param2:val2"
           const [key, ...paramStrings] = data.message.split("|");
@@ -378,61 +657,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           setTimeout(() => setError(null), 3000);
           break;
         }
-        case "FLOGGING_CONFIRMATION_REQUEST":
-          setFloggingConfirmationPrompt({
-            hostId: data.hostId,
-            hostName: data.hostName,
-          });
-          break;
-        case "FLOGGING_REVEAL":
-          setFloggingReveal({
-            targetPlayerId: data.targetPlayerId,
-            revealedRole: data.revealedRole,
-          });
-          break;
-        case "FLOGGING_DENIED":
-          setError(currentT("errors.floggingDenied"));
-          setTimeout(() => setError(null), 3000);
-          break;
-
-        case "CONVERSION_RESULT":
-          // Handled by lobby state update mostly, but could trigger toast here if needed
-          break;
-
-        // Feed the Kraken messages
-        case "FEED_THE_KRAKEN_PROMPT":
-          setFeedTheKrakenPrompt({
-            captainId: data.captainId,
-            captainName: data.captainName,
-          });
-          break;
-        case "FEED_THE_KRAKEN_RESULT":
-          setFeedTheKrakenResult({
-            targetPlayerId: data.targetPlayerId,
-            cultVictory: data.cultVictory,
-          });
-          setIsFeedTheKrakenPending(false);
-          break;
-        case "FEED_THE_KRAKEN_DENIED":
-          setIsFeedTheKrakenPending(false);
-          setError(currentT("errors.feedTheKrakenDenied"));
-          setTimeout(() => setError(null), 3000);
-          break;
 
         // Off with the Tongue messages
         case "OFF_WITH_TONGUE_PROMPT":
-          setOffWithTonguePrompt({
-            captainId: data.captainId,
-            captainName: data.captainName,
-          });
+          // Now handled by state update
           break;
         case "OFF_WITH_TONGUE_RESULT":
-          setIsOffWithTonguePending(false);
-          break;
-        case "OFF_WITH_TONGUE_DENIED":
-          setIsOffWithTonguePending(false);
-          setError(currentT("errors.offWithTongueDenied"));
-          setTimeout(() => setError(null), 3000);
+          // Handled by state update
           break;
       }
     } catch (error) {
@@ -477,6 +708,35 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   });
 
   // --- Actions ---
+
+  // Dismiss all popup/result modals EXCEPT the specified one
+  // Called when user accepts a new ritual - dismisses other modals but not the current one
+  type ModalType =
+    | "conversion"
+    | "cabinSearch"
+    | "gunsStash"
+    | "flogging"
+    | "captainCabinSearch"
+    | "feedTheKraken";
+
+  const dismissOtherModals = useCallback((exclude?: ModalType) => {
+    if (exclude !== "conversion") setIsConversionDismissed(true);
+    if (exclude !== "cabinSearch") setIsCabinSearchDismissed(true);
+    if (exclude !== "gunsStash") setIsGunsStashDismissed(true);
+    if (exclude !== "flogging") setIsFloggingDismissed(true);
+    if (exclude !== "captainCabinSearch") setIsCabinSearchResultDismissed(true);
+    if (exclude !== "feedTheKraken") setIsFeedTheKrakenResultDismissed(true);
+  }, []);
+
+  const handlers = useGameHandlers({
+    socket,
+    myPlayerId,
+    cabinSearchPrompt,
+    floggingConfirmationPrompt,
+    feedTheKrakenPrompt,
+    offWithTonguePrompt,
+    dismissOtherModals,
+  });
 
   const connectToLobby = useCallback((lobbyCode: string) => {
     // Set the lobby code - the usePartySocket hook will auto-connect
@@ -629,347 +889,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
-  const handleDenialOfCommand = () => {
-    if (socket) {
+  const kickPlayer = useCallback(
+    (targetPlayerId: string) => {
+      if (!socket) return;
       socket.send(
         JSON.stringify({
-          type: "DENIAL_OF_COMMAND",
+          type: "KICK_PLAYER",
           playerId: myPlayerId,
-        }),
-      );
-    }
-  };
-
-  const handleCabinSearch = (targetPlayerId: string) => {
-    if (socket) {
-      setIsCabinSearchPending(true);
-      socket.send(
-        JSON.stringify({
-          type: "CABIN_SEARCH_REQUEST",
           targetPlayerId,
         }),
       );
-    }
-  };
-
-  const handleCabinSearchResponse = (confirmed: boolean) => {
-    if (socket && cabinSearchPrompt) {
-      socket.send(
-        JSON.stringify({
-          type: "CABIN_SEARCH_RESPONSE",
-          searcherId: cabinSearchPrompt.searcherId,
-          confirmed,
-        }),
-      );
-      setCabinSearchPrompt(null);
-    }
-  };
-
-  const handleFloggingRequest = (targetPlayerId: string) => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "FLOGGING_REQUEST",
-          targetPlayerId,
-        }),
-      );
-    }
-  };
-
-  const handleFloggingConfirmationResponse = (confirmed: boolean) => {
-    if (socket && floggingConfirmationPrompt) {
-      socket.send(
-        JSON.stringify({
-          type: "FLOGGING_CONFIRMATION_RESPONSE",
-          hostId: floggingConfirmationPrompt.hostId,
-          confirmed,
-        }),
-      );
-      setFloggingConfirmationPrompt(null);
-    }
-  };
-
-  const clearCabinSearchResult = () => {
-    setCabinSearchResult(null);
-  };
-
-  const clearFloggingReveal = () => {
-    setFloggingReveal(null);
-  };
-
-  // Conversion State
-
-  const handleStartConversion = () => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "START_CONVERSION",
-          initiatorId: myPlayerId,
-        }),
-      );
-    }
-  };
-
-  const handleRespondConversion = (accept: boolean) => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "RESPOND_CONVERSION",
-          playerId: myPlayerId,
-          accept,
-        }),
-      );
-    }
-  };
-
-  const sendMessage = (message: MessagePayload) => {
-    if (socket) {
-      socket.send(JSON.stringify(message));
-    }
-  };
-
-  const submitConversionAction = (
-    action: "PICK_PLAYER" | "ANSWER_QUIZ",
-    targetId?: string,
-    answer?: string,
-  ) => {
-    if (!myPlayerId) return;
-    sendMessage({
-      type: "SUBMIT_CONVERSION_ACTION",
-      playerId: myPlayerId,
-      action,
-      targetId,
-      answer,
-    });
-  };
-
-  const handleResetGame = () => {
-    sendMessage({ type: "RESET_GAME" });
-  };
-
-  const handleBackToLobby = () => {
-    console.log("GameContext: Sending BACK_TO_LOBBY message");
-    sendMessage({ type: "BACK_TO_LOBBY" });
-  };
-
-  const startCabinSearch = () => {
-    console.log("GameContext: Sending start cabin search message...");
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "START_CULT_CABIN_SEARCH",
-          initiatorId: myPlayerId,
-        }),
-      );
-    }
-  };
-
-  const claimCabinSearchRole = (
-    role: "CAPTAIN" | "NAVIGATOR" | "LIEUTENANT" | "CREW",
-  ) => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "CLAIM_CULT_CABIN_SEARCH_ROLE",
-          playerId: myPlayerId,
-          role,
-        }),
-      );
-    }
-  };
-
-  const submitCabinSearchAction = (answer: string) => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "SUBMIT_CULT_CABIN_SEARCH_ACTION",
-          playerId: myPlayerId,
-          answer,
-        }),
-      );
-    }
-  };
-
-  const cancelCabinSearch = () => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "CANCEL_CULT_CABIN_SEARCH",
-          playerId: myPlayerId,
-        }),
-      );
-    }
-  };
-
-  const startGunsStash = () => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "START_CULT_GUNS_STASH",
-          initiatorId: myPlayerId,
-        }),
-      );
-    }
-  };
-
-  const confirmGunsStashReady = () => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "CONFIRM_CULT_GUNS_STASH_READY",
-          playerId: myPlayerId,
-        }),
-      );
-    }
-  };
-
-  const submitGunsStashDistribution = (
-    distribution: Record<string, number>,
-  ) => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "SUBMIT_CULT_GUNS_STASH_DISTRIBUTION",
-          playerId: myPlayerId,
-          distribution,
-        }),
-      );
-    }
-  };
-
-  const cancelGunsStash = () => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "CANCEL_CULT_GUNS_STASH",
-          playerId: myPlayerId,
-        }),
-      );
-    }
-  };
-
-  const submitGunsStashAction = (answer: string) => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "SUBMIT_CULT_GUNS_STASH_ACTION",
-          playerId: myPlayerId,
-          answer,
-        }),
-      );
-    }
-  };
-
-  // Feed the Kraken Actions
-  const handleFeedTheKrakenRequest = (targetPlayerId: string) => {
-    if (socket) {
-      setIsFeedTheKrakenPending(true);
-      socket.send(
-        JSON.stringify({
-          type: "FEED_THE_KRAKEN_REQUEST",
-          targetPlayerId,
-        }),
-      );
-    }
-  };
-
-  const handleFeedTheKrakenResponse = (confirmed: boolean) => {
-    if (socket && feedTheKrakenPrompt) {
-      socket.send(
-        JSON.stringify({
-          type: "FEED_THE_KRAKEN_RESPONSE",
-          captainId: feedTheKrakenPrompt.captainId,
-          confirmed,
-        }),
-      );
-      setFeedTheKrakenPrompt(null);
-    }
-  };
-
-  const clearFeedTheKrakenResult = () => {
-    setFeedTheKrakenResult(null);
-    // Also clear from lobby state
-    if (socket) {
-      // Note: We might need a server message to clear this, or handle it locally
-      // For now, just clear the local state
-    }
-  };
-
-  // Off with the Tongue Actions
-  const handleOffWithTongueRequest = (targetPlayerId: string) => {
-    if (socket) {
-      setIsOffWithTonguePending(true);
-      socket.send(
-        JSON.stringify({
-          type: "OFF_WITH_TONGUE_REQUEST",
-          targetPlayerId,
-        }),
-      );
-    }
-  };
-
-  const handleOffWithTongueResponse = (confirmed: boolean) => {
-    if (socket && offWithTonguePrompt) {
-      socket.send(
-        JSON.stringify({
-          type: "OFF_WITH_TONGUE_RESPONSE",
-          captainId: offWithTonguePrompt.captainId,
-          confirmed,
-        }),
-      );
-      setOffWithTonguePrompt(null);
-    }
-  };
-
-  // Role Selection Actions (for manual mode)
-  const setRoleDistributionMode = (mode: "automatic" | "manual") => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "SET_ROLE_DISTRIBUTION_MODE",
-          mode,
-        }),
-      );
-    }
-  };
-
-  const selectRole = (role: Role) => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "SELECT_ROLE",
-          playerId: myPlayerId,
-          role,
-        }),
-      );
-    }
-  };
-
-  const confirmRole = () => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "CONFIRM_ROLE",
-          playerId: myPlayerId,
-        }),
-      );
-    }
-  };
-
-  const cancelRoleSelection = () => {
-    if (socket) {
-      socket.send(
-        JSON.stringify({
-          type: "CANCEL_ROLE_SELECTION",
-          playerId: myPlayerId,
-        }),
-      );
-    }
-  };
+    },
+    [socket, myPlayerId],
+  );
 
   return (
     <GameContext.Provider
       value={{
+        ...handlers,
+        clearFloggingReveal,
         myPlayerId,
         myName,
         myPhoto,
@@ -984,61 +922,31 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         leaveLobby,
         startGame,
         addBotPlayer,
-        handleDenialOfCommand,
+        kickPlayer,
 
-        handleCabinSearch,
-        handleCabinSearchResponse,
         cabinSearchPrompt,
         cabinSearchResult,
-        clearCabinSearchResult,
         isCabinSearchPending,
+        clearCabinSearchResult,
 
-        handleFloggingRequest,
-        handleFloggingConfirmationResponse,
         floggingConfirmationPrompt,
         floggingReveal,
-        clearFloggingReveal,
 
-        handleStartConversion,
-        handleRespondConversion,
-        submitConversionAction,
         isConversionDismissed,
         setIsConversionDismissed,
         isCabinSearchDismissed,
         setIsCabinSearchDismissed,
 
-        handleResetGame,
-        handleBackToLobby,
-
-        startCabinSearch,
-        claimCabinSearchRole,
-        submitCabinSearchAction,
-        cancelCabinSearch,
-
-        startGunsStash,
-        confirmGunsStashReady,
-        submitGunsStashDistribution,
-        submitGunsStashAction,
-        cancelGunsStash,
         isGunsStashDismissed,
         setIsGunsStashDismissed,
 
-        handleFeedTheKrakenRequest,
-        handleFeedTheKrakenResponse,
         feedTheKrakenPrompt,
         feedTheKrakenResult,
         isFeedTheKrakenPending,
         clearFeedTheKrakenResult,
 
-        handleOffWithTongueRequest,
-        handleOffWithTongueResponse,
         offWithTonguePrompt,
         isOffWithTonguePending,
-
-        setRoleDistributionMode,
-        selectRole,
-        confirmRole,
-        cancelRoleSelection,
 
         error,
         setError,

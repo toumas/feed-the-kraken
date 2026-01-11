@@ -35,7 +35,7 @@ test("Game persistence across reloads", async ({ page }) => {
   await expect(page.getByText("Crew Status")).toBeVisible();
 
   // Reveal role to check it was assigned
-  const roleTitles = ["Loyal Sailor", "Pirate", "Cult Leader", "Cultist"];
+  const roleTitles = ["Sailor", "Pirate", "Cult Leader", "Cultist"];
   const assignedRole = await withRoleRevealed(page, async () => {
     const roleLocator = page
       .locator("h2")

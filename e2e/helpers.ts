@@ -99,7 +99,7 @@ export const identifyRole = async (page: Page) => {
       return "PIRATE";
     if (
       await page
-        .getByRole("heading", { name: "Loyal Sailor", exact: true })
+        .getByRole("heading", { name: "Sailor", exact: true })
         .isVisible()
     )
       return "SAILOR";

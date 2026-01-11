@@ -94,7 +94,7 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
   // 5 players: 1 Cult Leader, AND (1 Pirate, 3 Sailors OR 2 Pirates, 2 Sailors)
   const cultLeaders = allRoles.filter((r) => r === "Cult Leader").length;
   const pirates = allRoles.filter((r) => r === "Pirate").length;
-  const sailors = allRoles.filter((r) => r === "Loyal Sailor").length;
+  const sailors = allRoles.filter((r) => r === "Sailor").length;
 
   expect(cultLeaders).toBe(1);
   if (pirates === 1) {

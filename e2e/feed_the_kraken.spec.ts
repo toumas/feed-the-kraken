@@ -1,5 +1,9 @@
-import { expect, test } from "@playwright/test";
-import { checkRoleVisible, completeIdentifyPage } from "./helpers";
+import { expect, type Page, test } from "@playwright/test";
+import {
+  checkRoleVisible,
+  completeIdentifyPage,
+  identifyRole,
+} from "./helpers";
 
 test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   // 1. Host creates lobby
@@ -8,11 +12,13 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
 
   await hostPage.addInitScript(() => {
     localStorage.setItem("kraken_player_name", "Host");
+    localStorage.setItem("kraken_player_id", "host-uuid");
     localStorage.setItem(
       "kraken_player_photo",
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
     );
   });
+
   await hostPage.goto("/");
   await hostPage.getByRole("button", { name: "Create Voyage" }).click();
   await completeIdentifyPage(hostPage);
@@ -29,6 +35,7 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   const playerName = "Player 1";
   await page.addInitScript((name) => {
     localStorage.setItem("kraken_player_name", name);
+    localStorage.setItem("kraken_player_id", "p1-uuid");
     localStorage.setItem(
       "kraken_player_photo",
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -47,6 +54,7 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   const player2Name = "Player 2";
   await page2.addInitScript((name) => {
     localStorage.setItem("kraken_player_name", name);
+    localStorage.setItem("kraken_player_id", "p2-uuid");
     // Use different photo or same
     localStorage.setItem(
       "kraken_player_photo",
@@ -74,12 +82,17 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   const isCultLeader = await checkRoleVisible(page);
 
   // 5. Host initiates Feed the Kraken on Player 1
-  await hostPage.getByRole("link", { name: "Feed the Kraken" }).click();
-  // Should navigate to feed-the-kraken page
-  await expect(hostPage).toHaveURL(/\/feed-the-kraken/);
+  await hostPage.getByRole("button", { name: "Feed the Kraken" }).click();
+  // Should navigate to feed-the-kraken view
+  await expect(
+    hostPage.getByRole("heading", { name: "Feed The Kraken" }),
+  ).toBeVisible();
 
   // Select Player 1
-  await hostPage.locator("main").getByText("Player 1").first().click();
+  await hostPage
+    .locator("label")
+    .filter({ has: hostPage.getByRole("radio", { name: /Player 1/ }) })
+    .click();
   const feedButton = hostPage.getByRole("button", { name: "Feed to Kraken" });
   await expect(feedButton).toBeEnabled();
   await feedButton.click();
@@ -113,7 +126,7 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
       })
       .last();
     await expect(modal).toBeVisible();
-    await expect(modal.getByText("Eliminated")).toBeVisible();
+    await expect(modal.getByText("Eliminated", { exact: true })).toBeVisible();
     await expect(modal.getByText("Player 1")).toBeVisible();
   }
 
@@ -133,7 +146,9 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
       })
       .last();
     await expect(page2Modal).toBeVisible();
-    await expect(page2Modal.getByText("Eliminated")).toBeVisible();
+    await expect(
+      page2Modal.getByText("Eliminated", { exact: true }),
+    ).toBeVisible();
   }
 
   // Close result on Host
@@ -142,7 +157,7 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
 
   // 8. Verify Result on Player 1 (Eliminated screen)
   await expect(page).toHaveURL(/\/game/);
-  await expect(page.getByText("Eliminated")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Eliminated" })).toBeVisible();
   await expect(page.getByText("Return to Shore")).toBeVisible();
 });
 
@@ -152,6 +167,7 @@ test("Feed the Kraken Flow: Player 1 denies", async ({ browser }) => {
   const hostPage = await hostContext.newPage();
   await hostPage.addInitScript(() => {
     localStorage.setItem("kraken_player_name", "Host");
+    localStorage.setItem("kraken_player_id", "host-uuid");
     localStorage.setItem(
       "kraken_player_photo",
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -171,6 +187,7 @@ test("Feed the Kraken Flow: Player 1 denies", async ({ browser }) => {
   const playerName = "Player 1";
   await page.addInitScript((name) => {
     localStorage.setItem("kraken_player_name", name);
+    localStorage.setItem("kraken_player_id", "p1-uuid");
     localStorage.setItem(
       "kraken_player_photo",
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -198,10 +215,12 @@ test("Feed the Kraken Flow: Player 1 denies", async ({ browser }) => {
   await checkRoleVisible(page);
 
   // 5. Host initiates Feed the Kraken
-  await hostPage.getByRole("link", { name: "Feed the Kraken" }).click();
+  await hostPage.getByRole("button", { name: "Feed the Kraken" }).click();
 
   // Select Player 1 with robust locator and verify selection state
-  const player1Card = hostPage.locator("label").filter({ hasText: "Player 1" });
+  const player1Card = hostPage
+    .locator("label")
+    .filter({ has: hostPage.getByRole("radio", { name: /Player 1/ }) });
   await player1Card.click();
   // Verify selection (cyan border/styling indicates selection)
   await expect(player1Card).toHaveClass(/border-cyan-500/);
@@ -226,10 +245,152 @@ test("Feed the Kraken Flow: Player 1 denies", async ({ browser }) => {
   ).not.toBeVisible();
   // Check for error toast
   await expect(
-    hostPage.getByText("The player refused to be fed to the Kraken"),
+    hostPage
+      .getByText(/The player refused to be fed to the Kraken/i)
+      .and(hostPage.locator(":visible"))
+      .first(),
   ).toBeVisible();
 
   // Host should still be on action page or redirected?
   // Code in page.tsx: useEffect clears isPending on error. It keeps user on the page.
-  await expect(hostPage).toHaveURL(/\/feed-the-kraken/);
+  await expect(hostPage).toHaveURL(/\/en\/game/);
+});
+
+test("Feed the Kraken Flow: Cult Leader is fed (Automatic)", async ({
+  browser,
+}) => {
+  test.setTimeout(300_000); // 5 minutes for potential retries
+
+  let success = false;
+  // Try up to 5 times to get a game where Host is NOT the Cult Leader
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    const contexts = [];
+    const players = new Array(5);
+
+    try {
+      // 1. Host setup
+      const hostContext = await browser.newContext();
+      contexts.push(hostContext);
+      const hostPage = await hostContext.newPage();
+      players[0] = { page: hostPage, name: "Host", id: "host-uuid" };
+
+      await hostPage.addInitScript(() => {
+        localStorage.setItem("kraken_player_name", "Host");
+        localStorage.setItem("kraken_player_id", "host-uuid");
+        localStorage.setItem(
+          "kraken_player_photo",
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+        );
+      });
+      await hostPage.goto("/");
+      await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+      await completeIdentifyPage(hostPage);
+      const code = await hostPage.locator("p.font-mono").innerText();
+
+      // 2. Peers join (Parallel)
+      const peerIndices = [1, 2, 3, 4];
+      await Promise.all(
+        peerIndices.map(async (i) => {
+          const context = await browser.newContext();
+          contexts.push(context);
+          const page = await context.newPage();
+          const name = `Player ${i}`;
+          const id = `p${i}-uuid`;
+          players[i] = { page, name, id };
+
+          await page.addInitScript(
+            (arg) => {
+              localStorage.setItem("kraken_player_name", arg.name);
+              localStorage.setItem("kraken_player_id", arg.id);
+              localStorage.setItem(
+                "kraken_player_photo",
+                "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+              );
+            },
+            { name, id },
+          );
+
+          await page.goto("/");
+          await page.getByRole("button", { name: "Join Crew" }).click();
+          await page.getByPlaceholder("XP7K9L").fill(code);
+          await page.getByRole("button", { name: "Board Ship" }).click();
+          await completeIdentifyPage(page);
+          await expect(page).toHaveURL(/\/lobby/, { timeout: 30000 });
+        }),
+      );
+
+      // 3. Start Game (Automatic Roles is default)
+      await hostPage.getByRole("button", { name: "Start Voyage" }).click();
+      await expect(hostPage).toHaveURL(/\/game/, { timeout: 30000 });
+
+      // 4. Identify Roles
+      // We need to find the Cult Leader.
+      let cultLeaderParams: { page: Page; name: string } | null = null;
+      let hostIsCultLeader = false;
+
+      // Check Host first
+      const hostRole = await identifyRole(hostPage);
+      if (hostRole === "CULT_LEADER") {
+        hostIsCultLeader = true;
+      } else {
+        // Check peers
+        for (let i = 1; i < players.length; i++) {
+          const p = players[i];
+          const role = await identifyRole(p.page);
+          if (role === "CULT_LEADER") {
+            cultLeaderParams = p;
+            break;
+          }
+        }
+      }
+
+      if (hostIsCultLeader || !cultLeaderParams) {
+        // Retry logic: close valid contexts and continue
+        await Promise.all(contexts.map((c) => c.close()));
+        continue;
+      }
+
+      // 5. Host feeds the Cult Leader
+      await hostPage.getByRole("button", { name: "Feed the Kraken" }).click();
+
+      // Select target
+      await hostPage
+        .locator("label")
+        .filter({
+          has: hostPage.getByRole("radio", {
+            name: new RegExp(cultLeaderParams.name),
+          }),
+        })
+        .click();
+      await hostPage.getByRole("button", { name: "Feed to Kraken" }).click();
+
+      // 6. Target accepts
+      await expect(
+        cultLeaderParams.page.getByRole("heading", { name: "Feed the Kraken" }),
+      ).toBeVisible();
+      await cultLeaderParams.page
+        .getByRole("button", { name: "Accept Fate" })
+        .click();
+
+      // 7. Verify Cult Wins on ALL pages
+      await expect(
+        hostPage.getByText("The Cult Leader was fed to the Kraken!"),
+      ).toBeVisible();
+
+      for (const p of players) {
+        await expect(p.page.getByText("CULT WINS!")).toBeVisible({
+          timeout: 10000,
+        });
+      }
+
+      success = true;
+      await Promise.all(contexts.map((c) => c.close()));
+      break;
+    } catch (e) {
+      console.error(`Attempt ${attempt} failed with error:`, e);
+      await Promise.all(contexts.map((c) => c.close()));
+    }
+  }
+
+  expect(success).toBe(true);
 });

@@ -33,6 +33,8 @@
     "openCamera": "Avaa kamera",
     "removePhoto": "Poista kuva",
     "cameraDenied": "Kameraan pääsy evätty.",
+    "cameraDeniedHelp": "Kameraan pääsy evätty. iOS:ssa: siirry kohtaan Asetukset → Safari → Kamera ja valitse 'Salli'. Päivitä sitten sivu.",
+    "cameraNotSupported": "Kamera ei ole tuettu tällä laitteella tai selaimella.",
     "photoRequired": "Ota kuva jatkaaksesi.",
     "nameRequired": "Syötä nimesi."
   },
@@ -63,7 +65,8 @@
     "abandonShip": "Jätä laiva",
     "minPlayers": "Tarvitaan vähintään {{min}} merenkulkijaa lähtöön!",
     "showQRCode": "Näytä QR-koodi",
-    "scanToJoin": "Skannaa liittyäksesi"
+    "scanToJoin": "Skannaa liittyäksesi",
+    "kickPlayer": "Poista pelaaja"
   },
   "roles": {
     "SAILOR": "Merenkulkija",
@@ -140,6 +143,8 @@
     "result": "{{name}} syötettiin Krakenille!",
     "request": "on valinnut syöttää sinut Krakenille. Hyväksytkö kohtalosi?",
     "acceptFate": "Hyväksy kohtalo",
+    "waitingConfirmation": "Odotetaan vahvistusta",
+    "waitingConfirmationDesc": "Henkilöstön jäsenen täytyy hyväksyä kohtalonsa...",
     "cultWins": "KULTTI VOITTAA!",
     "cultWinsDesc": "Kulttijohtaja syötettiin Krakenille! Kulttijohtaja ja kaikki kultistit voittavat pelin välittömästi."
   },
@@ -218,7 +223,9 @@
     "request": "haluaa hiljentää sinut.",
     "requestDesc": "Jos hyväksyt, et voi enää muodostaa sanoja (mutta voit äännellä ja elehtiä) etkä voi enää tulla kapteeniksi.",
     "alreadySilenced": "Aikaisemmin hiljennetty",
-    "silenceSailor": "Hiljennä henkilöstön jäsen"
+    "silenceSailor": "Hiljennä henkilöstön jäsen",
+    "waitingConfirmation": "Odotetaan vahvistusta",
+    "waitingConfirmationDesc": "Merimiehen täytyy hyväksyä vaikenemisensa..."
   },
   "cultGunsStash": {
     "title": "Kultin asevarasto",
@@ -274,7 +281,8 @@
     "roleNotAvailableForCount": "Tämä rooli ei ole käytettävissä tällä pelaajamäärällä.",
     "selectRoleFirst": "Valitse ensin rooli.",
     "floggingAlreadyUsed": "Ruoskinta on jo käytetty tässä pelissä.",
-    "playerCancelledSelection": "{{name}} peruutti roolivalinnan."
+    "playerCancelledSelection": "{{name}} peruutti roolivalinnan.",
+    "youWereKicked": "Pelinhoitaja poisti sinut aulasta."
   },
   "denial": {
     "title": "Hyppää laivasta",

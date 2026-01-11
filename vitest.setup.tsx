@@ -18,6 +18,7 @@ import enTranslations from "./app/i18n/locales/en/common.json";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
+    // biome-ignore lint/suspicious/noExplicitAny: Mocking i18next options
     t: (key: string, options?: any) => {
       const count = options?.count;
       let finalKey = key;
@@ -26,6 +27,7 @@ vi.mock("react-i18next", () => ({
       }
 
       const parts = finalKey.split(".");
+      // biome-ignore lint/suspicious/noExplicitAny: Mocking i18next resources
       let val: any = enTranslations;
       for (const part of parts) {
         val = val?.[part];
@@ -36,6 +38,7 @@ vi.mock("react-i18next", () => ({
         const baseParts = key.split(".");
         val = enTranslations;
         for (const part of baseParts) {
+          // biome-ignore lint/suspicious/noExplicitAny: Mocking i18next resources
           val = (val as any)?.[part];
         }
       }

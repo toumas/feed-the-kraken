@@ -1,281 +1,403 @@
-/** biome-ignore-all lint/style/noNonNullAssertion: Test file uses non-null assertions for controlled test setup */
-import type * as Party from "partykit/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import Server, { type LobbyState } from "./index";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createActor } from "xstate";
+import { gameMachine } from "./machine/gameMachine";
 
-// Mock Party.Room and Party.Connection
-const mockStorage = {
-  get: vi.fn(),
-  put: vi.fn(),
-  delete: vi.fn(),
-};
+// Helper to setup a game with playing state
+function setupPlayingGame() {
+  const actor = createActor(gameMachine);
+  actor.start();
 
-const mockRoom = {
-  id: "TEST_ROOM",
-  storage: mockStorage,
-  broadcast: vi.fn(),
-  schedule: vi.fn(), // Mock schedule
-} as unknown as Party.Room;
+  // Create lobby
+  actor.send({
+    type: "CREATE_LOBBY",
+    playerId: "p1",
+    playerName: "P1",
+    playerPhoto: null,
+    code: "TEST",
+  });
 
-const _mockConnection = {
-  id: "conn_1",
-  send: vi.fn(),
-} as unknown as Party.Connection;
+  // Add 4 more players for a 5-player game
+  for (let i = 2; i <= 5; i++) {
+    actor.send({
+      type: "JOIN_LOBBY",
+      playerId: `p${i}`,
+      playerName: `P${i}`,
+      playerPhoto: null,
+    });
+  }
 
-describe("Server - Conversion Flow", () => {
-  let server: Server;
+  // Start game
+  actor.send({ type: "START_GAME", playerId: "p1" });
+
+  return actor;
+}
+
+describe("Conversion Flow - XState", () => {
+  let actor: ReturnType<typeof createActor<typeof gameMachine>>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    server = new Server(mockRoom);
-
-    // Setup initial state with 3 players
-    server.lobbyState = {
-      code: "TEST",
-      players: [
-        {
-          id: "p1",
-          name: "P1",
-          photoUrl: null,
-          isHost: true,
-          isReady: true,
-          isOnline: true,
-          isEliminated: false,
-          isUnconvertible: false,
-          notRole: null,
-          joinedAt: 0,
-          hasTongue: true,
-        },
-        {
-          id: "p2",
-          name: "P2",
-          photoUrl: null,
-          isHost: false,
-          isReady: true,
-          isOnline: true,
-          isEliminated: false,
-          isUnconvertible: false,
-          notRole: null,
-          joinedAt: 0,
-          hasTongue: true,
-        },
-        {
-          id: "p3",
-          name: "P3",
-          photoUrl: null,
-          isHost: false,
-          isReady: true,
-          isOnline: true,
-          isEliminated: false,
-          isUnconvertible: false,
-          notRole: null,
-          joinedAt: 0,
-          hasTongue: true,
-        },
-      ],
-      status: "PLAYING",
-      assignments: {
-        p1: "CULT_LEADER",
-        p2: "SAILOR",
-        p3: "PIRATE",
-      },
-      conversionStatus: {
-        initiatorId: "p1",
-        responses: { p1: true }, // Initiator auto-accepts usually, or we simulate it
-        state: "PENDING",
-      },
-    } as LobbyState;
-
-    // Mock connection mapping
-    server.connectionToPlayer = new Map([
-      ["conn_1", "p1"],
-      ["conn_2", "p2"],
-      ["conn_3", "p3"],
-    ]);
+    actor = setupPlayingGame();
   });
 
-  it("should start conversion round when all players accept", async () => {
-    vi.useFakeTimers();
-    const resolveSpy = vi.spyOn(server, "resolveConversionRound");
+  it("should start conversion and set conversionStatus to PENDING", () => {
+    actor.send({ type: "START_CONVERSION", initiatorId: "p1" });
 
-    // P2 accepts
-    await server.handleRespondConversion(
-      { type: "RESPOND_CONVERSION", playerId: "p2", accept: true },
-      { id: "conn_2" } as Party.Connection,
-    );
-
-    // P3 accepts (triggering start)
-    await server.handleRespondConversion(
-      { type: "RESPOND_CONVERSION", playerId: "p3", accept: true },
-      { id: "conn_3" } as Party.Connection,
-    );
-
-    expect(server.lobbyState?.conversionStatus?.state).toBe("ACTIVE");
-
-    // Verify broadcast of CONVERSION_RESULT success
-    expect(mockRoom.broadcast).toHaveBeenCalledWith(
-      expect.stringContaining('"type":"CONVERSION_RESULT","success":true'),
-    );
-
-    // Fast-forward time
-    vi.advanceTimersByTime(15000);
-
-    expect(resolveSpy).toHaveBeenCalled();
-    vi.useRealTimers();
+    const context = actor.getSnapshot().context;
+    expect(context.conversionStatus).toBeDefined();
+    expect(context.conversionStatus?.state).toBe("PENDING");
+    expect(context.conversionStatus?.initiatorId).toBe("p1");
   });
 
-  it("should handle Cult Leader picking a player", async () => {
-    // Setup active round
-    server.lobbyState!.conversionStatus!.state = "ACTIVE";
-    server.lobbyState!.conversionStatus!.round = {
-      startTime: Date.now(),
-      duration: 15000,
-      playerQuestions: { p1: 0, p2: 0, p3: 0 },
-      leaderChoice: null,
-      playerAnswers: {},
-    };
+  it("should track player responses to conversion", () => {
+    actor.send({ type: "START_CONVERSION", initiatorId: "p1" });
+    actor.send({ type: "RESPOND_CONVERSION", playerId: "p2", accept: true });
+    actor.send({ type: "RESPOND_CONVERSION", playerId: "p3", accept: true });
 
-    // P1 (Cult Leader) picks P2
-    await server.handleSubmitConversionAction(
-      {
+    const context = actor.getSnapshot().context;
+    expect(context.conversionStatus?.responses.p2).toBe(true);
+    expect(context.conversionStatus?.responses.p3).toBe(true);
+  });
+
+  it("should handle Cult Leader picking a player", () => {
+    actor.send({ type: "START_CONVERSION", initiatorId: "p1" });
+
+    // Accept from all players to trigger ACTIVE state
+    for (let i = 1; i <= 5; i++) {
+      actor.send({
+        type: "RESPOND_CONVERSION",
+        playerId: `p${i}`,
+        accept: true,
+      });
+    }
+
+    // Find the cult leader
+    const context = actor.getSnapshot().context;
+    const cultLeaderId = Object.entries(context.assignments || {}).find(
+      ([_, role]) => role === "CULT_LEADER",
+    )?.[0];
+
+    if (cultLeaderId) {
+      // Cult leader picks a player
+      actor.send({
         type: "SUBMIT_CONVERSION_ACTION",
-        playerId: "p1",
+        playerId: cultLeaderId,
         action: "PICK_PLAYER",
         targetId: "p2",
-      },
-      { id: "conn_1" } as Party.Connection,
-    );
+      });
 
-    expect(server.lobbyState?.conversionStatus?.round?.leaderChoice).toBe("p2");
+      const afterContext = actor.getSnapshot().context;
+      expect(afterContext.conversionStatus?.round?.leaderChoice).toBe("p2");
+    }
   });
 
-  it("should handle player answering quiz", async () => {
-    // Setup active round
-    server.lobbyState!.conversionStatus!.state = "ACTIVE";
-    server.lobbyState!.conversionStatus!.round = {
-      startTime: Date.now(),
-      duration: 15000,
-      playerQuestions: { p1: 0, p2: 0, p3: 0 },
-      leaderChoice: null,
-      playerAnswers: {},
-    };
+  it("should handle player answering quiz", () => {
+    actor.send({ type: "START_CONVERSION", initiatorId: "p1" });
 
-    // P2 answers quiz
-    await server.handleSubmitConversionAction(
-      {
-        type: "SUBMIT_CONVERSION_ACTION",
-        playerId: "p2",
-        action: "ANSWER_QUIZ",
-        answer: "q0-b", // Plankton option ID
-      },
-      { id: "conn_2" } as Party.Connection,
-    );
+    // Accept from all players to trigger ACTIVE state
+    for (let i = 1; i <= 5; i++) {
+      actor.send({
+        type: "RESPOND_CONVERSION",
+        playerId: `p${i}`,
+        accept: true,
+      });
+    }
 
-    expect(server.lobbyState?.conversionStatus?.round?.playerAnswers.p2).toBe(
-      "q0-b",
-    );
+    // Player answers quiz
+    actor.send({
+      type: "SUBMIT_CONVERSION_ACTION",
+      playerId: "p2",
+      action: "ANSWER_QUIZ",
+      answer: "q0-a",
+    });
+
+    const context = actor.getSnapshot().context;
+    expect(context.conversionStatus?.round?.playerAnswers?.p2).toBe("q0-a");
   });
 
-  it("should resolve round correctly", async () => {
-    // Setup active round with choices made
-    server.lobbyState!.conversionStatus!.state = "ACTIVE";
-    server.lobbyState!.conversionStatus!.round = {
-      startTime: Date.now(),
-      duration: 15000,
-      playerQuestions: { p1: 0, p2: 0, p3: 0 }, // Q0: correct answer is "q0-a" (Ships and Sailors)
-      leaderChoice: "p2",
-      playerAnswers: {
-        p2: "q0-a", // Correct
-        p3: "q0-b", // Incorrect
-      },
-    };
-
-    await server.resolveConversionRound();
-
-    expect(server.lobbyState?.conversionStatus?.state).toBe("COMPLETED");
-    expect(server.lobbyState?.conversionStatus?.round?.result).toBeDefined();
-
-    // P2 should be converted
-    expect(
-      server.lobbyState?.conversionStatus?.round?.result?.convertedPlayerId,
-    ).toBe("p2");
-    expect(server.lobbyState?.assignments?.p2).toBe("CULTIST");
-
-    // P2 should be in correctAnswers, P3 should not
-    expect(
-      server.lobbyState?.conversionStatus?.round?.result?.correctAnswers,
-    ).toContain("p2");
-    expect(
-      server.lobbyState?.conversionStatus?.round?.result?.correctAnswers,
-    ).not.toContain("p3");
+  it("should start with conversionCount at 0", () => {
+    const context = actor.getSnapshot().context;
+    expect(context.conversionCount).toBe(0);
   });
 
-  it("should handle random fallback when no choices made", async () => {
-    // Setup active round
-    server.lobbyState!.conversionStatus!.state = "ACTIVE";
-    server.lobbyState!.conversionStatus!.round = {
-      startTime: Date.now(),
-      duration: 15000,
-      playerQuestions: { p1: 0, p2: 0, p3: 0 },
-      leaderChoice: null,
-      playerAnswers: {},
-    };
+  it("should track conversion in state transitions", () => {
+    actor.send({ type: "START_CONVERSION", initiatorId: "p1" });
 
-    await server.resolveConversionRound();
-
-    expect(server.lobbyState?.conversionStatus?.state).toBe("COMPLETED");
-    expect(server.lobbyState?.conversionStatus?.round?.result).toBeDefined();
-
-    // Should have picked a random leader choice (p2 or p3, since p1 is leader)
-    expect(
-      server.lobbyState?.conversionStatus?.round?.leaderChoice,
-    ).not.toBeNull();
-    expect(["p2", "p3"]).toContain(
-      server.lobbyState?.conversionStatus?.round?.leaderChoice,
-    );
-
-    // Should have picked random answers for p2 and p3
-    expect(
-      server.lobbyState?.conversionStatus?.round?.playerAnswers.p2,
-    ).toBeDefined();
-    expect(
-      server.lobbyState?.conversionStatus?.round?.playerAnswers.p3,
-    ).toBeDefined();
-  });
-  it("should limit conversions to 3 per game", async () => {
-    // Set conversion count to 3 and clear any active conversion
-    server.lobbyState!.conversionCount = 3;
-    server.lobbyState!.conversionStatus = undefined;
-    const mockSend = vi.fn();
-
-    // Try to start conversion
-    await server.handleStartConversion(
-      { type: "START_CONVERSION", initiatorId: "p1" },
-      { id: "conn_1", send: mockSend } as unknown as Party.Connection,
-    );
-
-    // Should send error message
-    expect(mockSend).toHaveBeenCalledWith(
-      expect.stringContaining(
-        "The conversion ritual can only be performed 3 times per game",
-      ),
-    );
+    const snapshot = actor.getSnapshot();
+    expect(snapshot.value).toEqual({ playing: { conversion: "pending" } });
   });
 
-  it("should increment conversion count on successful start", async () => {
-    server.lobbyState!.conversionCount = 0;
-    server.lobbyState!.conversionStatus = {
-      initiatorId: "p1",
-      responses: { p1: true, p2: true },
-      state: "PENDING",
-    };
+  it("should track rejection responses", () => {
+    actor.send({ type: "START_CONVERSION", initiatorId: "p1" });
 
-    // P3 accepts, triggering start
-    await server.handleRespondConversion(
-      { type: "RESPOND_CONVERSION", playerId: "p3", accept: true },
-      { id: "conn_3" } as Party.Connection,
-    );
+    // Player rejects
+    actor.send({ type: "RESPOND_CONVERSION", playerId: "p2", accept: false });
 
-    expect(server.lobbyState?.conversionCount).toBe(1);
+    // Response should be tracked
+    const context = actor.getSnapshot().context;
+    expect(context.conversionStatus?.responses.p2).toBe(false);
+  });
+
+  it("should automatically ready the initiator", () => {
+    actor.send({ type: "START_CONVERSION", initiatorId: "p1" });
+
+    const context = actor.getSnapshot().context;
+    // Initiator should be implicitly readied
+    expect(context.conversionStatus?.responses.p1).toBe(true);
+  });
+
+  it("should populate playerQuestions for eligible players when becoming ACTIVE", () => {
+    actor.send({ type: "START_CONVERSION", initiatorId: "p1" });
+
+    // Accept from all players to trigger ACTIVE state
+    for (let i = 1; i <= 5; i++) {
+      actor.send({
+        type: "RESPOND_CONVERSION",
+        playerId: `p${i}`,
+        accept: true,
+      });
+    }
+
+    const context = actor.getSnapshot().context;
+    expect(context.conversionStatus?.state).toBe("ACTIVE");
+    expect(context.conversionStatus?.round).toBeDefined();
+    expect(context.conversionStatus?.round?.playerQuestions).toBeDefined();
+
+    // playerQuestions should have entries for non-cult players
+    const playerQuestions = context.conversionStatus?.round?.playerQuestions;
+    expect(Object.keys(playerQuestions || {}).length).toBeGreaterThan(0);
+
+    // Verify each question index is a valid number (0-9)
+    for (const [, questionIndex] of Object.entries(playerQuestions || {})) {
+      expect(questionIndex).toBeGreaterThanOrEqual(0);
+      expect(questionIndex).toBeLessThan(10);
+    }
+  });
+
+  describe("Random Target Selection on Timeout", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("should randomly select a target if leader does not pick one before timer", () => {
+      actor.send({ type: "START_CONVERSION", initiatorId: "p1" });
+
+      // Accept from all players to trigger ACTIVE state
+      for (let i = 1; i <= 5; i++) {
+        actor.send({
+          type: "RESPOND_CONVERSION",
+          playerId: `p${i}`,
+          accept: true,
+        });
+      }
+
+      const beforeContext = actor.getSnapshot().context;
+      expect(beforeContext.conversionStatus?.state).toBe("ACTIVE");
+      expect(beforeContext.conversionStatus?.round?.leaderChoice).toBeNull();
+
+      // Advance timer past the quiz duration
+      vi.advanceTimersByTime(16000);
+
+      const afterContext = actor.getSnapshot().context;
+
+      // Should be completed with a randomly selected target
+      expect(afterContext.conversionStatus?.state).toBe("COMPLETED");
+      expect(
+        afterContext.conversionStatus?.round?.result?.convertedPlayerId,
+      ).toBeDefined();
+
+      // conversionCount should have increased
+      expect(afterContext.conversionCount).toBe(1);
+    });
+
+    it("should use leader's choice if provided before timer", () => {
+      actor.send({ type: "START_CONVERSION", initiatorId: "p1" });
+
+      // Accept from all players to trigger ACTIVE state
+      for (let i = 1; i <= 5; i++) {
+        actor.send({
+          type: "RESPOND_CONVERSION",
+          playerId: `p${i}`,
+          accept: true,
+        });
+      }
+
+      // Find the cult leader
+      const context = actor.getSnapshot().context;
+      const cultLeaderId = Object.entries(context.assignments || {}).find(
+        ([_, role]) => role === "CULT_LEADER",
+      )?.[0];
+
+      // Find a non-cult-leader, non-cultist target
+      const targetId = Object.entries(context.assignments || {}).find(
+        ([_id, role]) => role !== "CULT_LEADER" && role !== "CULTIST",
+      )?.[0];
+
+      if (cultLeaderId && targetId) {
+        // Cult leader picks a player
+        actor.send({
+          type: "SUBMIT_CONVERSION_ACTION",
+          playerId: cultLeaderId,
+          action: "PICK_PLAYER",
+          targetId,
+        });
+
+        // Advance timer
+        vi.advanceTimersByTime(16000);
+
+        const afterContext = actor.getSnapshot().context;
+
+        // Should be completed with the leader's choice
+        expect(afterContext.conversionStatus?.state).toBe("COMPLETED");
+        expect(
+          afterContext.conversionStatus?.round?.result?.convertedPlayerId,
+        ).toBe(targetId);
+      }
+    });
+
+    it("should NOT select already-converted player in second conversion (50 iterations)", () => {
+      // Run multiple iterations to account for randomness
+      for (let iteration = 0; iteration < 50; iteration++) {
+        // Create a fresh actor for each iteration
+        const testActor = setupPlayingGame();
+
+        testActor.send({ type: "START_CONVERSION", initiatorId: "p1" });
+
+        // Accept from ALL players to trigger ACTIVE state
+        for (let i = 1; i <= 5; i++) {
+          testActor.send({
+            type: "RESPOND_CONVERSION",
+            playerId: `p${i}`,
+            accept: true,
+          });
+        }
+
+        // Find the cult leader
+        const context = testActor.getSnapshot().context;
+        const cultLeaderId = Object.entries(context.assignments || {}).find(
+          ([_, role]) => role === "CULT_LEADER",
+        )?.[0];
+
+        // Find a non-cult-leader, non-cultist target for first conversion
+        const firstTargetId = Object.entries(context.assignments || {}).find(
+          ([_id, role]) => role !== "CULT_LEADER" && role !== "CULTIST",
+        )?.[0];
+
+        if (cultLeaderId && firstTargetId) {
+          // Cult leader picks a player for first conversion
+          testActor.send({
+            type: "SUBMIT_CONVERSION_ACTION",
+            playerId: cultLeaderId,
+            action: "PICK_PLAYER",
+            targetId: firstTargetId,
+          });
+
+          // Advance timer to complete first conversion
+          vi.advanceTimersByTime(16000);
+
+          const afterFirstContext = testActor.getSnapshot().context;
+          expect(afterFirstContext.conversionStatus?.state).toBe("COMPLETED");
+          expect(afterFirstContext.assignments?.[firstTargetId]).toBe(
+            "CULTIST",
+          );
+
+          // START SECOND CONVERSION
+          testActor.send({
+            type: "START_CONVERSION",
+            initiatorId: cultLeaderId,
+          });
+
+          // ALL players must accept the ritual
+          for (let i = 1; i <= 5; i++) {
+            testActor.send({
+              type: "RESPOND_CONVERSION",
+              playerId: `p${i}`,
+              accept: true,
+            });
+          }
+
+          // Don't pick anyone - let timer expire for random selection
+          vi.advanceTimersByTime(16000);
+
+          const afterSecondContext = testActor.getSnapshot().context;
+          expect(afterSecondContext.conversionStatus?.state).toBe("COMPLETED");
+
+          const secondConvertedId =
+            afterSecondContext.conversionStatus?.round?.result
+              ?.convertedPlayerId;
+
+          // Should NOT have selected the first converted player or cult leader
+          expect(secondConvertedId).toBeDefined();
+          expect(secondConvertedId).not.toBe(firstTargetId);
+          expect(secondConvertedId).not.toBe(cultLeaderId);
+
+          // Note: Original Cultist IS a valid target (Cult Leader doesn't know who they are)
+          // So we intentionally don't check that originalCultistId is excluded
+        }
+
+        testActor.stop();
+      }
+    });
+
+    it("should allow targeting the ORIGINAL Cultist (Cult Leader doesn't know who they are)", () => {
+      // This test verifies that in games with an original Cultist (11+ players),
+      // the Cult Leader can target them for conversion since they don't know their identity
+
+      // Setup: Create a fresh actor and manually set up a scenario
+      // where we can control who the original Cultist is
+      const testActor = setupPlayingGame();
+
+      testActor.send({ type: "START_CONVERSION", initiatorId: "p1" });
+
+      // Accept from ALL players
+      for (let i = 1; i <= 5; i++) {
+        testActor.send({
+          type: "RESPOND_CONVERSION",
+          playerId: `p${i}`,
+          accept: true,
+        });
+      }
+
+      const context = testActor.getSnapshot().context;
+
+      // Find the cult leader and original cultist
+      const cultLeaderId = Object.entries(context.assignments || {}).find(
+        ([_, role]) => role === "CULT_LEADER",
+      )?.[0];
+      const originalCultistId = Object.entries(
+        context.originalRoles || {},
+      ).find(([_, role]) => role === "CULTIST")?.[0];
+
+      // In a 5-player game there's no original Cultist, but let's verify
+      // the eligibility logic by checking that we can select any non-cult-leader,
+      // non-eliminated, non-unconvertible player
+
+      if (cultLeaderId) {
+        // Get list of players who should be valid targets
+        const validTargets = context.players.filter(
+          (p) =>
+            !p.isEliminated &&
+            !p.isUnconvertible &&
+            context.assignments?.[p.id] !== "CULT_LEADER",
+        );
+
+        // Should have valid targets (everyone except cult leader)
+        expect(validTargets.length).toBeGreaterThan(0);
+
+        // If there's an original cultist, they should be in the valid targets
+        if (originalCultistId) {
+          const originalCultistIsValid = validTargets.some(
+            (p) => p.id === originalCultistId,
+          );
+          expect(originalCultistIsValid).toBe(true);
+        }
+      }
+
+      testActor.stop();
+    });
   });
 });

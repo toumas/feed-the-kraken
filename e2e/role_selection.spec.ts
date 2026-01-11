@@ -51,19 +51,24 @@ test.describe("Manual Role Selection", () => {
     // 3. Host starts game
     await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/role-selection/);
+    // Wait for role selection view to appear (it's now a view on /game, not a separate URL)
+    await expect(
+      hostPage.getByRole("heading", { name: "Choose Your Role", level: 1 }),
+    ).toBeVisible({ timeout: 15000 });
 
     // 4. Players select roles (3 Sailors, 1 Pirate, 1 Cult Leader)
     const rolesToSelect = [
       { page: hostPage, role: "Cult Leader" },
-      { page: players[0].page, role: "Loyal Sailor" },
-      { page: players[1].page, role: "Loyal Sailor" },
-      { page: players[2].page, role: "Loyal Sailor" },
+      { page: players[0].page, role: "Sailor" },
+      { page: players[1].page, role: "Sailor" },
+      { page: players[2].page, role: "Sailor" },
       { page: players[3].page, role: "Pirate" },
     ];
 
     for (const p of rolesToSelect) {
-      await expect(p.page).toHaveURL(/\/role-selection/);
+      await expect(
+        p.page.getByRole("heading", { name: "Choose Your Role", level: 1 }),
+      ).toBeVisible({ timeout: 15000 });
       // Using regex to match button name starting with role title to avoid description collisions
       const roleRegex = new RegExp(`^${p.role}`);
       await p.page.getByRole("button", { name: roleRegex }).click();
@@ -126,20 +131,31 @@ test.describe("Manual Role Selection", () => {
     }
 
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/role-selection/, { timeout: 15000 });
+    // Wait for role selection view to appear
+    await expect(
+      hostPage.getByRole("heading", { name: "Choose Your Role", level: 1 }),
+    ).toBeVisible({ timeout: 15000 });
 
     // 2. Everyone picks Cult Leader
     const allPages = [hostPage, ...players];
     for (const p of allPages) {
-      await expect(p).toHaveURL(/\/role-selection/, { timeout: 15000 });
+      await expect(
+        p.getByRole("heading", { name: "Choose Your Role", level: 1 }),
+      ).toBeVisible({ timeout: 15000 });
       await p.getByRole("button", { name: /^Cult Leader/ }).click();
       await p.getByRole("button", { name: "Confirm", exact: true }).click();
     }
 
-    // 3. Verify they are all back in the lobby
-    await expect(hostPage).toHaveURL(/\/lobby/);
+    // 3. Verify role selection is cancelled and they see the lobby again
+    // When all pick the same role, the selection should be cancelled
+    // The state goes back to lobby but URL may not change, so check for lobby content
+    await expect(
+      hostPage.getByText("Crew Manifest", { exact: false }),
+    ).toBeVisible({ timeout: 15000 });
     for (const p of players) {
-      await expect(p).toHaveURL(/\/lobby/);
+      await expect(p.getByText("Crew Manifest", { exact: false })).toBeVisible({
+        timeout: 15000,
+      });
     }
   });
 
@@ -191,11 +207,11 @@ test.describe("Manual Role Selection", () => {
     const rolesToSelect = [
       { p: hostPage, r: "Cult Leader" },
       { p: players[0], r: "Cultist" },
-      { p: players[1], r: "Loyal Sailor" },
-      { p: players[2], r: "Loyal Sailor" },
-      { p: players[3], r: "Loyal Sailor" },
-      { p: players[4], r: "Loyal Sailor" },
-      { p: players[5], r: "Loyal Sailor" },
+      { p: players[1], r: "Sailor" },
+      { p: players[2], r: "Sailor" },
+      { p: players[3], r: "Sailor" },
+      { p: players[4], r: "Sailor" },
+      { p: players[5], r: "Sailor" },
       { p: players[6], r: "Pirate" },
       { p: players[7], r: "Pirate" },
       { p: players[8], r: "Pirate" },

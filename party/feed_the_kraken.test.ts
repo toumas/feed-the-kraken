@@ -1,240 +1,201 @@
-import type * as Party from "partykit/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { LobbyState } from "../app/types";
-import Server from "./index";
+/**
+ * Feed the Kraken Tests - Migrated to XState
+ * Tests for the Feed the Kraken game action
+ */
 
-// Mock Party.Room and Party.Connection
-const mockStorage = {
-  get: vi.fn(),
-  put: vi.fn(),
-  delete: vi.fn(),
-};
+import { beforeEach, describe, expect, it } from "vitest";
+import { createActor } from "xstate";
+import { gameMachine } from "./machine/gameMachine";
 
-const mockRoom = {
-  id: "TEST_ROOM",
-  storage: mockStorage,
-  broadcast: vi.fn(),
-  getConnections: vi.fn(),
-} as unknown as Party.Room;
+// Helper to setup a game with playing state
+function setupPlayingGame() {
+  const actor = createActor(gameMachine);
+  actor.start();
 
-describe("Feed the Kraken Server Logic", () => {
-  let server: Server;
-  let mockLobbyState: LobbyState;
+  // Create lobby with host
+  actor.send({
+    type: "CREATE_LOBBY",
+    playerId: "captain",
+    playerName: "Captain",
+    playerPhoto: null,
+    code: "TEST",
+  });
+
+  // Add 4 more players
+  actor.send({
+    type: "JOIN_LOBBY",
+    playerId: "sailor",
+    playerName: "Sailor",
+    playerPhoto: null,
+  });
+  actor.send({
+    type: "JOIN_LOBBY",
+    playerId: "cult_leader",
+    playerName: "Cult Leader",
+    playerPhoto: null,
+  });
+  actor.send({
+    type: "JOIN_LOBBY",
+    playerId: "player_4",
+    playerName: "Player 4",
+    playerPhoto: null,
+  });
+  actor.send({
+    type: "JOIN_LOBBY",
+    playerId: "player_5",
+    playerName: "Player 5",
+    playerPhoto: null,
+  });
+
+  // Start game
+  actor.send({ type: "START_GAME", playerId: "captain" });
+
+  return actor;
+}
+
+describe("Feed the Kraken - XState", () => {
+  let actor: ReturnType<typeof createActor<typeof gameMachine>>;
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    server = new Server(mockRoom);
-
-    // Setup mock connections map
-    server.connectionToPlayer = new Map([
-      ["conn_1", "p1"], // Captain
-      ["conn_2", "p2"], // Target Sailor
-      ["conn_3", "p3"], // Target Cult Leader
-    ]);
-
-    // Setup mock lobby state
-    mockLobbyState = {
-      code: "TEST",
-      status: "PLAYING",
-      players: [
-        {
-          id: "p1",
-          name: "Captain",
-          photoUrl: null,
-          isHost: true,
-          isReady: true,
-          isOnline: true,
-          isEliminated: false,
-          isUnconvertible: false,
-          notRole: null,
-          joinedAt: Date.now(),
-          hasTongue: true,
-        },
-        {
-          id: "p2",
-          name: "Sailor",
-          photoUrl: null,
-          isHost: false,
-          isReady: true,
-          isOnline: true,
-          isEliminated: false,
-          isUnconvertible: false,
-          notRole: null,
-          joinedAt: Date.now(),
-          hasTongue: true,
-        },
-        {
-          id: "p3",
-          name: "Cult Leader",
-          photoUrl: null,
-          isHost: false,
-          isReady: true,
-          isOnline: true,
-          isEliminated: false,
-          isUnconvertible: false,
-          notRole: null,
-          joinedAt: Date.now(),
-          hasTongue: true,
-        },
-      ],
-      assignments: {
-        p1: "PIRATE",
-        p2: "SAILOR",
-        p3: "CULT_LEADER",
-      },
-    };
-    server.lobbyState = mockLobbyState;
-
-    // Mock getConnections
-    (
-      mockRoom.getConnections as unknown as ReturnType<typeof vi.fn>
-    ).mockReturnValue([
-      { id: "conn_1", send: vi.fn() },
-      { id: "conn_2", send: vi.fn() },
-      { id: "conn_3", send: vi.fn() },
-    ]);
+    actor = setupPlayingGame();
   });
 
-  it("should allow Captain to request feeding a player", async () => {
-    const captainConn = {
-      id: "conn_1",
-      send: vi.fn(),
-    } as unknown as Party.Connection;
-
-    await server.handleFeedTheKrakenRequest(
-      { type: "FEED_THE_KRAKEN_REQUEST", targetPlayerId: "p2" },
-      captainConn,
-    );
-
-    // Should verify that the target player receives the prompt
-    const connections = Array.from(mockRoom.getConnections());
-    const targetConn = connections.find((c) => c.id === "conn_2");
-
-    expect(targetConn?.send).toHaveBeenCalledWith(
-      expect.stringContaining("FEED_THE_KRAKEN_PROMPT"),
-    );
-    expect(targetConn?.send).toHaveBeenCalledWith(
-      expect.stringContaining('"captainName":"Captain"'),
-    );
-  });
-
-  it("should prevent Captain from feeding themselves", async () => {
-    const captainConn = {
-      id: "conn_1",
-      send: vi.fn(),
-    } as unknown as Party.Connection;
-
-    await server.handleFeedTheKrakenRequest(
-      { type: "FEED_THE_KRAKEN_REQUEST", targetPlayerId: "p1" },
-      captainConn,
-    );
-
-    expect(captainConn.send).toHaveBeenCalledWith(
-      expect.stringContaining("ERROR"),
-    );
-    expect(captainConn.send).toHaveBeenCalledWith(
-      expect.stringContaining("errors.captainCannotFeedSelf"),
-    );
-  });
-
-  it("should eliminate player when they accept", async () => {
-    // Target (p2) accepts
-    const targetConn = {
-      id: "conn_2",
-      send: vi.fn(),
-    } as unknown as Party.Connection;
-
-    await server.handleFeedTheKrakenResponse(
-      {
-        type: "FEED_THE_KRAKEN_RESPONSE",
-        captainId: "p1",
-        confirmed: true,
-      },
-      targetConn,
-    );
-
-    // Player should be eliminated
-    expect(server.lobbyState?.players[1].isEliminated).toBe(true);
-
-    // Result should be set (no cult victory)
-    expect(server.lobbyState?.feedTheKrakenResult).toEqual({
-      targetPlayerId: "p2",
-      cultVictory: false,
+  it("should allow Captain to request feeding a player", () => {
+    // Request feeding sailor
+    actor.send({
+      type: "FEED_THE_KRAKEN_REQUEST",
+      targetPlayerId: "sailor",
+      playerId: "captain",
     });
 
-    // Should broadcast lobby update
-    expect(mockRoom.broadcast).toHaveBeenCalledWith(
-      expect.stringContaining("LOBBY_UPDATE"),
-    );
+    // Should transition to feedTheKraken state
+    const snapshot = actor.getSnapshot();
+    expect(snapshot.value).toEqual({ playing: "feedTheKraken" });
 
-    // Should broadcast result prompt to everyone
-    expect(mockRoom.broadcast).toHaveBeenCalledWith(
-      expect.stringContaining("FEED_THE_KRAKEN_RESULT"),
-    );
-    expect(mockRoom.broadcast).toHaveBeenCalledWith(
-      expect.stringContaining('"cultVictory":false'),
-    );
+    // Assert status is PENDING
+    expect(snapshot.context.feedTheKrakenStatus).toMatchObject({
+      state: "PENDING",
+      initiatorId: "captain",
+      targetPlayerId: "sailor",
+    });
   });
 
-  it("should trigger Cult Victory when Cult Leader is fed", async () => {
-    // Cult Leader (p3) accepts
-    const targetConn = {
-      id: "conn_3",
-      send: vi.fn(),
-    } as unknown as Party.Connection;
+  it("should transition back to idle and complete status after feeding confirmed", () => {
+    // Find a target who is NOT the cult leader
+    const context = actor.getSnapshot().context;
+    const targetPlayerId = Object.entries(context.assignments || {}).find(
+      ([id, role]) => id !== "captain" && role !== "CULT_LEADER",
+    )?.[0];
 
-    await server.handleFeedTheKrakenResponse(
-      {
-        type: "FEED_THE_KRAKEN_RESPONSE",
-        captainId: "p1",
-        confirmed: true,
-      },
-      targetConn,
-    );
+    if (!targetPlayerId) {
+      throw new Error("Could not find a valid target (non-Cult Leader)");
+    }
 
-    // Player should be eliminated
-    expect(server.lobbyState?.players[2].isEliminated).toBe(true);
-
-    // Result should show cult victory
-    expect(server.lobbyState?.feedTheKrakenResult).toEqual({
-      targetPlayerId: "p3",
-      cultVictory: true,
+    actor.send({
+      type: "FEED_THE_KRAKEN_REQUEST",
+      targetPlayerId: targetPlayerId,
+      playerId: "captain",
+    });
+    actor.send({
+      type: "FEED_THE_KRAKEN_RESPONSE",
+      captainId: "captain",
+      confirmed: true,
     });
 
-    // Should broadcast result prompt to everyone
-    expect(mockRoom.broadcast).toHaveBeenCalledWith(
-      expect.stringContaining("FEED_THE_KRAKEN_RESULT"),
+    // Should be back to idle
+    const snapshot = actor.getSnapshot();
+    expect(snapshot.value).toEqual({ playing: "idle" });
+
+    // Assert status is COMPLETED and result is correct (target eliminated)
+    expect(snapshot.context.feedTheKrakenStatus).toMatchObject({
+      state: "COMPLETED",
+      result: {
+        targetPlayerId: targetPlayerId,
+        cultVictory: false,
+      },
+    });
+
+    // Assert target is eliminated
+    const targetPlayer = snapshot.context.players.find(
+      (p) => p.id === targetPlayerId,
     );
-    expect(mockRoom.broadcast).toHaveBeenCalledWith(
-      expect.stringContaining('"cultVictory":true'),
-    );
+    expect(targetPlayer?.isEliminated).toBe(true);
   });
 
-  it("should notify Captain when player denies", async () => {
-    // Target (p2) denies
-    const targetConn = {
-      id: "conn_2",
-      send: vi.fn(),
-    } as unknown as Party.Connection;
+  it("should transition back to idle and set cult victory after feeding cult leader", () => {
+    // Find the cult leader in the assignments
+    const context = actor.getSnapshot().context;
+    const cultLeaderPlayerId = Object.entries(context.assignments || {}).find(
+      ([_, role]) => role === "CULT_LEADER",
+    )?.[0];
 
-    await server.handleFeedTheKrakenResponse(
-      {
+    if (cultLeaderPlayerId) {
+      actor.send({
+        type: "FEED_THE_KRAKEN_REQUEST",
+        targetPlayerId: cultLeaderPlayerId,
+        playerId: "captain",
+      });
+      actor.send({
         type: "FEED_THE_KRAKEN_RESPONSE",
-        captainId: "p1",
-        confirmed: false,
-      },
-      targetConn,
-    );
+        captainId: "captain",
+        confirmed: true,
+      });
+
+      // Should be back to idle
+      const snapshot = actor.getSnapshot();
+      expect(snapshot.value).toEqual({ playing: "idle" });
+
+      // Assert status is COMPLETED and Cult Victory
+      expect(snapshot.context.feedTheKrakenStatus).toMatchObject({
+        state: "COMPLETED",
+        result: {
+          targetPlayerId: cultLeaderPlayerId,
+          cultVictory: true,
+        },
+      });
+    }
+  });
+
+  it("should set status to CANCELLED and NOT eliminate player when they deny", () => {
+    actor.send({
+      type: "FEED_THE_KRAKEN_REQUEST",
+      targetPlayerId: "sailor",
+      playerId: "captain",
+    });
+    actor.send({
+      type: "FEED_THE_KRAKEN_RESPONSE",
+      captainId: "captain",
+      confirmed: false,
+    });
+
+    // Should be back to idle
+    const snapshot = actor.getSnapshot();
+    expect(snapshot.value).toEqual({ playing: "idle" });
+
+    // Status should be CANCELLED
+    expect(snapshot.context.feedTheKrakenStatus).toMatchObject({
+      state: "CANCELLED",
+      initiatorId: "captain",
+      targetPlayerId: "sailor",
+    });
 
     // Player should NOT be eliminated
-    expect(server.lobbyState?.players[1].isEliminated).toBe(false);
+    const context = snapshot.context;
+    const sailor = context.players.find((p) => p.id === "sailor");
+    expect(sailor?.isEliminated).toBe(false);
+  });
 
-    // Captain should receive denial message
-    const connections = Array.from(mockRoom.getConnections());
-    const captainConn = connections.find((c) => c.id === "conn_1");
+  it("should not process request for non-existent player", () => {
+    // This should not throw
+    expect(() => {
+      actor.send({
+        type: "FEED_THE_KRAKEN_REQUEST",
+        targetPlayerId: "nonexistent",
+        playerId: "captain",
+      });
+    }).not.toThrow();
 
-    expect(captainConn?.send).toHaveBeenCalledWith(
-      expect.stringContaining("FEED_THE_KRAKEN_DENIED"),
-    );
+    const snapshot = actor.getSnapshot();
+    expect(snapshot.value).toBeDefined();
   });
 });

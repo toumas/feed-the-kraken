@@ -4,12 +4,12 @@ import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { JoinView } from "../../components/JoinView";
-import { useGame } from "../../context/GameContext";
+
 import { useT } from "../../i18n/client";
 
 export default function JoinPage() {
   const router = useRouter();
-  const { joinLobby } = useGame();
+
   const { t } = useT("common");
 
   const handleJoin = (code: string) => {
