@@ -17,13 +17,18 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["app/**/*.{ts,tsx}", "party/**/*.ts"],
-      exclude: ["**/*.test.{ts,tsx}", "**/*.d.ts", "**/types.ts", "app/i18n/**"],
+      exclude: [
+        "**/*.test.{ts,tsx}",
+        "**/*.d.ts",
+        "**/types.ts",
+        "app/i18n/**",
+      ],
       thresholds: {
         autoUpdate: true,
-        lines: 39.23,
-        functions: 37.98,
-        branches: 33.25,
-        statements: 38.37,
+        lines: 40.4,
+        functions: 38.37,
+        branches: 34.1,
+        statements: 39.51,
       },
     },
   },

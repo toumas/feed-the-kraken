@@ -398,8 +398,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (
       lobby?.gunsStashStatus?.state === "WAITING_FOR_PLAYERS" ||
-      lobby?.gunsStashStatus?.state === "DISTRIBUTION" ||
-      lobby?.gunsStashStatus?.state === "COMPLETED"
+      lobby?.gunsStashStatus?.state === "DISTRIBUTION"
     ) {
       setIsGunsStashDismissed(false);
       // Cross-dismiss: hide other ritual views when server starts a new ritual

@@ -1,18 +1,28 @@
-import { cleanup, render } from "@testing-library/react";
+import { act, cleanup, render, waitFor } from "@testing-library/react";
 import { useEffect, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GameProvider, useGame } from "./GameContext";
 
 // Mock PartySocket
+let socketOnMessage: ((event: MessageEvent) => void) | undefined;
+
+vi.mock("partysocket/react", () => {
+  return {
+    default: vi.fn().mockImplementation((options) => {
+      socketOnMessage = options.onMessage;
+      return {
+        send: vi.fn(),
+        close: vi.fn(),
+      };
+    }),
+  };
+});
+
 vi.mock("partysocket", () => {
   return {
     default: class MockPartySocket {
-      onopen: () => void = () => {};
-      onclose: () => void = () => {};
-      onerror: () => void = () => {};
-      onmessage: () => void = () => {};
-      send: () => void = () => {};
-      close: () => void = () => {};
+      send = vi.fn();
+      close = vi.fn();
     },
   };
 });
@@ -249,5 +259,62 @@ describe("GameContext Cross-Dismissal", () => {
     expect(capturedState.isConversionDismissed).toBe(true); // dismissed
     expect(capturedState.isCabinSearchDismissed).toBe(true); // dismissed
     expect(capturedState.isGunsStashDismissed).toBe(false); // NOT dismissed (preserved)
+  });
+
+  it("does not reset isGunsStashDismissed when loading with COMPLETED state (simulating refresh)", async () => {
+    // 1. Mock localStorage to have dismissal: true
+    localStorage.setItem("kraken_guns_stash_dismissed", "true");
+
+    let capturedState = {
+      isGunsStashDismissed: false,
+    };
+
+    const TestComponent = () => {
+      const { isGunsStashDismissed } = useGame();
+
+      capturedState = {
+        isGunsStashDismissed,
+      };
+
+      return null;
+    };
+
+    render(
+      <GameProvider>
+        <TestComponent />
+      </GameProvider>,
+    );
+
+    // Initial state from localStorage
+    expect(capturedState.isGunsStashDismissed).toBe(true);
+
+    // 2. Simulate receiving the lobby state from server via socket
+    // We trigger a STATE_UPDATE message
+    const lobbyState = {
+      code: "REFRESH",
+      players: [{ id: "p1", name: "Player 1" }],
+      status: "PLAYING",
+      gunsStashStatus: { state: "COMPLETED" },
+    };
+
+    if (socketOnMessage) {
+      act(() => {
+        socketOnMessage?.({
+          data: JSON.stringify({
+            type: "STATE_UPDATE",
+            snapshot: {
+              context: lobbyState,
+              value: "playing",
+            },
+          }),
+        } as MessageEvent);
+      });
+    }
+
+    // 3. Check if isGunsStashDismissed became false (BUG!)
+    // We use waitFor because effects run asynchronously after render
+    await waitFor(() => {
+      expect(capturedState.isGunsStashDismissed).toBe(true);
+    });
   });
 });
