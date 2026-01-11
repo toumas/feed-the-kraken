@@ -22,6 +22,7 @@ describe("LobbyView", () => {
       isReady: false,
       notRole: null,
       joinedAt: Date.now(),
+      hasTongue: true,
     })),
     status: "WAITING",
   });
@@ -32,6 +33,7 @@ describe("LobbyView", () => {
     onLeave: vi.fn(),
     onStart: vi.fn(),
     onAddBot: vi.fn(),
+    onKickPlayer: vi.fn(),
     onSetRoleDistributionMode: vi.fn(),
     connectionStatus: "connected" as const,
   };

@@ -30,6 +30,7 @@ interface LobbyViewProps {
   onLeave: () => void;
   onStart: () => void;
   onAddBot: () => void;
+  onKickPlayer: (targetPlayerId: string) => void;
   onSetRoleDistributionMode: (mode: "automatic" | "manual") => void;
   connectionStatus: ConnectionStatus;
 }
@@ -41,6 +42,7 @@ export function LobbyView({
   onLeave,
   onStart,
   onAddBot,
+  onKickPlayer,
   onSetRoleDistributionMode,
   connectionStatus,
 }: LobbyViewProps) {
@@ -299,7 +301,7 @@ export function LobbyView({
                   />
                 )}
               </div>
-              <div className="overflow-hidden">
+              <div className="overflow-hidden flex-1">
                 <p className="font-medium truncate text-slate-200 text-sm">
                   {player.name}
                   {player.id === myPlayerId && (
@@ -315,6 +317,16 @@ export function LobbyView({
                   <p className="text-xs text-slate-500">{t("lobby.offline")}</p>
                 )}
               </div>
+              {isHost && !player.isHost && player.id !== myPlayerId && (
+                <button
+                  onClick={() => onKickPlayer(player.id)}
+                  type="button"
+                  className="p-1 text-slate-500 hover:text-red-400 transition-colors ml-auto"
+                  title={t("lobby.kickPlayer")}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
           ))}
 

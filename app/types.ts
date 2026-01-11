@@ -29,7 +29,20 @@ export type LobbyState = {
   assignments?: Record<string, Role>;
   originalRoles?: Record<string, Role>;
   isFloggingUsed?: boolean;
+  floggingStatus?: {
+    initiatorId: string;
+    targetPlayerId: string;
+    state: "PENDING" | "COMPLETED" | "CANCELLED";
+    result?: { notRole: Role };
+  };
+  offWithTongueStatus?: {
+    initiatorId: string;
+    targetPlayerId: string;
+    state: "PENDING" | "COMPLETED" | "CANCELLED";
+    result?: { outcome: "SILENCED" };
+  };
   conversionCount?: number;
+  convertedPlayerIds?: string[]; // All players who have been successfully converted
   conversionStatus?: {
     initiatorId: string;
     responses: Record<string, boolean>;
@@ -45,6 +58,12 @@ export type LobbyState = {
         correctAnswers: string[]; // list of playerIds
       };
     };
+  };
+  captainCabinSearchStatus?: {
+    searcherId: string;
+    targetPlayerId: string;
+    state: "PENDING" | "COMPLETED" | "CANCELLED";
+    result?: { role: Role; originalRole?: Role };
   };
   cabinSearchStatus?: {
     initiatorId: string;
@@ -70,6 +89,15 @@ export type LobbyState = {
       correctAnswers: string[]; // list of playerIds
     };
     cancellationReason?: string;
+  };
+  feedTheKrakenStatus?: {
+    initiatorId: string;
+    targetPlayerId: string;
+    state: "PENDING" | "COMPLETED" | "CANCELLED";
+    result?: {
+      targetPlayerId: string;
+      cultVictory: boolean;
+    };
   };
   feedTheKrakenResult?: {
     targetPlayerId: string;
@@ -104,10 +132,15 @@ export type MessagePayload =
     }
   | { type: "ADD_BOT" }
   | { type: "LEAVE_LOBBY"; playerId: string }
+  | { type: "KICK_PLAYER"; playerId: string; targetPlayerId: string }
   | { type: "START_GAME"; playerId: string }
-  | { type: "START_GAME"; playerId: string }
+  | { type: "GAME_STARTED"; assignments?: Record<string, Role> }
   | { type: "DENIAL_OF_COMMAND"; playerId: string }
-  | { type: "CABIN_SEARCH_REQUEST"; targetPlayerId: string }
+  | {
+      type: "CABIN_SEARCH_REQUEST";
+      playerId: string;
+      targetPlayerId: string;
+    }
   | { type: "CABIN_SEARCH_PROMPT"; searcherId: string; searcherName: string }
   | { type: "CABIN_SEARCH_RESPONSE"; searcherId: string; confirmed: boolean }
   | {
@@ -122,7 +155,12 @@ export type MessagePayload =
       role: Role;
       originalRole?: Role;
     }
-  | { type: "CABIN_SEARCH_DENIED"; targetPlayerId: string }
+  | {
+      type: "CABIN_SEARCH_RESULT";
+      targetPlayerId: string;
+      role: Role;
+      originalRole?: Role;
+    }
   | { type: "FLOGGING_REQUEST"; targetPlayerId: string }
   | { type: "FLOGGING_CONFIRMATION_REQUEST"; hostId: string; hostName: string }
   | {
@@ -133,7 +171,7 @@ export type MessagePayload =
   | { type: "FLOGGING_PROMPT"; targetPlayerId: string; options: Role[] }
   | { type: "FLOGGING_REVEAL"; targetPlayerId: string; revealedRole: Role }
   | { type: "FLOGGING_REVEAL"; targetPlayerId: string; revealedRole: Role }
-  | { type: "FLOGGING_DENIED"; targetPlayerId: string }
+  | { type: "FLOGGING_REVEAL"; targetPlayerId: string; revealedRole: Role }
   | { type: "START_CONVERSION"; initiatorId: string }
   | { type: "RESPOND_CONVERSION"; playerId: string; accept: boolean }
   | {
@@ -167,27 +205,34 @@ export type MessagePayload =
       playerId: string;
       distribution: Record<string, number>;
     }
+  | {
+      type: "SUBMIT_CULT_GUNS_STASH_ACTION";
+      playerId: string;
+      answer: string;
+    }
   | { type: "CANCEL_CULT_GUNS_STASH"; playerId: string }
   | { type: "RESET_GAME" }
-  | { type: "BACK_TO_LOBBY" }
-  | { type: "FEED_THE_KRAKEN_REQUEST"; targetPlayerId: string }
+  | { type: "BACK_TO_LOBBY"; playerId: string }
   | {
-      type: "FEED_THE_KRAKEN_PROMPT";
-      captainId: string;
-      captainName: string;
+      type: "FEED_THE_KRAKEN_REQUEST";
+      playerId: string;
+      targetPlayerId: string;
     }
   | {
       type: "FEED_THE_KRAKEN_RESPONSE";
       captainId: string;
       confirmed: boolean;
     }
-  | { type: "FEED_THE_KRAKEN_DENIED"; targetPlayerId: string }
   | {
-      type: "FEED_THE_KRAKEN_RESULT";
-      targetPlayerId: string;
-      cultVictory: boolean;
+      type: "FEED_THE_KRAKEN_RESPONSE";
+      captainId: string;
+      confirmed: boolean;
     }
-  | { type: "OFF_WITH_TONGUE_REQUEST"; targetPlayerId: string }
+  | {
+      type: "OFF_WITH_TONGUE_REQUEST";
+      playerId: string;
+      targetPlayerId: string;
+    }
   | {
       type: "OFF_WITH_TONGUE_PROMPT";
       captainId: string;
@@ -199,7 +244,7 @@ export type MessagePayload =
       confirmed: boolean;
     }
   | { type: "OFF_WITH_TONGUE_RESULT"; targetPlayerId: string }
-  | { type: "OFF_WITH_TONGUE_DENIED"; targetPlayerId: string }
+  | { type: "OFF_WITH_TONGUE_RESULT"; targetPlayerId: string }
   | { type: "SET_ROLE_DISTRIBUTION_MODE"; mode: "automatic" | "manual" }
   | { type: "SELECT_ROLE"; playerId: string; role: Role }
   | { type: "CONFIRM_ROLE"; playerId: string }

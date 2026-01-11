@@ -16,6 +16,7 @@ export default function LobbyPage() {
     leaveLobby,
     startGame,
     addBotPlayer,
+    kickPlayer,
     setRoleDistributionMode,
     connectionStatus,
   } = useGame();
@@ -28,14 +29,9 @@ export default function LobbyPage() {
   useEffect(() => {
     // If game starts, go to appropriate page based on mode
     if (lobby?.status === "PLAYING") {
-      // If in manual role selection mode, go to role selection page
-      if (lobby.roleSelectionStatus?.state === "SELECTING") {
-        router.push("/role-selection");
-      } else {
-        router.push("/game");
-      }
+      router.push("/game");
     }
-  }, [lobby?.status, lobby?.roleSelectionStatus?.state, router]);
+  }, [lobby?.status, router]);
 
   // Show cancellation message when role selection is cancelled
   useEffect(() => {
@@ -104,6 +100,7 @@ export default function LobbyPage() {
           onLeave={handleLeave}
           onStart={startGame}
           onAddBot={addBotPlayer}
+          onKickPlayer={kickPlayer}
           onSetRoleDistributionMode={setRoleDistributionMode}
           connectionStatus={connectionStatus}
         />

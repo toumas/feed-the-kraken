@@ -10,8 +10,17 @@ import { useT } from "../i18n/client";
 
 export default function KrakenCompanion() {
   const router = useRouter();
-  const { myName, myPhoto, createLobby, lobby, error, setError } = useGame();
+  const { lobby, error, setError } = useGame();
   const { t } = useT("common");
+
+  // Check for kick message from localStorage (set when player was kicked)
+  useEffect(() => {
+    const kickMessage = localStorage.getItem("kraken_kick_message");
+    if (kickMessage) {
+      setError(kickMessage);
+      localStorage.removeItem("kraken_kick_message");
+    }
+  }, [setError]);
 
   // Redirect if already in a lobby
   useEffect(() => {

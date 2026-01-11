@@ -22,7 +22,9 @@ test.describe("Conversion Role Display", () => {
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
     await completeIdentifyPage(hostPage);
-    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+      timeout: 15000,
+    });
 
     // Get the room code
     const codeElement = hostPage.locator("p.font-mono");
@@ -47,14 +49,18 @@ test.describe("Conversion Role Display", () => {
       await page.getByPlaceholder("XP7K9L").fill(code);
       await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
-      await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
+      await expect(page.getByText("Crew Manifest")).toBeVisible({
+        timeout: 15000,
+      });
       players.push({ context, page, name: playerName });
     }
 
     // 3. Host starts game
     await expect(hostPage.getByText("Crew Manifest (6/11)")).toBeVisible();
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/game/, { timeout: 30000 });
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+      timeout: 30000,
+    });
 
     // 4. Identify Roles
     const allPages = [hostPage, ...players.map((p) => p.page)];
@@ -94,18 +100,19 @@ test.describe("Conversion Role Display", () => {
     }
 
     // Perform conversion
-    await expect(cultLeaderPage).toHaveURL(/.*\/conversion/, {
-      timeout: 30000,
-    });
     await expect(
       cultLeaderPage.getByRole("heading", { name: "Choose a Convert" }),
     ).toBeVisible({ timeout: 15000 });
 
-    // Select target pirate
-    const targetLabel = cultLeaderPage
+    // Select target pirate - scope to conversion modal
+    const conversionModal1 = cultLeaderPage
+      .locator("div")
+      .filter({ hasText: "Choose a Convert" })
+      .filter({ has: cultLeaderPage.locator("h2") });
+    await conversionModal1
       .locator("label")
-      .filter({ hasText: targetPirate.name });
-    await targetLabel.click();
+      .filter({ hasText: targetPirate.name })
+      .click();
 
     // Answer quiz (everyone answers A)
     for (const p of players) {
@@ -125,7 +132,7 @@ test.describe("Conversion Role Display", () => {
 
     // Return to game
     for (const page of allPages) {
-      await page.getByRole("link", { name: "Return to Ship" }).click();
+      await page.getByText("Return to Ship", { exact: true }).click();
     }
 
     // Wait for everyone to be back
@@ -139,8 +146,12 @@ test.describe("Conversion Role Display", () => {
     // A. Converted Pirate should see "Cultist" and "Your Leader"
     // A. Converted Pirate should see "Cultist" and "Your Leader"
     await withRoleRevealed(targetPirate.page, async () => {
-      await expect(targetPirate.page.getByText("Cultist")).toBeVisible();
-      await expect(targetPirate.page.getByText("Your Leader")).toBeVisible();
+      await expect(
+        targetPirate.page.getByRole("heading", { name: "Cultist" }),
+      ).toBeVisible();
+      await expect(
+        targetPirate.page.getByRole("heading", { name: "Your Leader" }),
+      ).toBeVisible();
       const yourLeaderSection = targetPirate.page
         .locator("div")
         .filter({ hasText: "Your Leader" })
@@ -177,7 +188,9 @@ test.describe("Conversion Role Display", () => {
     await hostPage.goto("/");
     await hostPage.getByRole("button", { name: "Create Voyage" }).click();
     await completeIdentifyPage(hostPage);
-    await expect(hostPage).toHaveURL(/\/lobby/, { timeout: 15000 });
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+      timeout: 15000,
+    });
 
     // Get the room code
     const codeElement = hostPage.locator("p.font-mono");
@@ -202,14 +215,18 @@ test.describe("Conversion Role Display", () => {
       await page.getByPlaceholder("XP7K9L").fill(code);
       await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
-      await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
+      await expect(page.getByText("Crew Manifest")).toBeVisible({
+        timeout: 15000,
+      });
       players.push({ context, page, name: playerName });
     }
 
     // 3. Host starts game
     await expect(hostPage.getByText("Crew Manifest (6/11)")).toBeVisible();
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/game/, { timeout: 30000 });
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+      timeout: 30000,
+    });
 
     // 4. Identify Roles
     const allPages = [hostPage, ...players.map((p) => p.page)];
@@ -253,18 +270,22 @@ test.describe("Conversion Role Display", () => {
     }
 
     // Perform conversion
-    await expect(cultLeaderPage).toHaveURL(/.*\/conversion/, {
+    await expect(cultLeaderPage.getByText("Ritual in Progress")).toBeVisible({
       timeout: 30000,
     });
     await expect(
       cultLeaderPage.getByRole("heading", { name: "Choose a Convert" }),
     ).toBeVisible({ timeout: 15000 });
 
-    // Select target sailor
-    const targetLabel = cultLeaderPage
+    // Select target sailor - scope to conversion modal
+    const conversionModal2 = cultLeaderPage
+      .locator("div")
+      .filter({ hasText: "Choose a Convert" })
+      .filter({ has: cultLeaderPage.locator("h2") });
+    await conversionModal2
       .locator("label")
-      .filter({ hasText: targetSailor.name });
-    await targetLabel.click();
+      .filter({ hasText: targetSailor.name })
+      .click();
 
     // Answer quiz (everyone answers A)
     for (const p of players) {
@@ -284,22 +305,31 @@ test.describe("Conversion Role Display", () => {
 
     // Return to game
     for (const page of allPages) {
-      await page.getByRole("link", { name: "Return to Ship" }).click();
+      await page.getByText("Return to Ship", { exact: true }).click();
     }
 
     // Wait for everyone to be back
     for (const page of allPages) {
-      await expect(page).toHaveURL(/\/game/);
+      await expect(page.getByText("Crew Status")).toBeVisible();
     }
 
     // 6. Perform Cabin Search on the converted sailor
     await searcherSailor.page
-      .getByRole("link", { name: "Cabin Search" })
+      .getByRole("button", { name: "Cabin Search", exact: true })
       .click();
-    await expect(searcherSailor.page).toHaveURL(/\/cabin-search/);
+    await expect(
+      searcherSailor.page.getByRole("heading", {
+        name: "Cabin Search",
+        level: 1,
+      }),
+    ).toBeVisible();
 
-    // Select the converted sailor
-    await searcherSailor.page
+    // Select the converted sailor - scope to cabin search modal
+    const cabinSearchModal = searcherSailor.page
+      .locator("div")
+      .filter({ hasText: "Cabin Search" })
+      .filter({ has: searcherSailor.page.locator("h1") });
+    await cabinSearchModal
       .locator("label")
       .filter({ hasText: targetSailor.name })
       .click();
@@ -315,7 +345,12 @@ test.describe("Conversion Role Display", () => {
 
     // 7. Verify the cabin search result shows original Sailor role AND Converted badge
     // Ensure we stay on the cabin-search page
-    await expect(searcherSailor.page).toHaveURL(/\/cabin-search/);
+    await expect(
+      searcherSailor.page.getByRole("heading", {
+        name: "Cabin Search",
+        level: 1,
+      }),
+    ).toBeVisible();
 
     // Wait for the result overlay to appear - find by the reveal button
     const revealBtn = searcherSailor.page
@@ -330,7 +365,7 @@ test.describe("Conversion Role Display", () => {
 
     // Should show original role (Sailor) and Converted to Cult badge
     const resultOverlay = searcherSailor.page.locator(".fixed");
-    await expect(resultOverlay.getByText("Loyal Sailor")).toBeVisible({
+    await expect(resultOverlay.getByText("Sailor")).toBeVisible({
       timeout: 3000,
     });
     await expect(resultOverlay.getByText("Converted to Cult")).toBeVisible();

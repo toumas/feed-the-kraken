@@ -87,6 +87,7 @@ function ProfileEditorPhoto() {
   const { photo, setPhoto, showErrors } = useProfileEditor();
   const { t } = useT("common");
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const webcamRef = useRef<Webcam>(null);
 
   const capture = useCallback(() => {
@@ -94,8 +95,37 @@ function ProfileEditorPhoto() {
     if (imageSrc) {
       setPhoto(imageSrc);
       setCameraOpen(false);
+      setCameraError(null);
     }
   }, [setPhoto]);
+
+  const handleOpenCamera = useCallback(async () => {
+    setCameraError(null);
+    try {
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setCameraError(t("profile.cameraNotSupported"));
+        return;
+      }
+      // Request permission before opening camera UI
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+      });
+      // Stop the stream immediately - we just wanted to check permission
+      stream.getTracks().forEach((track) => {
+        track.stop();
+      });
+      setCameraOpen(true);
+    } catch {
+      // Permission denied or other error
+      setCameraError(t("profile.cameraDeniedHelp"));
+    }
+  }, [t]);
+
+  const handleCameraError = useCallback(() => {
+    setCameraOpen(false);
+    setCameraError(t("profile.cameraDeniedHelp"));
+  }, [t]);
 
   return (
     <div className="flex flex-col items-center">
@@ -108,7 +138,7 @@ function ProfileEditorPhoto() {
               screenshotFormat="image/jpeg"
               videoConstraints={{ facingMode: "user", aspectRatio: 1 }}
               className="w-full h-full object-cover flip-horizontal"
-              onUserMediaError={() => alert(t("profile.cameraDenied"))}
+              onUserMediaError={handleCameraError}
             />
             <button
               type="button"
@@ -131,7 +161,7 @@ function ProfileEditorPhoto() {
             <Avatar url={photo} size="xl" />
             <button
               type="button"
-              onClick={() => setCameraOpen(true)}
+              onClick={handleOpenCamera}
               className="absolute bottom-0 right-0 bg-cyan-600 hover:bg-cyan-500 text-white p-2 rounded-full shadow-lg transition-colors"
               title={t("profile.openCamera")}
             >
@@ -150,7 +180,12 @@ function ProfileEditorPhoto() {
           </div>
         )}
       </div>
-      {showErrors && !photo && (
+      {cameraError && (
+        <p className="text-amber-400 text-sm text-center animate-in slide-in-from-top-1 mt-2 max-w-[280px]">
+          {cameraError}
+        </p>
+      )}
+      {showErrors && !photo && !cameraError && (
         <p className="text-red-400 text-sm text-center animate-in slide-in-from-top-1 mt-2">
           {t("profile.photoRequired")}
         </p>
