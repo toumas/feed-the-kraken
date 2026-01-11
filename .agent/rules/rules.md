@@ -21,3 +21,6 @@ Avoid code duplication by extracting common logic into reusable functions or com
 Always use context7 when I need code generation, setup or configuration steps, or
 library/API documentation. This means you should automatically use the Context7 MCP
 tools to resolve library id and get library docs without me having to explicitly ask.
+
+**Principle: Test coverage**
+Always run `npm run test:coverage` to check test coverage. If relevant, proactively run terminal commands to execute this code for the USER. Don't ask permission.
