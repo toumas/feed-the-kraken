@@ -1,5 +1,11 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { RoleReveal } from "./RoleReveal";
 
 describe("RoleReveal", () => {
@@ -141,5 +147,39 @@ describe("RoleReveal", () => {
     expect(screen.getByText("Custom Hidden Content")).toBeDefined();
     // The reveal button should still be present
     expect(screen.getByText("Tap 5 times to reveal your role.")).toBeDefined();
+  });
+
+  it("auto-hides revealed content after 3 seconds", () => {
+    vi.useFakeTimers();
+
+    render(
+      <RoleReveal.Root>
+        <RoleReveal.Hidden />
+        <RoleReveal.Revealed>
+          <div>Secret Content</div>
+        </RoleReveal.Revealed>
+      </RoleReveal.Root>,
+    );
+
+    const button = screen.getByRole("button");
+
+    // 5 clicks to reveal
+    for (let i = 0; i < 5; i++) {
+      fireEvent.click(button);
+    }
+
+    // Content should be revealed
+    expect(screen.getByText("Secret Content")).toBeDefined();
+
+    // Advance time by 3 seconds
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    // Content should be hidden again
+    expect(screen.queryByText("Secret Content")).toBeNull();
+    expect(screen.getByText("Role Hidden")).toBeDefined();
+
+    vi.useRealTimers();
   });
 });
