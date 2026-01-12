@@ -5,6 +5,7 @@ import React, {
   type ComponentType,
   type ReactNode,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -89,7 +90,10 @@ export default function GamePage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showBackToLobbyConfirm, setShowBackToLobbyConfirm] = useState(false);
 
+  const isLeavingRef = useRef(false);
+
   useEffect(() => {
+    if (isLeavingRef.current) return; // Skip redirect during intentional leave
     if (lobby && lobby.status !== "PLAYING") {
       router.push("/lobby");
     } else if (!lobby) {
@@ -98,8 +102,9 @@ export default function GamePage() {
   }, [lobby, router]);
 
   const handleLeave = () => {
+    isLeavingRef.current = true;
+    router.replace("/");
     leaveLobby();
-    router.push("/");
   };
 
   const handleDismissLocalView = () => {
