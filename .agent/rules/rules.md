@@ -23,4 +23,34 @@ library/API documentation. This means you should automatically use the Context7 
 tools to resolve library id and get library docs without me having to explicitly ask.
 
 **Principle: Test coverage**
-Always run `npm run test:coverage` to check test coverage. If relevant, proactively run terminal commands to execute this code for the USER. Don't ask permission.
+Always run `npm run test:coverage` to check test coverage. If relevant, proactively run terminal commands to execute this code for the USER. Don't ask permission. IMPORTANT: You are not allowed to manually update thresholds in the vitest.config.ts file.
+
+**Principle: You Might Not Need an Effect**
+Effects are an escape hatch from the React paradigm for synchronizing with external systems. Avoid unnecessary Effects:
+- **Don't use Effects to transform data for rendering.** Calculate derived values at the top level of components instead of using useEffect to update state—this avoids unnecessary render passes.
+- **Don't use Effects to handle user events.** Use event handlers directly; they know exactly what happened.
+- **Use `useMemo` instead of `useEffect`** to cache expensive calculations.
+- **Reset component state with `key`** instead of Effects when props change.
+- **Set state during rendering** to adjust state in response to prop changes, instead of using Effects.
+- **Lift state up** when synchronizing state between components, rather than using Effects.
+- **Only use Effects for external synchronization:** non-React widgets, network requests, browser DOM, subscriptions to external stores.
+Reference: https://react.dev/learn/you-might-not-need-an-effect
+
+**Principle: Use useEffectEvent for Non-Reactive Logic in Effects**
+`useEffectEvent` is a React Hook that extracts non-reactive logic from Effects into Effect Events. Use it when you need to read the latest props/state inside an Effect without including them in the dependency array:
+- **Problem it solves:** Avoid unnecessary Effect re-runs when only non-reactive values change, while still accessing their latest values.
+- **When to use:** When an Effect needs to call a function that reads props/state but shouldn't re-run when those values change.
+- **Example:**
+  ```javascript
+  function Page({ url, shoppingCart }) {
+    const onVisit = useEffectEvent(visitedUrl => {
+      logVisit(visitedUrl, shoppingCart.length); // reads latest shoppingCart
+    });
+
+    useEffect(() => {
+      onVisit(url);
+    }, [url]); // Only re-runs when url changes, not shoppingCart
+  }
+  ```
+- **Rules:** Call `useEffectEvent` at the top level of your component. Effect Events can only be called synchronously inside Effects.
+Reference: https://react.dev/reference/react/useEffectEvent
