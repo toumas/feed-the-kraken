@@ -386,29 +386,65 @@ export function GameView({
         <div className="space-y-3">
           <button
             type="button"
-            onClick={onOpenCabinSearch}
-            className="w-full py-3 bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-200 border border-cyan-800/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+            onClick={() => {
+              if ((lobby.cabinSearchCount || 0) >= 2) {
+                window.alert(t("cabinSearch.limitReached"));
+              } else {
+                onOpenCabinSearch();
+              }
+            }}
+            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+              (lobby.cabinSearchCount || 0) >= 2
+                ? "bg-slate-800/50 text-slate-500 border border-slate-800"
+                : "bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-200 border border-cyan-800/50"
+            }`}
           >
             <Search className="w-5 h-5" />
-            {t("cabinSearch.title")}
+            {(lobby.cabinSearchCount || 0) >= 2
+              ? `${t("cabinSearch.title")} (${t("flogging.used")})`
+              : t("cabinSearch.title")}
           </button>
 
           <button
             type="button"
-            onClick={onStartCabinSearch}
-            className="w-full py-3 bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+            onClick={() => {
+              if (lobby.isCultCabinSearchUsed) {
+                window.alert(t("cabinSearch.alreadyUsed"));
+              } else {
+                onStartCabinSearch();
+              }
+            }}
+            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+              lobby.isCultCabinSearchUsed
+                ? "bg-slate-800/50 text-slate-500 border border-slate-800"
+                : "bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50"
+            }`}
           >
             <Eye className="w-5 h-5" />
-            {t("cabinSearch.title")} ({t("cabinSearch.cult")})
+            {lobby.isCultCabinSearchUsed
+              ? `${t("cabinSearch.title")} (${t("cabinSearch.cult")}) (${t("flogging.used")})`
+              : `${t("cabinSearch.title")} (${t("cabinSearch.cult")})`}
           </button>
 
           <button
             type="button"
-            onClick={onStartGunsStash}
-            className="w-full py-3 bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+            onClick={() => {
+              if (lobby.isGunsStashUsed) {
+                window.alert(t("cultGunsStash.alreadyUsed"));
+              } else {
+                onStartGunsStash();
+              }
+            }}
+            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+              lobby.isGunsStashUsed
+                ? "bg-slate-800/50 text-slate-500 border border-slate-800"
+                : "bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50"
+            }`}
           >
             <Target className="w-5 h-5" />
-            {t("cultGunsStash.title")}
+            {lobby.isGunsStashUsed
+              ? `${t("cultGunsStash.title")} (${t("flogging.used")})`
+              : t("cultGunsStash.title")}
           </button>
 
           <button
@@ -422,7 +458,13 @@ export function GameView({
 
           <button
             type="button"
-            onClick={onOpenFlogging}
+            onClick={() => {
+              if (lobby.isFloggingUsed) {
+                window.alert(t("flogging.alreadyUsed"));
+              } else {
+                onOpenFlogging();
+              }
+            }}
             className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
               lobby.isFloggingUsed
                 ? "bg-slate-800/50 text-slate-500 border border-slate-800"
@@ -444,28 +486,58 @@ export function GameView({
                 onStartConversion();
               }
             }}
-            className="w-full py-3 bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+              (lobby.conversionCount || 0) >= 3
+                ? "bg-slate-800/50 text-slate-500 border border-slate-800"
+                : "bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50"
+            }`}
           >
             <Eye className="w-5 h-5" />
-            {t("conversion.title")}
+            {(lobby.conversionCount || 0) >= 3
+              ? `${t("conversion.title")} (${t("flogging.used")})`
+              : t("conversion.title")}
           </button>
 
           <button
             type="button"
-            onClick={onOpenFeedTheKraken}
-            className="w-full py-3 bg-red-950/30 hover:bg-red-900/50 text-red-200 border border-red-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+            onClick={() => {
+              if ((lobby.feedTheKrakenCount || 0) >= 2) {
+                window.alert(t("feedTheKraken.limitReached"));
+              } else {
+                onOpenFeedTheKraken();
+              }
+            }}
+            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+              (lobby.feedTheKrakenCount || 0) >= 2
+                ? "bg-slate-800/50 text-slate-500 border border-slate-800"
+                : "bg-red-950/30 hover:bg-red-900/50 text-red-200 border border-red-900/50"
+            }`}
           >
             <Skull className="w-5 h-5" />
-            {t("feedTheKraken.title")}
+            {(lobby.feedTheKrakenCount || 0) >= 2
+              ? `${t("feedTheKraken.title")} (${t("flogging.used")})`
+              : t("feedTheKraken.title")}
           </button>
 
           <button
             type="button"
-            onClick={onOpenOffWithTongue}
-            className="w-full py-3 bg-amber-900/30 hover:bg-amber-900/50 text-amber-200 border border-amber-800/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+            onClick={() => {
+              if (lobby.isOffWithTongueUsed) {
+                window.alert(t("offWithTongue.alreadyUsed"));
+              } else {
+                onOpenOffWithTongue();
+              }
+            }}
+            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+              lobby.isOffWithTongueUsed
+                ? "bg-slate-800/50 text-slate-500 border border-slate-800"
+                : "bg-amber-900/30 hover:bg-amber-900/50 text-amber-200 border border-amber-800/50"
+            }`}
           >
             <Scissors className="w-5 h-5" />
-            {t("offWithTongue.title")}
+            {lobby.isOffWithTongueUsed
+              ? `${t("offWithTongue.title")} (${t("flogging.used")})`
+              : t("offWithTongue.title")}
           </button>
 
           <button

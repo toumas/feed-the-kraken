@@ -146,7 +146,8 @@
     "waitingConfirmation": "Odotetaan vahvistusta",
     "waitingConfirmationDesc": "Henkilöstön jäsenen täytyy hyväksyä kohtalonsa...",
     "cultWins": "KULTTI VOITTAA!",
-    "cultWinsDesc": "Kulttijohtaja syötettiin Krakenille! Kulttijohtaja ja kaikki kultistit voittavat pelin välittömästi."
+    "cultWinsDesc": "Kulttijohtaja syötettiin Krakenille! Kulttijohtaja ja kaikki kultistit voittavat pelin välittömästi.",
+    "limitReached": "Krakenia voi ruokkia vain 2 kertaa pelissä."
   },
   "flogging": {
     "title": "Ruoski",
@@ -179,13 +180,15 @@
     "crew": "Henkilöstön jäsen",
     "request": "haluaa tarkastaa hyttisi. Sallitko sen?",
     "cult": "Kultti",
+    "alreadyUsed": "Kultin hytin tarkastus on jo käytetty tässä pelissä.",
     "alreadySearched": "Tarkastettu jo",
     "confirmSearch": "Tarkasta",
     "waitingConfirmation": "Odotetaan vahvistusta",
     "waitingConfirmationDesc": "Henkilöstön jäsenen on sallittava tarkastus...",
     "searchedTitle": "Hytti tarkastettu",
     "searchedDesc": "Napauta 5 kertaa paljastaaksesi roolikortti.",
-    "foundCard": "{{name}}"
+    "foundCard": "{{name}}",
+    "limitReached": "Hytin tarkastusta voi käyttää vain 2 kertaa pelissä."
   },
   "conversion": {
     "interrupted": "Rituaali keskeytyi!",
@@ -223,6 +226,7 @@
     "request": "haluaa hiljentää sinut.",
     "requestDesc": "Jos hyväksyt, et voi enää muodostaa sanoja (mutta voit äännellä ja elehtiä) etkä voi enää tulla kapteeniksi.",
     "alreadySilenced": "Aikaisemmin hiljennetty",
+    "alreadyUsed": "Kielen leikkaus on jo käytetty tässä pelissä.",
     "silenceSailor": "Hiljennä henkilöstön jäsen",
     "waitingConfirmation": "Odotetaan vahvistusta",
     "waitingConfirmationDesc": "Merimiehen täytyy hyväksyä vaikenemisensa..."
@@ -243,7 +247,8 @@
     "receivedCount_plural": "Sait {{count}} asetta!",
     "useWisely": "Käytä niitä viisaasti.",
     "emptyHands": "Tyhjät kädet",
-    "noGuns": "Et saanut yhtään asetta varastosta."
+    "noGuns": "Et saanut yhtään asetta varastosta.",
+    "alreadyUsed": "Kultin asevarasto on jo käytetty tässä pelissä."
   },
   "roleReveal": {
     "yourRoleIs": "Sinun roolisi on",

@@ -415,5 +415,63 @@ describe("Cult Guns Stash Flow - XState", () => {
       ).reduce((sum, count) => sum + count, 0);
       expect(totalGuns).toBe(3);
     });
+
+    it("should set isGunsStashUsed to true when completed", () => {
+      actor.send({ type: "START_CULT_GUNS_STASH", initiatorId: "p1" });
+
+      // All players ready
+      for (let i = 1; i <= 5; i++) {
+        actor.send({
+          type: "CONFIRM_CULT_GUNS_STASH_READY",
+          playerId: `p${i}`,
+        });
+      }
+
+      // Advance timers to complete
+      vi.advanceTimersByTime(16000);
+
+      const context = actor.getSnapshot().context;
+      expect(context.gunsStashStatus?.state).toBe("COMPLETED");
+      expect(context.isGunsStashUsed).toBe(true);
+    });
+  });
+
+  describe("One-Time Use Restriction", () => {
+    it("should have isGunsStashUsed as false initially", () => {
+      const context = actor.getSnapshot().context;
+      expect(context.isGunsStashUsed).toBe(false);
+    });
+
+    it("should keep isGunsStashUsed as false when cancelled", () => {
+      actor.send({ type: "START_CULT_GUNS_STASH", initiatorId: "p1" });
+      actor.send({ type: "CANCEL_CULT_GUNS_STASH", playerId: "p2" });
+
+      const context = actor.getSnapshot().context;
+      expect(context.isGunsStashUsed).toBe(false);
+    });
+
+    it("should reset isGunsStashUsed when game is reset", () => {
+      vi.useFakeTimers();
+
+      actor.send({ type: "START_CULT_GUNS_STASH", initiatorId: "p1" });
+
+      // All players ready
+      for (let i = 1; i <= 5; i++) {
+        actor.send({
+          type: "CONFIRM_CULT_GUNS_STASH_READY",
+          playerId: `p${i}`,
+        });
+      }
+
+      // Complete the guns stash
+      vi.advanceTimersByTime(16000);
+      expect(actor.getSnapshot().context.isGunsStashUsed).toBe(true);
+
+      // Reset the game
+      actor.send({ type: "RESET_GAME" });
+      expect(actor.getSnapshot().context.isGunsStashUsed).toBe(false);
+
+      vi.useRealTimers();
+    });
   });
 });

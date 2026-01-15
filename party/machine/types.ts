@@ -141,8 +141,13 @@ export interface GameContext {
   assignments?: Record<string, Role>;
   originalRoles?: Record<string, Role>;
   isFloggingUsed: boolean;
+  isGunsStashUsed: boolean;
+  isCultCabinSearchUsed: boolean;
+  isOffWithTongueUsed: boolean;
 
   conversionCount: number;
+  feedTheKrakenCount: number;
+  cabinSearchCount: number;
   convertedPlayerIds: string[]; // All players who have been successfully converted (including original Cultists)
   conversionStatus?: ConversionStatus;
   captainCabinSearchStatus?: CaptainCabinSearchStatus;
