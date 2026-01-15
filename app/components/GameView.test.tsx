@@ -91,8 +91,9 @@ describe("GameView", () => {
     expect(screen.queryByText("Denial of Command")).toBeNull();
   });
 
-  it("shows disabled-looking but clickable flogging button when used", () => {
+  it("shows disabled-looking flogging button and shows alert when used", () => {
     const onOpenFlogging = vi.fn();
+    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
     render(
       <GameView
         {...defaultProps}
@@ -105,7 +106,12 @@ describe("GameView", () => {
     expect(button.className).toContain("bg-slate-800/50");
     expect(button.className).toContain("text-slate-500");
     fireEvent.click(button);
-    expect(onOpenFlogging).toHaveBeenCalled();
+    // Should show alert instead of calling onOpenFlogging
+    expect(alertMock).toHaveBeenCalledWith(
+      "Flogging has already been used this game.",
+    );
+    expect(onOpenFlogging).not.toHaveBeenCalled();
+    alertMock.mockRestore();
   });
 
   it("renders End Session button", () => {
@@ -609,5 +615,86 @@ describe("GameView", () => {
     expect(screen.queryByText(/Sailors/i)).toBeNull();
     expect(screen.queryByText(/Merenkulkijaa/i)).toBeNull();
     expect(screen.queryByText("game.sailors")).toBeNull();
+  });
+
+  // --- Action Limitation Tests ---
+
+  it("shows alert when clicking Cabin Search at limit", () => {
+    const onOpenCabinSearch = vi.fn();
+    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={{ ...mockLobby, cabinSearchCount: 2 }}
+        onOpenCabinSearch={onOpenCabinSearch}
+      />,
+    );
+    revealRole();
+    const button = screen.getByText("Cabin Search (Used)");
+    fireEvent.click(button);
+    expect(alertMock).toHaveBeenCalledWith(
+      "Cabin Search can only be used 2 times per game.",
+    );
+    expect(onOpenCabinSearch).not.toHaveBeenCalled();
+    alertMock.mockRestore();
+  });
+
+  it("shows alert when clicking Feed the Kraken at limit", () => {
+    const onOpenFeedTheKraken = vi.fn();
+    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={{ ...mockLobby, feedTheKrakenCount: 2 }}
+        onOpenFeedTheKraken={onOpenFeedTheKraken}
+      />,
+    );
+    revealRole();
+    const button = screen.getByText("Feed the Kraken (Used)");
+    fireEvent.click(button);
+    expect(alertMock).toHaveBeenCalledWith(
+      "The Kraken can only be fed 2 times per game.",
+    );
+    expect(onOpenFeedTheKraken).not.toHaveBeenCalled();
+    alertMock.mockRestore();
+  });
+
+  it("shows alert when clicking Conversion at limit", () => {
+    const onStartConversion = vi.fn();
+    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={{ ...mockLobby, conversionCount: 3 }}
+        onStartConversion={onStartConversion}
+      />,
+    );
+    const button = screen.getByText("Conversion to Cult (Used)");
+    fireEvent.click(button);
+    expect(alertMock).toHaveBeenCalledWith(
+      "The conversion ritual can only be performed 3 times per game.",
+    );
+    expect(onStartConversion).not.toHaveBeenCalled();
+    alertMock.mockRestore();
+  });
+
+  it("shows alert when clicking Off with Tongue when used", () => {
+    const onOpenOffWithTongue = vi.fn();
+    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={{ ...mockLobby, isOffWithTongueUsed: true }}
+        onOpenOffWithTongue={onOpenOffWithTongue}
+      />,
+    );
+    revealRole();
+    const button = screen.getByText("Off with the Tongue (Used)");
+    fireEvent.click(button);
+    expect(alertMock).toHaveBeenCalledWith(
+      "Off with the Tongue has already been used this game.",
+    );
+    expect(onOpenOffWithTongue).not.toHaveBeenCalled();
+    alertMock.mockRestore();
   });
 });

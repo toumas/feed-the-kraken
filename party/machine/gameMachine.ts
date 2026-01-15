@@ -68,7 +68,12 @@ const initialContext: GameContext = {
   players: [],
   roleDistributionMode: "automatic",
   isFloggingUsed: false,
+  isGunsStashUsed: false,
+  isCultCabinSearchUsed: false,
+  isOffWithTongueUsed: false,
   conversionCount: 0,
+  feedTheKrakenCount: 0,
+  cabinSearchCount: 0,
   convertedPlayerIds: [],
 };
 
@@ -160,6 +165,14 @@ export const gameMachine = setup({
       context.gunsStashStatus?.state === "DISTRIBUTION",
     gunsStashComplete: ({ context }) =>
       context.gunsStashStatus?.state === "COMPLETED",
+    gunsStashNotUsed: ({ context }) => context.isGunsStashUsed !== true,
+    cabinSearchNotUsed: ({ context }) => context.isCultCabinSearchUsed !== true,
+    floggingNotUsed: ({ context }) => context.isFloggingUsed !== true,
+    conversionNotAtLimit: ({ context }) => (context.conversionCount || 0) < 3,
+    feedTheKrakenNotAtLimit: ({ context }) =>
+      (context.feedTheKrakenCount || 0) < 2,
+    cabinSearchNotAtLimit: ({ context }) => (context.cabinSearchCount || 0) < 2,
+    offWithTongueNotUsed: ({ context }) => context.isOffWithTongueUsed !== true,
     lastPlayerLeaving: ({ context, event }) => {
       if (!("playerId" in event)) return false;
       const remaining = context.players.filter((p) => p.id !== event.playerId);
@@ -311,7 +324,12 @@ export const gameMachine = setup({
         assignments,
         originalRoles: { ...assignments },
         isFloggingUsed: false,
+        isGunsStashUsed: false,
+        isCultCabinSearchUsed: false,
+        isOffWithTongueUsed: false,
         conversionCount: 0,
+        feedTheKrakenCount: 0,
+        cabinSearchCount: 0,
         convertedPlayerIds: [],
         // Explicitly clear all game status fields
         conversionStatus: undefined,
@@ -413,7 +431,12 @@ export const gameMachine = setup({
           state: "COMPLETED" as const,
         },
         isFloggingUsed: false,
+        isGunsStashUsed: false,
+        isCultCabinSearchUsed: false,
+        isOffWithTongueUsed: false,
         conversionCount: 0,
+        feedTheKrakenCount: 0,
+        cabinSearchCount: 0,
         convertedPlayerIds: [],
         // Explicitly clear all game status fields
         conversionStatus: undefined,
@@ -682,6 +705,7 @@ export const gameMachine = setup({
           state: "COMPLETED" as const,
           result: { role, originalRole },
         },
+        cabinSearchCount: (context.cabinSearchCount || 0) + 1,
         // Mark target as unconvertible
         players: context.players.map((p) =>
           p.id === targetId ? { ...p, isUnconvertible: true } : p,
@@ -825,6 +849,7 @@ export const gameMachine = setup({
       });
 
       return {
+        isCultCabinSearchUsed: true,
         cabinSearchStatus: {
           ...context.cabinSearchStatus,
           state: "COMPLETED" as const,
@@ -966,6 +991,7 @@ export const gameMachine = setup({
       }
 
       return {
+        isGunsStashUsed: true,
         gunsStashStatus: {
           ...context.gunsStashStatus,
           state: "COMPLETED" as const,
@@ -1049,6 +1075,7 @@ export const gameMachine = setup({
       const targetId = context.offWithTongueStatus.targetPlayerId;
 
       return {
+        isOffWithTongueUsed: true,
         offWithTongueStatus: {
           ...context.offWithTongueStatus,
           state: "COMPLETED" as const,
@@ -1107,6 +1134,7 @@ export const gameMachine = setup({
             // If not, target is eliminated.
           };
         }),
+        feedTheKrakenCount: (context.feedTheKrakenCount || 0) + 1,
       };
     }),
 
@@ -1121,7 +1149,12 @@ export const gameMachine = setup({
         assignments: context.initialGameState.assignments,
         originalRoles: context.initialGameState.originalRoles,
         isFloggingUsed: false,
+        isGunsStashUsed: false,
+        isCultCabinSearchUsed: false,
+        isOffWithTongueUsed: false,
         conversionCount: 0,
+        feedTheKrakenCount: 0,
+        cabinSearchCount: 0,
         convertedPlayerIds: [],
 
         // Clear all game status fields (matching backToLobby)
@@ -1163,7 +1196,12 @@ export const gameMachine = setup({
       originalRoles: undefined,
       roleSelectionStatus: undefined,
       isFloggingUsed: false,
+      isGunsStashUsed: false,
+      isCultCabinSearchUsed: false,
+      isOffWithTongueUsed: false,
       conversionCount: 0,
+      feedTheKrakenCount: 0,
+      cabinSearchCount: 0,
       convertedPlayerIds: [],
 
       // Explicitly clear all game status fields
@@ -1337,14 +1375,17 @@ export const gameMachine = setup({
         idle: {
           on: {
             START_CONVERSION: {
+              guard: "conversionNotAtLimit",
               target: "conversion",
               actions: "startConversion",
             },
             CABIN_SEARCH_REQUEST: {
+              guard: "cabinSearchNotAtLimit",
               target: "cabinSearchAction",
               actions: "startCaptainCabinSearch",
             },
             FLOGGING_REQUEST: {
+              guard: "floggingNotUsed",
               target: "floggingAction",
               actions: "startFlogging",
             },
@@ -1352,18 +1393,22 @@ export const gameMachine = setup({
               actions: "eliminatePlayer",
             },
             START_CULT_CABIN_SEARCH: {
+              guard: "cabinSearchNotUsed",
               target: "cultCabinSearch",
               actions: "startCultCabinSearch",
             },
             START_CULT_GUNS_STASH: {
+              guard: "gunsStashNotUsed",
               target: "gunsStash",
               actions: "startGunsStash",
             },
             FEED_THE_KRAKEN_REQUEST: {
+              guard: "feedTheKrakenNotAtLimit",
               target: "feedTheKraken",
               actions: "startFeedTheKraken",
             },
             OFF_WITH_TONGUE_REQUEST: {
+              guard: "offWithTongueNotUsed",
               target: "offWithTongueAction",
               actions: "startOffWithTongue",
             },

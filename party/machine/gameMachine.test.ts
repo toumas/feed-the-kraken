@@ -573,7 +573,213 @@ describe("XState Game Machine", () => {
       context = actor.getSnapshot().context;
       expect(context.floggingStatus).toBeUndefined();
       expect(context.isFloggingUsed).toBe(false);
+      expect(context.isGunsStashUsed).toBe(false);
+      expect(context.isCultCabinSearchUsed).toBe(false);
       expect(context.conversionCount).toBe(0);
+    });
+  });
+
+  describe("Action Limitations", () => {
+    let actor: ReturnType<typeof createTestActor>;
+
+    // Helper type for guard functions
+    type GuardFn = (args: { context: GameContext }) => boolean;
+    type GuardsRecord = Record<string, GuardFn>;
+
+    beforeEach(() => {
+      // Create a game with 5 players and start it
+      actor = createTestActor();
+      actor.send({
+        type: "CREATE_LOBBY",
+        playerId: "host",
+        playerName: "Host",
+        playerPhoto: null,
+        code: "TEST",
+      });
+      // Add 4 more players
+      for (let i = 1; i <= 4; i++) {
+        actor.send({
+          type: "JOIN_LOBBY",
+          playerId: `p${i}`,
+          playerName: `Player ${i}`,
+          playerPhoto: null,
+        });
+      }
+      // Start the game
+      actor.send({ type: "START_GAME", playerId: "host" });
+    });
+
+    describe("One-Time Use Actions", () => {
+      it("should block FLOGGING_REQUEST when isFloggingUsed is true", () => {
+        const snapshot = actor.getSnapshot();
+        expect(snapshot.context.isFloggingUsed).toBe(false);
+        expect(snapshot.value).toEqual({ playing: "idle" });
+
+        // Test the guard logic directly
+        const guards = gameMachine.implementations?.guards as GuardsRecord;
+        expect(guards).toBeDefined();
+
+        // Test guard with isFloggingUsed = false (should allow)
+        const contextNotUsed = { ...snapshot.context, isFloggingUsed: false };
+        expect(guards.floggingNotUsed({ context: contextNotUsed })).toBe(true);
+
+        // Test guard with isFloggingUsed = true (should block)
+        const contextUsed = { ...snapshot.context, isFloggingUsed: true };
+        expect(guards.floggingNotUsed({ context: contextUsed })).toBe(false);
+      });
+
+      it("should block OFF_WITH_TONGUE_REQUEST when isOffWithTongueUsed is true", () => {
+        const snapshot = actor.getSnapshot();
+        const guards = gameMachine.implementations?.guards as GuardsRecord;
+
+        // Test guard with isOffWithTongueUsed = false (should allow)
+        const contextNotUsed = {
+          ...snapshot.context,
+          isOffWithTongueUsed: false,
+        };
+        expect(guards.offWithTongueNotUsed({ context: contextNotUsed })).toBe(
+          true,
+        );
+
+        // Test guard with isOffWithTongueUsed = true (should block)
+        const contextUsed = { ...snapshot.context, isOffWithTongueUsed: true };
+        expect(guards.offWithTongueNotUsed({ context: contextUsed })).toBe(
+          false,
+        );
+      });
+
+      it("should block START_CULT_CABIN_SEARCH when isCultCabinSearchUsed is true", () => {
+        const snapshot = actor.getSnapshot();
+        const guards = gameMachine.implementations?.guards as GuardsRecord;
+
+        // Test guard with isCultCabinSearchUsed = false (should allow)
+        const contextNotUsed = {
+          ...snapshot.context,
+          isCultCabinSearchUsed: false,
+        };
+        expect(guards.cabinSearchNotUsed({ context: contextNotUsed })).toBe(
+          true,
+        );
+
+        // Test guard with isCultCabinSearchUsed = true (should block)
+        const contextUsed = {
+          ...snapshot.context,
+          isCultCabinSearchUsed: true,
+        };
+        expect(guards.cabinSearchNotUsed({ context: contextUsed })).toBe(false);
+      });
+
+      it("should block START_CULT_GUNS_STASH when isGunsStashUsed is true", () => {
+        const snapshot = actor.getSnapshot();
+        const guards = gameMachine.implementations?.guards as GuardsRecord;
+
+        // Test guard with isGunsStashUsed = false (should allow)
+        const contextNotUsed = { ...snapshot.context, isGunsStashUsed: false };
+        expect(guards.gunsStashNotUsed({ context: contextNotUsed })).toBe(true);
+
+        // Test guard with isGunsStashUsed = true (should block)
+        const contextUsed = { ...snapshot.context, isGunsStashUsed: true };
+        expect(guards.gunsStashNotUsed({ context: contextUsed })).toBe(false);
+      });
+    });
+
+    describe("Count-Limited Actions", () => {
+      it("should allow START_CONVERSION up to 3 times", () => {
+        const snapshot = actor.getSnapshot();
+        const guards = gameMachine.implementations?.guards as GuardsRecord;
+
+        // Test counts 0, 1, 2 (should allow)
+        for (let count = 0; count < 3; count++) {
+          const context = { ...snapshot.context, conversionCount: count };
+          expect(guards.conversionNotAtLimit({ context })).toBe(true);
+        }
+
+        // Test count 3 (should block)
+        const contextAtLimit = { ...snapshot.context, conversionCount: 3 };
+        expect(guards.conversionNotAtLimit({ context: contextAtLimit })).toBe(
+          false,
+        );
+      });
+
+      it("should allow FEED_THE_KRAKEN_REQUEST up to 2 times", () => {
+        const snapshot = actor.getSnapshot();
+        const guards = gameMachine.implementations?.guards as GuardsRecord;
+
+        // Test counts 0, 1 (should allow)
+        for (let count = 0; count < 2; count++) {
+          const context = { ...snapshot.context, feedTheKrakenCount: count };
+          expect(guards.feedTheKrakenNotAtLimit({ context })).toBe(true);
+        }
+
+        // Test count 2 (should block)
+        const contextAtLimit = { ...snapshot.context, feedTheKrakenCount: 2 };
+        expect(
+          guards.feedTheKrakenNotAtLimit({ context: contextAtLimit }),
+        ).toBe(false);
+      });
+
+      it("should allow CABIN_SEARCH_REQUEST up to 2 times", () => {
+        const snapshot = actor.getSnapshot();
+        const guards = gameMachine.implementations?.guards as GuardsRecord;
+
+        // Test counts 0, 1 (should allow)
+        for (let count = 0; count < 2; count++) {
+          const context = { ...snapshot.context, cabinSearchCount: count };
+          expect(guards.cabinSearchNotAtLimit({ context })).toBe(true);
+        }
+
+        // Test count 2 (should block)
+        const contextAtLimit = { ...snapshot.context, cabinSearchCount: 2 };
+        expect(guards.cabinSearchNotAtLimit({ context: contextAtLimit })).toBe(
+          false,
+        );
+      });
+    });
+
+    describe("Reset Behavior", () => {
+      it("should reset all action flags and counts on RESET_GAME", () => {
+        const snapshot = actor.getSnapshot();
+
+        // Verify initial values after game start
+        expect(snapshot.context.isFloggingUsed).toBe(false);
+        expect(snapshot.context.isGunsStashUsed).toBe(false);
+        expect(snapshot.context.isCultCabinSearchUsed).toBe(false);
+        expect(snapshot.context.isOffWithTongueUsed).toBe(false);
+        expect(snapshot.context.conversionCount).toBe(0);
+        expect(snapshot.context.feedTheKrakenCount).toBe(0);
+        expect(snapshot.context.cabinSearchCount).toBe(0);
+
+        // Send RESET_GAME
+        actor.send({ type: "RESET_GAME" });
+        const afterReset = actor.getSnapshot();
+
+        // Verify all flags and counts are reset
+        expect(afterReset.context.isFloggingUsed).toBe(false);
+        expect(afterReset.context.isGunsStashUsed).toBe(false);
+        expect(afterReset.context.isCultCabinSearchUsed).toBe(false);
+        expect(afterReset.context.isOffWithTongueUsed).toBe(false);
+        expect(afterReset.context.conversionCount).toBe(0);
+        expect(afterReset.context.feedTheKrakenCount).toBe(0);
+        expect(afterReset.context.cabinSearchCount).toBe(0);
+      });
+
+      it("should reset all action flags and counts on BACK_TO_LOBBY", () => {
+        // Send BACK_TO_LOBBY (host only)
+        actor.send({ type: "BACK_TO_LOBBY", playerId: "host" });
+        const afterBackToLobby = actor.getSnapshot();
+
+        // Should be back in lobby
+        expect(afterBackToLobby.value).toEqual({ lobby: "waiting" });
+
+        // Verify all flags and counts are reset
+        expect(afterBackToLobby.context.isFloggingUsed).toBe(false);
+        expect(afterBackToLobby.context.isGunsStashUsed).toBe(false);
+        expect(afterBackToLobby.context.isCultCabinSearchUsed).toBe(false);
+        expect(afterBackToLobby.context.isOffWithTongueUsed).toBe(false);
+        expect(afterBackToLobby.context.conversionCount).toBe(0);
+        expect(afterBackToLobby.context.feedTheKrakenCount).toBe(0);
+        expect(afterBackToLobby.context.cabinSearchCount).toBe(0);
+      });
     });
   });
 });

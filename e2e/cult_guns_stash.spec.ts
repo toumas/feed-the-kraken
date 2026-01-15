@@ -288,4 +288,115 @@ test.describe("Cult Guns Stash Flow", () => {
       await p.context.close();
     }
   });
+
+  test("One-Time Use Restriction", async ({ browser }) => {
+    // 1. Host creates lobby
+    const hostContext = await browser.newContext();
+    const hostPage = await hostContext.newPage();
+    await hostPage.addInitScript(() => {
+      localStorage.setItem("kraken_player_name", "Host");
+      localStorage.setItem(
+        "kraken_player_photo",
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      );
+    });
+    await hostPage.goto("/");
+    await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+    await completeIdentifyPage(hostPage);
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+      timeout: 15000,
+    });
+
+    const codeElement = hostPage.locator("p.font-mono");
+    await expect(codeElement).toBeVisible();
+    const code = await codeElement.innerText();
+
+    // 2. 4 Players join (Total 5 players)
+    const players = [];
+    for (let i = 0; i < 4; i++) {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const playerName = `Player ${i + 1}`;
+      await page.addInitScript((name) => {
+        localStorage.setItem("kraken_player_name", name);
+        localStorage.setItem(
+          "kraken_player_photo",
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+        );
+      }, playerName);
+      await page.goto("/");
+      await page.getByRole("button", { name: "Join Crew" }).click();
+      await page.getByPlaceholder("XP7K9L").fill(code);
+      await page.getByRole("button", { name: "Board Ship" }).click();
+      await completeIdentifyPage(page);
+      await expect(page.getByText("Crew Manifest")).toBeVisible({
+        timeout: 15000,
+      });
+      players.push({ context, page, name: playerName });
+    }
+
+    // 3. Start game
+    await hostPage.getByRole("button", { name: "Start Voyage" }).click();
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+      timeout: 15000,
+    });
+
+    // 4. Navigate to Guns Stash
+    await hostPage.getByText("Cult's Guns Stash").click();
+    await expect(
+      hostPage.getByRole("heading", { name: "Cult's Guns Stash" }),
+    ).toBeVisible({
+      timeout: 15000,
+    });
+
+    // 5. All players confirm ready
+    for (const p of players) {
+      await expect(
+        p.page.getByRole("heading", { name: "Cult's Guns Stash" }),
+      ).toBeVisible({ timeout: 15000 });
+      const readyButton = p.page.getByRole("button", { name: "I'm Ready" });
+      await expect(readyButton).toBeVisible({ timeout: 5000 });
+      await readyButton.click();
+    }
+
+    // 6. Wait for completion (15 seconds)
+    await hostPage.waitForTimeout(18000);
+
+    // 7. Verify COMPLETED state and dismiss
+    await expect(
+      hostPage.getByRole("heading", { name: "Ritual Complete" }),
+    ).toBeVisible({ timeout: 5000 });
+
+    // Click Return to Ship for all players
+    for (const p of [...players, { page: hostPage }]) {
+      const returnBtn = p.page.getByText("Return to Ship");
+      if (await returnBtn.isVisible().catch(() => false)) {
+        await returnBtn.click();
+      }
+    }
+
+    // 8. Verify one-time use restriction - button shows "(Used)"
+    await expect(hostPage.getByTestId("game-view")).toBeVisible({
+      timeout: 10000,
+    });
+
+    const gunsStashLink = hostPage.getByRole("button", {
+      name: "Cult's Guns Stash (Used)",
+    });
+    await expect(gunsStashLink).toBeVisible();
+    await expect(gunsStashLink).toHaveClass(/bg-slate-800\/50/);
+
+    // Clicking it should trigger an alert (already used)
+    hostPage.once("dialog", (dialog) => dialog.accept());
+    await gunsStashLink.click({ noWaitAfter: true });
+
+    // After dismissing alert, should stay on game view
+    await expect(hostPage.getByTestId("game-view")).toBeVisible();
+
+    // Cleanup
+    await hostContext.close();
+    for (const p of players) {
+      await p.context.close();
+    }
+  });
 });
