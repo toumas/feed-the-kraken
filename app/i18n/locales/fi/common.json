@@ -290,7 +290,7 @@
     "youWereKicked": "Pelinhoitaja poisti sinut aulasta."
   },
   "denial": {
-    "title": "Hyppää laivasta",
+    "title": "Hyppää laivasta?",
     "description": "Tämä toiminto on peruuttamaton. Sinut poistetaan pelistä.",
     "confirm": "Kyllä, hyppään laivasta"
   },

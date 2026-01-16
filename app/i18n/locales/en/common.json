@@ -290,7 +290,7 @@
     "youWereKicked": "You were removed from the lobby by the host."
   },
   "denial": {
-    "title": "Denial of Command",
+    "title": "Denial of Command?",
     "description": "This action is irreversible. You will be eliminated from the game.",
     "confirm": "Yes, I Deny Command"
   },
