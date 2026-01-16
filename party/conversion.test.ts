@@ -133,9 +133,10 @@ describe("Conversion Flow - XState", () => {
     // Player rejects
     actor.send({ type: "RESPOND_CONVERSION", playerId: "p2", accept: false });
 
-    // Response should be tracked
+    // Response should be tracked and state should be CANCELLED
     const context = actor.getSnapshot().context;
     expect(context.conversionStatus?.responses.p2).toBe(false);
+    expect(context.conversionStatus?.state).toBe("CANCELLED");
   });
 
   it("should automatically ready the initiator", () => {
@@ -144,6 +145,80 @@ describe("Conversion Flow - XState", () => {
     const context = actor.getSnapshot().context;
     // Initiator should be implicitly readied
     expect(context.conversionStatus?.responses.p1).toBe(true);
+  });
+
+  it("should require all non-eliminated players including cult members to respond", () => {
+    actor.send({ type: "START_CONVERSION", initiatorId: "p1" });
+
+    // Find the cult leader from assignments
+    const context = actor.getSnapshot().context;
+    const cultLeaderId = Object.entries(context.assignments || {}).find(
+      ([_, role]) => role === "CULT_LEADER",
+    )?.[0];
+
+    // Accept from all players EXCEPT the cult leader (if they're not the initiator)
+    for (let i = 1; i <= 5; i++) {
+      const playerId = `p${i}`;
+      // Skip if this player is the cult leader (we'll add them last to test the requirement)
+      if (playerId === cultLeaderId && playerId !== "p1") continue;
+      actor.send({
+        type: "RESPOND_CONVERSION",
+        playerId,
+        accept: true,
+      });
+    }
+
+    // If cult leader is different from initiator, state should still be PENDING
+    // because cult leader hasn't responded yet
+    if (cultLeaderId && cultLeaderId !== "p1") {
+      const beforeContext = actor.getSnapshot().context;
+      expect(beforeContext.conversionStatus?.state).toBe("PENDING");
+
+      // Now cult leader responds
+      actor.send({
+        type: "RESPOND_CONVERSION",
+        playerId: cultLeaderId,
+        accept: true,
+      });
+    }
+
+    // Now state should be ACTIVE since everyone has responded
+    const afterContext = actor.getSnapshot().context;
+    expect(afterContext.conversionStatus?.state).toBe("ACTIVE");
+  });
+
+  it("should not require eliminated players to respond", () => {
+    // Eliminate a player using Denial of Command (self-elimination)
+    const targetId = "p3";
+    actor.send({
+      type: "DENIAL_OF_COMMAND",
+      playerId: targetId,
+    });
+
+    // Verify player is eliminated
+    const afterDenialContext = actor.getSnapshot().context;
+    const eliminatedPlayer = afterDenialContext.players.find(
+      (p) => p.id === targetId,
+    );
+    expect(eliminatedPlayer?.isEliminated).toBe(true);
+
+    // Start conversion
+    actor.send({ type: "START_CONVERSION", initiatorId: "p1" });
+
+    // Accept from all remaining players EXCEPT the eliminated one
+    for (let i = 1; i <= 5; i++) {
+      const playerId = `p${i}`;
+      if (playerId === targetId) continue; // Skip eliminated player
+      actor.send({
+        type: "RESPOND_CONVERSION",
+        playerId,
+        accept: true,
+      });
+    }
+
+    // State should be ACTIVE since all non-eliminated players responded
+    const afterContext = actor.getSnapshot().context;
+    expect(afterContext.conversionStatus?.state).toBe("ACTIVE");
   });
 
   it("should populate playerQuestions for eligible players when becoming ACTIVE", () => {
