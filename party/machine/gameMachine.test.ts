@@ -577,6 +577,45 @@ describe("XState Game Machine", () => {
       expect(context.isCultCabinSearchUsed).toBe(false);
       expect(context.conversionCount).toBe(0);
     });
+
+    it("should remove player when LEAVE_LOBBY is sent during game", () => {
+      actor.send({ type: "LEAVE_LOBBY", playerId: "player_1" });
+      const context = actor.getSnapshot().context;
+      expect(context.players).toHaveLength(4);
+      expect(context.players.find((p) => p.id === "player_1")).toBeUndefined();
+      // Game should still be in playing state
+      expect(actor.getSnapshot().value).toEqual({ playing: "idle" });
+    });
+
+    it("should promote another player to host when host leaves during game", () => {
+      // Verify host_1 is the host
+      let context = actor.getSnapshot().context;
+      expect(context.players.find((p) => p.id === "host_1")?.isHost).toBe(true);
+
+      // Host leaves the game
+      actor.send({ type: "LEAVE_LOBBY", playerId: "host_1" });
+
+      context = actor.getSnapshot().context;
+      // host_1 should be removed
+      expect(context.players.find((p) => p.id === "host_1")).toBeUndefined();
+      // First remaining player should be promoted to host
+      expect(context.players[0].isHost).toBe(true);
+      // Game should still be in playing state
+      expect(actor.getSnapshot().value).toEqual({ playing: "idle" });
+    });
+
+    it("should not change host when non-host player leaves during game", () => {
+      let context = actor.getSnapshot().context;
+      const originalHost = context.players.find((p) => p.isHost);
+      expect(originalHost?.id).toBe("host_1");
+
+      // Non-host player leaves
+      actor.send({ type: "LEAVE_LOBBY", playerId: "player_2" });
+
+      context = actor.getSnapshot().context;
+      // Original host should still be host
+      expect(context.players.find((p) => p.id === "host_1")?.isHost).toBe(true);
+    });
   });
 
   describe("Action Limitations", () => {
