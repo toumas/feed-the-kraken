@@ -151,6 +151,82 @@ describe("GameView", () => {
     expect(onLeave).toHaveBeenCalled();
   });
 
+  it("closes End Session modal for eliminated player when Stay is clicked", () => {
+    const eliminatedLobby: LobbyState = {
+      ...mockLobby,
+      players: [
+        {
+          ...mockLobby.players[0],
+          isEliminated: true,
+        },
+      ],
+    };
+
+    render(<GameView {...defaultProps} lobby={eliminatedLobby} />);
+
+    // Click Return to Shore to show the End Session modal
+    fireEvent.click(screen.getByText("Return to Shore"));
+
+    // Modal should appear
+    const stayButton = screen.getByRole("button", { name: /Stay/i });
+    expect(stayButton).toBeDefined();
+
+    // Click Stay
+    fireEvent.click(stayButton);
+
+    // Modal should be closed (Stay button should no longer exist)
+    expect(screen.queryByRole("button", { name: /Stay/i })).toBeNull();
+  });
+
+  it("shows End Session modal for non-eliminated player and calls onLeave", () => {
+    const onLeave = vi.fn();
+
+    render(<GameView {...defaultProps} onLeave={onLeave} />);
+
+    // Click End Session? button
+    const endSessionButton = screen.getByRole("button", {
+      name: /End Session/i,
+    });
+    fireEvent.click(endSessionButton);
+
+    // Modal should appear with Stay and Leave buttons (verify modal is shown)
+    const stayButton = screen.getByRole("button", { name: /Stay/i });
+    const leaveButton = screen.getByRole("button", { name: /Leave/i });
+    expect(stayButton).toBeDefined();
+    expect(leaveButton).toBeDefined();
+
+    // Also verify modal description text is present
+    expect(
+      screen.getByText(
+        "Are you sure you want to leave the game? You won't be able to rejoin with the same role.",
+      ),
+    ).toBeDefined();
+
+    // Click Leave
+    fireEvent.click(leaveButton);
+    expect(onLeave).toHaveBeenCalled();
+  });
+
+  it("closes End Session modal when Stay is clicked", () => {
+    render(<GameView {...defaultProps} />);
+
+    // Click End Session? button
+    const endSessionButton = screen.getByRole("button", {
+      name: /End Session/i,
+    });
+    fireEvent.click(endSessionButton);
+
+    // Modal should appear - check for Stay button which only exists in modal
+    const stayButton = screen.getByRole("button", { name: /Stay/i });
+    expect(stayButton).toBeDefined();
+
+    // Click Stay
+    fireEvent.click(stayButton);
+
+    // Modal should be closed (Stay button should no longer exist)
+    expect(screen.queryByRole("button", { name: /Stay/i })).toBeNull();
+  });
+
   it("renders Cabin Search button and calls callback when clicked", () => {
     const onOpenCabinSearch = vi.fn();
     render(

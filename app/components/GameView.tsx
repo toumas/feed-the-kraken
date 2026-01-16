@@ -574,6 +574,34 @@ export function GameView({
       </div>
 
       {/* Modals have been moved to GamePage */}
+
+      {/* End Session Confirmation Modal */}
+      {showEndSessionConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
+            <h2 className="text-xl font-bold text-white mb-4">
+              {t("game.endSession")}
+            </h2>
+            <p className="text-slate-400 mb-8">{t("game.endSessionDesc")}</p>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setShowEndSessionConfirm(false)}
+                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
+              >
+                {t("game.stay")}
+              </button>
+              <button
+                type="button"
+                onClick={onLeave}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors"
+              >
+                {t("game.leave")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
