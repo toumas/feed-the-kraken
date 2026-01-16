@@ -520,12 +520,7 @@ export const gameMachine = setup({
         };
       }
 
-      const eligiblePlayers = context.players.filter(
-        (p) =>
-          !p.isEliminated &&
-          context.assignments?.[p.id] !== "CULT_LEADER" &&
-          context.assignments?.[p.id] !== "CULTIST",
-      );
+      const eligiblePlayers = context.players.filter((p) => !p.isEliminated);
 
       const allAccepted = eligiblePlayers.every(
         (p) => newResponses[p.id] === true,
