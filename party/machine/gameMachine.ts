@@ -1418,6 +1418,9 @@ export const gameMachine = setup({
             PLAYER_RECONNECTED: {
               actions: "playerReconnected",
             },
+            LEAVE_LOBBY: {
+              actions: "removePlayer",
+            },
           },
         },
 
