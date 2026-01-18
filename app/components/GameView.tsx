@@ -256,6 +256,46 @@ export function GameView({
                 </div>
               </div>
             )}
+
+          {myRole === "CULT_LEADER" && lobby.assignments && (
+            <div
+              data-testid="role-team-info"
+              className="mt-6 pt-6 border-t border-slate-700 w-full"
+            >
+              <h3 className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
+                {t("game.yourConverts")}
+              </h3>
+              <div className="flex flex-wrap justify-center gap-3">
+                {lobby.players
+                  .filter(
+                    (p) =>
+                      p.id !== myPlayerId &&
+                      lobby.convertedPlayerIds?.includes(p.id),
+                  )
+                  .map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex flex-col items-center gap-1"
+                    >
+                      <Avatar
+                        url={p.photoUrl}
+                        size="sm"
+                        className="ring-2 ring-purple-900/50"
+                      />
+                      <span className="text-xs text-purple-200/70 font-medium max-w-[60px] truncate">
+                        {p.name}
+                      </span>
+                    </div>
+                  ))}
+                {(!lobby.convertedPlayerIds ||
+                  lobby.convertedPlayerIds.length === 0) && (
+                  <p className="text-xs text-slate-500 italic">
+                    {t("game.noConverts")}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </RoleReveal.Revealed>
       </RoleReveal.Root>
 

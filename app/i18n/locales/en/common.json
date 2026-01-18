@@ -98,6 +98,8 @@
     "pirateCrew": "Pirate Crew",
     "noPirates": "No other pirates",
     "yourLeader": "Your Leader",
+    "yourConverts": "Your Converts",
+    "noConverts": "Converted cultists will appear here",
     "sailors": "Sailors",
     "eliminatedDesc": "You have been thrown overboard or fed to the Kraken. Your journey ends here.",
     "returnToShore": "Return to Shore",
