@@ -106,10 +106,16 @@ test.describe("Cult Role Visibility in 11-Player Games", () => {
       ).not.toBeVisible();
     });
 
-    // 7. Verify: Cult Leader can see their own role
+    // 7. Verify: Cult Leader can see their own role and "Your Converts" section with placeholder
     await withRoleRevealed(hostPage, async () => {
       await expect(
         hostPage.getByRole("heading", { name: "Cult Leader", exact: true }),
+      ).toBeVisible();
+      // Cult Leader should see "Your Converts" section
+      await expect(hostPage.getByText("Your Converts")).toBeVisible();
+      // Since no conversions have happened, should show placeholder text
+      await expect(
+        hostPage.getByText("Converted cultists will appear here"),
       ).toBeVisible();
     });
   });
@@ -287,6 +293,33 @@ test.describe("Cult Role Visibility in 11-Player Games", () => {
       ).toBeVisible();
       await expect(
         originalCultistPage.getByText("Your Leader"),
+      ).not.toBeVisible();
+    });
+
+    // 8. Verify: Cult Leader sees converted Sailor (P2) in "Your Converts" section
+    // but does NOT see the original Cultist (P1)
+    await withRoleRevealed(cultLeaderPage, async () => {
+      await expect(
+        cultLeaderPage.getByRole("heading", {
+          name: "Cult Leader",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(cultLeaderPage.getByText("Your Converts")).toBeVisible();
+      // Should show the converted sailor's name, NOT the placeholder anymore
+      await expect(
+        cultLeaderPage.getByText("Converted cultists will appear here"),
+      ).not.toBeVisible();
+      const yourConvertsSection = cultLeaderPage
+        .locator("div")
+        .filter({ hasText: "Your Converts" })
+        .last();
+      await expect(
+        yourConvertsSection.getByText(targetSailor.name),
+      ).toBeVisible();
+      // The original Cultist should NOT be visible (they weren't converted, they were dealt the role)
+      await expect(
+        yourConvertsSection.getByText(players[0].name),
       ).not.toBeVisible();
     });
   });

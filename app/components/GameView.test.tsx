@@ -773,4 +773,131 @@ describe("GameView", () => {
     expect(onOpenOffWithTongue).not.toHaveBeenCalled();
     alertMock.mockRestore();
   });
+
+  // --- Cult Leader Converted Cultists Display Tests ---
+
+  it("Cult Leader sees placeholder when no players are converted", () => {
+    const lobbyWithCultLeader: LobbyState = {
+      ...mockLobby,
+      players: [
+        {
+          id: "leader1",
+          name: "The Leader",
+          photoUrl: null,
+          isHost: true,
+          isReady: true,
+          isOnline: true,
+          isEliminated: false,
+          isUnconvertible: false,
+          notRole: null,
+          joinedAt: Date.now(),
+          hasTongue: true,
+        },
+        {
+          id: "sailor1",
+          name: "Sailor 1",
+          photoUrl: null,
+          isHost: false,
+          isReady: true,
+          isOnline: true,
+          isEliminated: false,
+          isUnconvertible: false,
+          notRole: null,
+          joinedAt: Date.now(),
+          hasTongue: true,
+        },
+      ],
+      status: "PLAYING",
+      assignments: {
+        leader1: "CULT_LEADER",
+        sailor1: "SAILOR",
+      },
+      originalRoles: {
+        leader1: "CULT_LEADER",
+        sailor1: "SAILOR",
+      },
+      convertedPlayerIds: [], // No converted players
+    };
+
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={lobbyWithCultLeader}
+        myRole="CULT_LEADER"
+        myPlayerId="leader1"
+      />,
+    );
+
+    revealRole();
+
+    // Should show "Your Converts" section
+    expect(screen.getByText("Your Converts")).toBeDefined();
+
+    // Should show placeholder message
+    expect(
+      screen.getByText("Converted cultists will appear here"),
+    ).toBeDefined();
+  });
+
+  it("Cult Leader sees converted players in Your Converts section", () => {
+    const lobbyWithConvertedPlayers: LobbyState = {
+      ...mockLobby,
+      players: [
+        {
+          id: "leader1",
+          name: "The Leader",
+          photoUrl: null,
+          isHost: true,
+          isReady: true,
+          isOnline: true,
+          isEliminated: false,
+          isUnconvertible: false,
+          notRole: null,
+          joinedAt: Date.now(),
+          hasTongue: true,
+        },
+        {
+          id: "converted1",
+          name: "Converted Sailor",
+          photoUrl: null,
+          isHost: false,
+          isReady: true,
+          isOnline: true,
+          isEliminated: false,
+          isUnconvertible: false,
+          notRole: null,
+          joinedAt: Date.now(),
+          hasTongue: true,
+        },
+      ],
+      status: "PLAYING",
+      assignments: {
+        leader1: "CULT_LEADER",
+        converted1: "CULTIST",
+      },
+      originalRoles: {
+        leader1: "CULT_LEADER",
+        converted1: "SAILOR", // Was originally a sailor
+      },
+      convertedPlayerIds: ["converted1"],
+    };
+
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={lobbyWithConvertedPlayers}
+        myRole="CULT_LEADER"
+        myPlayerId="leader1"
+      />,
+    );
+
+    revealRole();
+
+    // Should show "Your Converts" section
+    expect(screen.getByText("Your Converts")).toBeDefined();
+
+    // Should show the converted player's name in the Your Converts section
+    const yourConvertsSection = screen.getByText("Your Converts").parentElement;
+    expect(yourConvertsSection?.textContent).toContain("Converted Sailor");
+  });
 });
