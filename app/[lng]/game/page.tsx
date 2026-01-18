@@ -34,7 +34,7 @@ import { OffWithTongueView } from "../../components/views/OffWithTongueView";
 import { RoleSelectionView } from "../../components/views/RoleSelectionView";
 import { useGame } from "../../context/GameContext";
 import { useT } from "../../i18n/client";
-import { getRoleColor } from "../../utils/role-utils";
+import { getRoleColor, sortPlayersWithSelfFirst } from "../../utils/role-utils";
 
 type LocalView =
   | "NONE"
@@ -453,15 +453,16 @@ export default function GamePage() {
             </ReadyCheckModal.Description>
 
             <ReadyCheckModal.PlayerList>
-              {lobby.players
-                .filter((p) => !p.isEliminated)
-                .map((p) => (
-                  <ReadyCheckModal.PlayerItem
-                    key={p.id}
-                    player={p}
-                    isReady={!!lobby.conversionStatus?.responses[p.id]}
-                  />
-                ))}
+              {sortPlayersWithSelfFirst(
+                lobby.players.filter((p) => !p.isEliminated),
+                myPlayerId,
+              ).map((p) => (
+                <ReadyCheckModal.PlayerItem
+                  key={p.id}
+                  player={p}
+                  isReady={!!lobby.conversionStatus?.responses[p.id]}
+                />
+              ))}
             </ReadyCheckModal.PlayerList>
 
             {lobby.conversionStatus.responses[myPlayerId] && (

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { Role } from "../types";
-import { getRolesForPlayerCount, isValidComposition } from "./role-utils";
+import {
+  getRolesForPlayerCount,
+  isValidComposition,
+  sortPlayersWithSelfFirst,
+} from "./role-utils";
 
 describe("role-utils", () => {
   describe("getRolesForPlayerCount", () => {
@@ -185,6 +189,50 @@ describe("role-utils", () => {
     it("invalidates if no Cult Leader", () => {
       const roles: Role[] = ["SAILOR", "SAILOR", "SAILOR", "SAILOR", "PIRATE"];
       expect(isValidComposition(roles, 5)).toBe(false);
+    });
+  });
+
+  describe("sortPlayersWithSelfFirst", () => {
+    it("puts self first in the list", () => {
+      const players = [
+        { id: "p1", name: "Alpha" },
+        { id: "p2", name: "Beta" },
+        { id: "p3", name: "Gamma" },
+      ];
+      const sorted = sortPlayersWithSelfFirst(players, "p2");
+      expect(sorted[0].id).toBe("p2");
+    });
+
+    it("sorts remaining players alphabetically by name", () => {
+      const players = [
+        { id: "p1", name: "Zebra" },
+        { id: "p2", name: "Alpha" },
+        { id: "p3", name: "Me" },
+      ];
+      const sorted = sortPlayersWithSelfFirst(players, "p3");
+      expect(sorted[0].id).toBe("p3"); // Self first
+      expect(sorted[1].id).toBe("p2"); // Alpha
+      expect(sorted[2].id).toBe("p1"); // Zebra
+    });
+
+    it("does not mutate the original array", () => {
+      const players = [
+        { id: "p1", name: "Beta" },
+        { id: "p2", name: "Alpha" },
+      ];
+      const original = [...players];
+      sortPlayersWithSelfFirst(players, "p2");
+      expect(players).toEqual(original);
+    });
+
+    it("works when self is already first", () => {
+      const players = [
+        { id: "p1", name: "Alpha" },
+        { id: "p2", name: "Beta" },
+      ];
+      const sorted = sortPlayersWithSelfFirst(players, "p1");
+      expect(sorted[0].id).toBe("p1");
+      expect(sorted[1].id).toBe("p2");
     });
   });
 });

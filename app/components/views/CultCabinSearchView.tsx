@@ -6,7 +6,7 @@ import { useGame } from "../../context/GameContext";
 import { QUIZ_QUESTIONS } from "../../data/quiz";
 import { useT } from "../../i18n/client";
 import type { Role } from "../../types";
-import { getRoleColor } from "../../utils/role-utils";
+import { getRoleColor, sortPlayersWithSelfFirst } from "../../utils/role-utils";
 import { Avatar } from "../Avatar";
 import { FeedbackCard } from "../FeedbackCard";
 import { InlineError } from "../InlineError";
@@ -65,8 +65,9 @@ export function CultCabinSearchView({ onDismiss }: { onDismiss: () => void }) {
     const navigatorClaimed = Object.values(claims).includes("NAVIGATOR");
     const lieutenantClaimed = Object.values(claims).includes("LIEUTENANT");
 
-    const activePlayers = lobby.players.filter(
-      (p) => !p.isEliminated && p.isOnline,
+    const activePlayers = sortPlayersWithSelfFirst(
+      lobby.players.filter((p) => !p.isEliminated && p.isOnline),
+      myPlayerId,
     );
     const allClaimed = activePlayers.every((p) => claims[p.id]);
 
