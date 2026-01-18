@@ -21,6 +21,7 @@ import { Avatar } from "../../components/Avatar";
 import { CancellationModal } from "../../components/CancellationModal";
 import { GameView } from "../../components/GameView";
 import { InlineError } from "../../components/InlineError";
+import { ReadyCheckModal } from "../../components/ReadyCheckModal";
 // Import Views
 import { CabinSearchView } from "../../components/views/CabinSearchView";
 import { ConversionView } from "../../components/views/ConversionView";
@@ -421,117 +422,70 @@ export default function GamePage() {
 
       {/* Conversion Status Modal */}
       {lobby.conversionStatus &&
-        (lobby.conversionStatus.state === "PENDING" ||
-          lobby.conversionStatus.state === "CANCELLED") &&
+        lobby.conversionStatus.state === "CANCELLED" &&
         !isConversionDismissed && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="w-full max-w-md bg-slate-900 border border-amber-900/50 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
-              <div className="flex items-center gap-3 mb-6">
-                <Eye className="w-8 h-8 text-amber-500" />
-                <h2 className="text-xl font-bold text-white">
-                  {t("conversion.title")}
-                </h2>
-              </div>
+          <CancellationModal.Root
+            isOpen={true}
+            onDismiss={() => setIsConversionDismissed(true)}
+          >
+            <CancellationModal.Header title={t("conversion.title")} />
+            <CancellationModal.Body
+              message={t("conversion.interrupted")}
+              reason={t("conversion.failed")}
+            />
+            <CancellationModal.Action
+              onClick={() => setIsConversionDismissed(true)}
+            />
+          </CancellationModal.Root>
+        )}
 
-              {lobby.conversionStatus.state === "CANCELLED" ? (
-                <CancellationModal.Root
-                  isOpen={true}
-                  onDismiss={() => setIsConversionDismissed(true)}
+      {/* Conversion Pending Modal */}
+      {lobby.conversionStatus &&
+        lobby.conversionStatus.state === "PENDING" &&
+        !isConversionDismissed && (
+          <ReadyCheckModal.Root
+            readyLabel={t("actions.accepted")}
+            pendingLabel={t("actions.pending")}
+          >
+            <ReadyCheckModal.Header title={t("conversion.title")} />
+            <ReadyCheckModal.Description>
+              {t("conversion.ritualBegun")}
+            </ReadyCheckModal.Description>
+
+            <ReadyCheckModal.PlayerList>
+              {lobby.players
+                .filter((p) => !p.isEliminated)
+                .map((p) => (
+                  <ReadyCheckModal.PlayerItem
+                    key={p.id}
+                    player={p}
+                    isReady={!!lobby.conversionStatus?.responses[p.id]}
+                  />
+                ))}
+            </ReadyCheckModal.PlayerList>
+
+            {lobby.conversionStatus.responses[myPlayerId] && (
+              <ReadyCheckModal.WaitingText>
+                {t("game.waitingForOthers")}
+              </ReadyCheckModal.WaitingText>
+            )}
+
+            <ReadyCheckModal.Actions>
+              <ReadyCheckModal.ActionButtons>
+                <ReadyCheckModal.CancelButton
+                  onClick={() => handleRespondConversion(false)}
                 >
-                  <CancellationModal.Header title={t("conversion.title")} />
-                  <CancellationModal.Body
-                    message={t("conversion.interrupted")}
-                    reason={t("conversion.failed")}
-                  />
-                  <CancellationModal.Action
-                    onClick={() => setIsConversionDismissed(true)}
-                  />
-                </CancellationModal.Root>
-              ) : (
-                <>
-                  <p className="text-slate-300 mb-6">
-                    {t("conversion.ritualBegun")}
-                  </p>
-
-                  <div className="space-y-2 mb-8 max-h-60 overflow-y-auto">
-                    {lobby.players
-                      .filter((p) => !p.isEliminated)
-                      .map((p) => {
-                        const hasAccepted =
-                          lobby.conversionStatus?.responses[p.id];
-                        return (
-                          <div
-                            key={p.id}
-                            className="flex items-center justify-between bg-slate-800/50 p-3 rounded-lg border border-slate-700"
-                          >
-                            <div className="flex items-center gap-3">
-                              <Avatar url={p.photoUrl} size="sm" />
-                              <span className="text-slate-200 font-medium">
-                                {p.name}
-                              </span>
-                            </div>
-                            {hasAccepted ? (
-                              <span className="text-green-400 text-sm font-bold flex items-center gap-1">
-                                {t("actions.accepted")}
-                              </span>
-                            ) : (
-                              <span className="text-slate-500 text-sm font-bold flex items-center gap-1">
-                                {t("actions.pending")}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                  </div>
-
-                  {!lobby.conversionStatus.responses[myPlayerId] && (
-                    <div className="flex gap-4">
-                      <button
-                        type="button"
-                        onClick={() => handleRespondConversion(false)}
-                        className="flex-1 py-3 bg-red-900/50 hover:bg-red-900 text-red-200 rounded-xl font-bold transition-colors"
-                      >
-                        {t("actions.deny")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRespondConversion(true)}
-                        className="flex-1 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold transition-colors"
-                      >
-                        {t("actions.allow")}
-                      </button>
-                    </div>
-                  )}
-
-                  {lobby.conversionStatus.responses[myPlayerId] && (
-                    <div className="flex flex-col gap-3">
-                      <p className="text-center text-slate-500 italic">
-                        {t("game.waitingForOthers")}
-                      </p>
-                      <div className="flex gap-4">
-                        <button
-                          type="button"
-                          onClick={() => handleRespondConversion(false)}
-                          className="flex-1 py-3 bg-red-900/30 hover:bg-red-900/50 text-red-200 rounded-xl font-bold transition-colors border border-red-900/30"
-                        >
-                          {t("actions.deny")}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            window.alert(t("conversion.alreadyAccepted"))
-                          }
-                          className="flex-1 py-3 bg-amber-600/50 text-white/50 cursor-not-allowed rounded-xl font-bold border border-amber-600/20"
-                        >
-                          {t("actions.accepted")}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+                  {t("actions.cancel")}
+                </ReadyCheckModal.CancelButton>
+                <ReadyCheckModal.ReadyButton
+                  onClick={() => handleRespondConversion(true)}
+                  isReady={!!lobby.conversionStatus.responses[myPlayerId]}
+                  readyLabel={t("actions.accepted")}
+                  notReadyLabel={t("actions.accepted")}
+                />
+              </ReadyCheckModal.ActionButtons>
+            </ReadyCheckModal.Actions>
+          </ReadyCheckModal.Root>
         )}
 
       {/* Feed the Kraken Confirmation Modal (Target) */}

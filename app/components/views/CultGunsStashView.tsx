@@ -18,6 +18,7 @@ import { useT } from "../../i18n/client";
 import { Avatar } from "../Avatar";
 import { FeedbackCard } from "../FeedbackCard";
 import { Quiz } from "../Quiz";
+import { ReadyCheckModal } from "../ReadyCheckModal";
 
 export function CultGunsStashView({ onDismiss }: { onDismiss: () => void }) {
   const {
@@ -85,44 +86,37 @@ export function CultGunsStashView({ onDismiss }: { onDismiss: () => void }) {
       return a.name.localeCompare(b.name);
     });
 
+    const allReady = sortedPlayers.every((p) =>
+      gunsStashStatus.readyPlayers.includes(p.id),
+    );
+
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 animate-in fade-in duration-1000">
-        <div className="max-w-md w-full bg-slate-900 border border-slate-800 p-6 space-y-6 rounded-2xl">
-          <div className="flex items-center gap-3 pb-4 border-b border-slate-800">
-            <Eye className="w-6 h-6 text-amber-500" />
-            <h1 className="text-xl font-bold text-white">
-              {t("cultGunsStash.title")}
-            </h1>
-          </div>
+      <ReadyCheckModal.Root
+        readyLabel={t("roleSelection.ready")}
+        pendingLabel={t("roleSelection.pending")}
+      >
+        <ReadyCheckModal.Header title={t("cultGunsStash.title")} />
+        <ReadyCheckModal.Description>
+          {t("cultGunsStash.waitingDescription")}
+        </ReadyCheckModal.Description>
 
-          {/* Player List with Status */}
-          <div className="space-y-2 max-h-72 overflow-y-auto">
-            {sortedPlayers.map((p) => {
-              const ready = gunsStashStatus.readyPlayers.includes(p.id);
-              return (
-                <div
-                  key={p.id}
-                  className="flex items-center justify-between bg-slate-800/50 p-3 rounded-lg border border-slate-700"
-                >
-                  <div className="flex items-center gap-3">
-                    <Avatar url={p.photoUrl} size="sm" />
-                    <span className="text-slate-200 font-medium">{p.name}</span>
-                  </div>
-                  {ready ? (
-                    <span className="text-green-400 text-sm font-bold flex items-center gap-1">
-                      <CheckCircle className="w-4 h-4" />
-                      {t("roleSelection.ready")}
-                    </span>
-                  ) : (
-                    <span className="text-slate-500 text-sm font-bold flex items-center gap-1">
-                      {t("roleSelection.pending")}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+        <ReadyCheckModal.PlayerList>
+          {sortedPlayers.map((p) => (
+            <ReadyCheckModal.PlayerItem
+              key={p.id}
+              player={p}
+              isReady={gunsStashStatus.readyPlayers.includes(p.id)}
+            />
+          ))}
+        </ReadyCheckModal.PlayerList>
 
+        {isReady && !allReady && (
+          <ReadyCheckModal.WaitingText>
+            {t("game.waitingForOthers")}
+          </ReadyCheckModal.WaitingText>
+        )}
+
+        <ReadyCheckModal.Actions>
           {error && (
             <div className="p-3 bg-red-950/90 border border-red-500/50 text-red-200 rounded-lg flex items-start animate-in slide-in-from-top-2">
               <AlertCircle className="w-5 h-5 mr-2 shrink-0 text-red-500 mt-0.5" />
@@ -137,17 +131,11 @@ export function CultGunsStashView({ onDismiss }: { onDismiss: () => void }) {
             </div>
           )}
 
-          <div className="flex gap-3">
-            {/* Cancel Button */}
-            <button
-              type="button"
-              onClick={cancelGunsStash}
-              className="px-6 py-4 bg-red-900/30 hover:bg-red-900/50 text-red-200 rounded-xl font-bold transition-colors border border-red-900/50"
-            >
+          <ReadyCheckModal.ActionButtons>
+            <ReadyCheckModal.CancelButton onClick={cancelGunsStash}>
               {t("actions.cancel")}
-            </button>
-            <button
-              type="button"
+            </ReadyCheckModal.CancelButton>
+            <ReadyCheckModal.ReadyButton
               onClick={() => {
                 if (isReady) {
                   setError("You are already ready.");
@@ -155,25 +143,13 @@ export function CultGunsStashView({ onDismiss }: { onDismiss: () => void }) {
                 }
                 confirmGunsStashReady();
               }}
-              className={`flex-1 py-4 rounded-xl font-bold text-lg transition-all shadow-lg flex items-center justify-center gap-2
-                   ${
-                     isReady
-                       ? "bg-green-900/50 text-green-400 border border-green-800"
-                       : "bg-amber-600 hover:bg-amber-500 text-white shadow-amber-900/20"
-                   }`}
-            >
-              {isReady ? (
-                <>
-                  <CheckCircle className="w-6 h-6" />
-                  <span>{t("cultGunsStash.waiting")}</span>
-                </>
-              ) : (
-                <span>{t("cultGunsStash.imReady")}</span>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
+              isReady={isReady}
+              readyLabel={t("actions.accepted")}
+              notReadyLabel={t("cultGunsStash.imReady")}
+            />
+          </ReadyCheckModal.ActionButtons>
+        </ReadyCheckModal.Actions>
+      </ReadyCheckModal.Root>
     );
   }
 

@@ -233,6 +233,7 @@
   },
   "cultGunsStash": {
     "title": "Cult's Guns Stash",
+    "waitingDescription": "The ritual is about to begin. All players must confirm to proceed.",
     "interrupted": "The ritual was interrupted!",
     "cancelled": "The action has been cancelled.",
     "alreadyReady": "You are already ready.",

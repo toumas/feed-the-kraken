@@ -233,6 +233,7 @@
   },
   "cultGunsStash": {
     "title": "Kultin asevarasto",
+    "waitingDescription": "Rituaali on alkamassa. Kaikkien pelaajien on vahvistettava jatkaakseen.",
     "interrupted": "Rituaali keskeytyi!",
     "cancelled": "Toiminto on peruttu.",
     "alreadyReady": "Olet jo valmis.",
