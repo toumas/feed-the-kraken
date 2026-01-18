@@ -64,7 +64,7 @@ describe("GameView", () => {
   it("renders Denial of Command button and calls callback when clicked", () => {
     const onOpenDenial = vi.fn();
     render(<GameView {...defaultProps} onOpenDenial={onOpenDenial} />);
-    const button = screen.getByText("Denial of Command");
+    const button = screen.getByText("Denial of Command?");
     fireEvent.click(button);
     expect(onOpenDenial).toHaveBeenCalled();
   });
@@ -88,7 +88,7 @@ describe("GameView", () => {
         "You have been thrown overboard or fed to the Kraken. Your journey ends here.",
       ),
     ).toBeDefined();
-    expect(screen.queryByText("Denial of Command")).toBeNull();
+    expect(screen.queryByText("Denial of Command?")).toBeNull();
   });
 
   it("shows disabled-looking flogging button and shows alert when used", () => {
