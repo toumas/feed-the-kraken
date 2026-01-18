@@ -224,4 +224,104 @@ describe("Cult Cabin Search Flow - XState", () => {
     const context = actor.getSnapshot().context;
     expect(context.cabinSearchStatus?.playerAnswers?.p2).toBe("test-answer");
   });
+
+  describe("One-Time Use Restriction", () => {
+    it("should have isCultCabinSearchUsed as false initially", () => {
+      const context = actor.getSnapshot().context;
+      expect(context.isCultCabinSearchUsed).toBe(false);
+    });
+
+    it("should keep isCultCabinSearchUsed as false when cancelled", () => {
+      actor.send({ type: "START_CULT_CABIN_SEARCH", initiatorId: "p1" });
+      actor.send({ type: "CANCEL_CULT_CABIN_SEARCH", playerId: "p2" });
+
+      const context = actor.getSnapshot().context;
+      expect(context.isCultCabinSearchUsed).toBe(false);
+    });
+
+    it("should set isCultCabinSearchUsed to true when completed", () => {
+      vi.useFakeTimers();
+
+      actor.send({ type: "START_CULT_CABIN_SEARCH", initiatorId: "p1" });
+
+      // All players claim valid roles
+      actor.send({
+        type: "CLAIM_CULT_CABIN_SEARCH_ROLE",
+        playerId: "p1",
+        role: "CAPTAIN",
+      });
+      actor.send({
+        type: "CLAIM_CULT_CABIN_SEARCH_ROLE",
+        playerId: "p2",
+        role: "NAVIGATOR",
+      });
+      actor.send({
+        type: "CLAIM_CULT_CABIN_SEARCH_ROLE",
+        playerId: "p3",
+        role: "LIEUTENANT",
+      });
+      actor.send({
+        type: "CLAIM_CULT_CABIN_SEARCH_ROLE",
+        playerId: "p4",
+        role: "CREW",
+      });
+      actor.send({
+        type: "CLAIM_CULT_CABIN_SEARCH_ROLE",
+        playerId: "p5",
+        role: "CREW",
+      });
+
+      // Wait for timer to complete
+      vi.advanceTimersByTime(16000);
+
+      const context = actor.getSnapshot().context;
+      expect(context.cabinSearchStatus?.state).toBe("COMPLETED");
+      expect(context.isCultCabinSearchUsed).toBe(true);
+
+      vi.useRealTimers();
+    });
+
+    it("should reset isCultCabinSearchUsed when game is reset", () => {
+      vi.useFakeTimers();
+
+      actor.send({ type: "START_CULT_CABIN_SEARCH", initiatorId: "p1" });
+
+      // All players claim valid roles
+      actor.send({
+        type: "CLAIM_CULT_CABIN_SEARCH_ROLE",
+        playerId: "p1",
+        role: "CAPTAIN",
+      });
+      actor.send({
+        type: "CLAIM_CULT_CABIN_SEARCH_ROLE",
+        playerId: "p2",
+        role: "NAVIGATOR",
+      });
+      actor.send({
+        type: "CLAIM_CULT_CABIN_SEARCH_ROLE",
+        playerId: "p3",
+        role: "LIEUTENANT",
+      });
+      actor.send({
+        type: "CLAIM_CULT_CABIN_SEARCH_ROLE",
+        playerId: "p4",
+        role: "CREW",
+      });
+      actor.send({
+        type: "CLAIM_CULT_CABIN_SEARCH_ROLE",
+        playerId: "p5",
+        role: "CREW",
+      });
+
+      // Wait for timer to complete
+      vi.advanceTimersByTime(16000);
+      expect(actor.getSnapshot().context.isCultCabinSearchUsed).toBe(true);
+
+      // Reset the game
+      actor.send({ type: "RESET_GAME" });
+      expect(actor.getSnapshot().context.isCultCabinSearchUsed).toBe(false);
+
+      vi.useRealTimers();
+    });
+  });
 });

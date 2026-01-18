@@ -1,7 +1,7 @@
 "use client";
 
 import { EyeOff } from "lucide-react";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useT } from "../i18n/client";
 import { cn } from "../utils";
 
@@ -9,6 +9,7 @@ import { cn } from "../utils";
 interface RoleRevealContextValue {
   isRevealed: boolean;
   tapCount: number;
+  revealTimestamp: number | null;
   startReveal: () => void;
   endReveal: () => void;
   handleTap: () => void;
@@ -37,9 +38,29 @@ interface RootProps {
 function Root({ children, className, defaultRevealed = false }: RootProps) {
   const [isRevealed, setIsRevealed] = useState(defaultRevealed);
   const [taps, setTaps] = useState<number[]>([]);
+  const [revealTimestamp, setRevealTimestamp] = useState<number | null>(
+    defaultRevealed ? Date.now() : null,
+  );
 
-  const startReveal = () => setIsRevealed(true);
-  const endReveal = () => setIsRevealed(false);
+  const startReveal = () => {
+    setRevealTimestamp(Date.now());
+    setIsRevealed(true);
+  };
+  const endReveal = () => {
+    setRevealTimestamp(null);
+    setIsRevealed(false);
+  };
+
+  // Auto-hide after 3 seconds when revealed
+  useEffect(() => {
+    if (!isRevealed) return;
+
+    const timer = setTimeout(() => {
+      setIsRevealed(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [isRevealed]);
 
   const handleTap = () => {
     if (isRevealed) {
@@ -63,7 +84,14 @@ function Root({ children, className, defaultRevealed = false }: RootProps) {
 
   return (
     <RoleRevealContext.Provider
-      value={{ isRevealed, tapCount, startReveal, endReveal, handleTap }}
+      value={{
+        isRevealed,
+        tapCount,
+        revealTimestamp,
+        startReveal,
+        endReveal,
+        handleTap,
+      }}
     >
       <div className={cn("relative w-full", className)}>{children}</div>
     </RoleRevealContext.Provider>
@@ -230,19 +258,36 @@ interface HideInstructionProps {
   className?: string;
 }
 
+const AUTO_HIDE_DURATION_MS = 3000;
+
 function HideInstruction({ className }: HideInstructionProps) {
   const { t } = useT("common");
-  const { handleTap } = useRoleReveal();
+  const { handleTap, revealTimestamp } = useRoleReveal();
+
   return (
     <button
       type="button"
       onClick={handleTap}
       onContextMenu={(e) => e.preventDefault()}
       className={cn(
-        "px-6 py-4 bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-200 border border-cyan-800/50 rounded-xl font-bold transition-all cursor-pointer select-none touch-none focus:outline-none focus:ring-2 focus:ring-cyan-500/50",
+        "relative overflow-hidden px-6 py-4 bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-200 border border-cyan-800/50 rounded-xl font-bold transition-all cursor-pointer select-none touch-none focus:outline-none focus:ring-2 focus:ring-cyan-500/50",
         className,
       )}
     >
+      {/* Countdown progress bar */}
+      <div
+        key={revealTimestamp}
+        className="absolute bottom-0 left-0 h-1 bg-cyan-400"
+        style={{
+          animation: `countdown-shrink ${AUTO_HIDE_DURATION_MS}ms linear forwards`,
+        }}
+      />
+      <style>{`
+        @keyframes countdown-shrink {
+          from { width: 100%; }
+          to { width: 0%; }
+        }
+      `}</style>
       {t("roleReveal.hideInstruction")}
     </button>
   );

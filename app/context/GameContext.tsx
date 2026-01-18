@@ -398,8 +398,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (
       lobby?.gunsStashStatus?.state === "WAITING_FOR_PLAYERS" ||
-      lobby?.gunsStashStatus?.state === "DISTRIBUTION" ||
-      lobby?.gunsStashStatus?.state === "COMPLETED"
+      lobby?.gunsStashStatus?.state === "DISTRIBUTION"
     ) {
       setIsGunsStashDismissed(false);
       // Cross-dismiss: hide other ritual views when server starts a new ritual
@@ -578,11 +577,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               roleSelectionStatus: ctx.roleSelectionStatus,
               conversionStatus: ctx.conversionStatus,
               conversionCount: ctx.conversionCount,
+              feedTheKrakenCount: ctx.feedTheKrakenCount,
+              cabinSearchCount: ctx.cabinSearchCount,
               convertedPlayerIds: ctx.convertedPlayerIds || [],
               cabinSearchStatus: ctx.cabinSearchStatus,
               captainCabinSearchStatus: ctx.captainCabinSearchStatus,
               gunsStashStatus: ctx.gunsStashStatus,
               isFloggingUsed: ctx.isFloggingUsed,
+              isGunsStashUsed: ctx.isGunsStashUsed,
+              isCultCabinSearchUsed: ctx.isCultCabinSearchUsed,
+              isOffWithTongueUsed: ctx.isOffWithTongueUsed,
               floggingStatus: ctx.floggingStatus,
               feedTheKrakenStatus: ctx.feedTheKrakenStatus,
               offWithTongueStatus: ctx.offWithTongueStatus,

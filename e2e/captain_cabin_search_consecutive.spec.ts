@@ -60,7 +60,6 @@ test.describe("Captain Cabin Search Flow (Consecutive)", () => {
     });
 
     // 4. Host initiates Cabin Search on Player 1
-    console.log("--- Search 1: Host searches Player 1 ---");
     await hostPage
       .getByRole("button", { name: "Cabin Search", exact: true })
       .click();
@@ -114,7 +113,6 @@ test.describe("Captain Cabin Search Flow (Consecutive)", () => {
     await expect(hostPage.getByText("Crew Status")).toBeVisible();
 
     // 5. Player 2 initiates Cabin Search on Player 3
-    console.log("--- Search 2: Player 2 searches Player 3 ---");
     const player2Page = players[1].page;
     const player3Page = players[2].page;
 

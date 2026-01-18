@@ -534,4 +534,126 @@ test.describe("Cult Cabin Search Flow", () => {
       await p.context.close();
     }
   });
+
+  test("One-Time Use Restriction", async ({ browser }) => {
+    // 1. Host creates lobby
+    const hostContext = await browser.newContext();
+    const hostPage = await hostContext.newPage();
+    await hostPage.addInitScript(() => {
+      localStorage.setItem("kraken_player_name", "Host");
+      localStorage.setItem(
+        "kraken_player_photo",
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      );
+    });
+    await hostPage.goto("/");
+    await hostPage.getByRole("button", { name: "Create Voyage" }).click();
+    await completeIdentifyPage(hostPage);
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+      timeout: 15000,
+    });
+
+    const codeElement = hostPage.locator("p.font-mono");
+    await expect(codeElement).toBeVisible();
+    const code = await codeElement.innerText();
+
+    // 2. 4 Players join (Total 5 players)
+    type PlayerContext = {
+      context: typeof hostContext;
+      page: typeof hostPage;
+      name: string;
+    };
+    const players: PlayerContext[] = [];
+    for (let i = 0; i < 4; i++) {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const playerName = `Player ${i + 1}`;
+      await page.addInitScript((name) => {
+        localStorage.setItem("kraken_player_name", name);
+        localStorage.setItem(
+          "kraken_player_photo",
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+        );
+      }, playerName);
+      await page.goto("/");
+      await page.getByRole("button", { name: "Join Crew" }).click();
+      await page.getByPlaceholder("XP7K9L").fill(code);
+      await page.getByRole("button", { name: "Board Ship" }).click();
+      await completeIdentifyPage(page);
+      await expect(page.getByText("Crew Manifest")).toBeVisible({
+        timeout: 15000,
+      });
+      players.push({ context, page, name: playerName });
+    }
+
+    // 3. Start game
+    await hostPage.getByRole("button", { name: "Start Voyage" }).click();
+    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+      timeout: 15000,
+    });
+    for (const p of players) {
+      await expect(p.page.getByText("Crew Manifest")).toBeVisible();
+    }
+
+    // 4. Navigate to Cabin Search
+    await hostPage.getByRole("button", { name: "Cabin Search (Cult)" }).click();
+    await expect(
+      hostPage.getByRole("heading", {
+        name: /Cabin Search|Crew Quiz|Cabin Inspection/,
+      }),
+    ).toBeVisible();
+
+    for (const p of players) {
+      await expect(
+        p.page.getByRole("heading", {
+          name: /Cabin Search|Crew Quiz|Cabin Inspection/,
+        }),
+      ).toBeVisible();
+    }
+
+    // 5. Players claim roles - valid distribution
+    await hostPage.getByRole("button", { name: "Captain" }).click();
+    await players[0].page.getByRole("button", { name: "Navigator" }).click();
+    await players[1].page.getByRole("button", { name: "Lieutenant" }).click();
+    await players[2].page.getByRole("button", { name: "Crew Member" }).click();
+    await players[3].page.getByRole("button", { name: "Crew Member" }).click();
+
+    // 6. Wait for the timer to complete and return to game
+    await expect(
+      hostPage.getByRole("heading", { name: "Ritual Complete" }),
+    ).toBeVisible({ timeout: 45000 });
+
+    // 7. Return to game
+    const allPagesForReturn = [hostPage, ...players.map((p) => p.page)];
+    for (const page of allPagesForReturn) {
+      const returnButton = page.getByText("Return to Ship", { exact: true });
+      if (await returnButton.isVisible().catch(() => false)) {
+        await returnButton.click();
+      }
+    }
+
+    // 8. Verify one-time use restriction - button shows "(Used)"
+    await expect(hostPage.getByText("Crew status")).toBeVisible({
+      timeout: 10000,
+    });
+
+    const cabinSearchLink = hostPage.getByRole("button", {
+      name: "Cabin Search (Cult) (Used)",
+    });
+    await expect(cabinSearchLink).toBeVisible();
+    await expect(cabinSearchLink).toHaveClass(/bg-slate-800\/50/);
+
+    // Clicking it should trigger an alert (already used)
+    hostPage.once("dialog", (dialog) => dialog.accept());
+    await cabinSearchLink.click({ noWaitAfter: true });
+
+    // After dismissing alert, should stay on game view
+    await expect(hostPage.getByText("Crew status")).toBeVisible();
+
+    // Cleanup
+    await hostContext.close();
+    for (const p of players) {
+      await p.context.close();
+    }
+  });
 });

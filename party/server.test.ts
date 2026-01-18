@@ -49,6 +49,15 @@ describe("Server - Denial of Command", () => {
     // Game should remain in valid state
     const snapshot = actor.getSnapshot();
     expect(snapshot.value).toBeDefined();
+
+    // Player should be eliminated
+    const player = snapshot.context.players.find((p) => p.id === "player_1");
+    expect(player?.isEliminated).toBe(true);
+
+    // Player should still be in the list
+    expect(
+      snapshot.context.players.find((p) => p.id === "player_1"),
+    ).toBeDefined();
   });
 
   it("should not crash if DENIAL_OF_COMMAND targets non-existent player", () => {
@@ -62,5 +71,39 @@ describe("Server - Denial of Command", () => {
     // Game should still be in playing state
     const snapshot = actor.getSnapshot();
     expect(snapshot.value).toEqual({ playing: "idle" });
+  });
+
+  it("should keep eliminated player in the game after DENIAL_OF_COMMAND", () => {
+    const actor = setupPlayingGame();
+    const snapshotBefore = actor.getSnapshot();
+    const playerCountBefore = snapshotBefore.context.players.length;
+
+    actor.send({ type: "DENIAL_OF_COMMAND", playerId: "player_2" });
+
+    const snapshot = actor.getSnapshot();
+    // Player count should remain the same
+    expect(snapshot.context.players.length).toBe(playerCountBefore);
+    // Player 2 should be eliminated
+    const player2 = snapshot.context.players.find((p) => p.id === "player_2");
+    expect(player2?.isEliminated).toBe(true);
+    // Other players should not be eliminated
+    const player1 = snapshot.context.players.find((p) => p.id === "player_1");
+    expect(player1?.isEliminated).toBe(false);
+  });
+
+  it("should allow multiple players to be eliminated via DENIAL_OF_COMMAND", () => {
+    const actor = setupPlayingGame();
+
+    actor.send({ type: "DENIAL_OF_COMMAND", playerId: "player_1" });
+    actor.send({ type: "DENIAL_OF_COMMAND", playerId: "player_3" });
+
+    const snapshot = actor.getSnapshot();
+    const p1 = snapshot.context.players.find((p) => p.id === "player_1");
+    const p3 = snapshot.context.players.find((p) => p.id === "player_3");
+    const p2 = snapshot.context.players.find((p) => p.id === "player_2");
+
+    expect(p1?.isEliminated).toBe(true);
+    expect(p3?.isEliminated).toBe(true);
+    expect(p2?.isEliminated).toBe(false);
   });
 });

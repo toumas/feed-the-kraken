@@ -256,6 +256,46 @@ export function GameView({
                 </div>
               </div>
             )}
+
+          {myRole === "CULT_LEADER" && lobby.assignments && (
+            <div
+              data-testid="role-team-info"
+              className="mt-6 pt-6 border-t border-slate-700 w-full"
+            >
+              <h3 className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
+                {t("game.yourConverts")}
+              </h3>
+              <div className="flex flex-wrap justify-center gap-3">
+                {lobby.players
+                  .filter(
+                    (p) =>
+                      p.id !== myPlayerId &&
+                      lobby.convertedPlayerIds?.includes(p.id),
+                  )
+                  .map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex flex-col items-center gap-1"
+                    >
+                      <Avatar
+                        url={p.photoUrl}
+                        size="sm"
+                        className="ring-2 ring-purple-900/50"
+                      />
+                      <span className="text-xs text-purple-200/70 font-medium max-w-[60px] truncate">
+                        {p.name}
+                      </span>
+                    </div>
+                  ))}
+                {(!lobby.convertedPlayerIds ||
+                  lobby.convertedPlayerIds.length === 0) && (
+                  <p className="text-xs text-slate-500 italic">
+                    {t("game.noConverts")}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </RoleReveal.Revealed>
       </RoleReveal.Root>
 
@@ -386,29 +426,65 @@ export function GameView({
         <div className="space-y-3">
           <button
             type="button"
-            onClick={onOpenCabinSearch}
-            className="w-full py-3 bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-200 border border-cyan-800/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+            onClick={() => {
+              if ((lobby.cabinSearchCount || 0) >= 2) {
+                window.alert(t("cabinSearch.limitReached"));
+              } else {
+                onOpenCabinSearch();
+              }
+            }}
+            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+              (lobby.cabinSearchCount || 0) >= 2
+                ? "bg-slate-800/50 text-slate-500 border border-slate-800"
+                : "bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-200 border border-cyan-800/50"
+            }`}
           >
             <Search className="w-5 h-5" />
-            {t("cabinSearch.title")}
+            {(lobby.cabinSearchCount || 0) >= 2
+              ? `${t("cabinSearch.title")} (${t("flogging.used")})`
+              : t("cabinSearch.title")}
           </button>
 
           <button
             type="button"
-            onClick={onStartCabinSearch}
-            className="w-full py-3 bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+            onClick={() => {
+              if (lobby.isCultCabinSearchUsed) {
+                window.alert(t("cabinSearch.alreadyUsed"));
+              } else {
+                onStartCabinSearch();
+              }
+            }}
+            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+              lobby.isCultCabinSearchUsed
+                ? "bg-slate-800/50 text-slate-500 border border-slate-800"
+                : "bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50"
+            }`}
           >
             <Eye className="w-5 h-5" />
-            {t("cabinSearch.title")} ({t("cabinSearch.cult")})
+            {lobby.isCultCabinSearchUsed
+              ? `${t("cabinSearch.title")} (${t("cabinSearch.cult")}) (${t("flogging.used")})`
+              : `${t("cabinSearch.title")} (${t("cabinSearch.cult")})`}
           </button>
 
           <button
             type="button"
-            onClick={onStartGunsStash}
-            className="w-full py-3 bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+            onClick={() => {
+              if (lobby.isGunsStashUsed) {
+                window.alert(t("cultGunsStash.alreadyUsed"));
+              } else {
+                onStartGunsStash();
+              }
+            }}
+            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+              lobby.isGunsStashUsed
+                ? "bg-slate-800/50 text-slate-500 border border-slate-800"
+                : "bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50"
+            }`}
           >
             <Target className="w-5 h-5" />
-            {t("cultGunsStash.title")}
+            {lobby.isGunsStashUsed
+              ? `${t("cultGunsStash.title")} (${t("flogging.used")})`
+              : t("cultGunsStash.title")}
           </button>
 
           <button
@@ -422,7 +498,13 @@ export function GameView({
 
           <button
             type="button"
-            onClick={onOpenFlogging}
+            onClick={() => {
+              if (lobby.isFloggingUsed) {
+                window.alert(t("flogging.alreadyUsed"));
+              } else {
+                onOpenFlogging();
+              }
+            }}
             className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
               lobby.isFloggingUsed
                 ? "bg-slate-800/50 text-slate-500 border border-slate-800"
@@ -444,28 +526,58 @@ export function GameView({
                 onStartConversion();
               }
             }}
-            className="w-full py-3 bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+              (lobby.conversionCount || 0) >= 3
+                ? "bg-slate-800/50 text-slate-500 border border-slate-800"
+                : "bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50"
+            }`}
           >
             <Eye className="w-5 h-5" />
-            {t("conversion.title")}
+            {(lobby.conversionCount || 0) >= 3
+              ? `${t("conversion.title")} (${t("flogging.used")})`
+              : t("conversion.title")}
           </button>
 
           <button
             type="button"
-            onClick={onOpenFeedTheKraken}
-            className="w-full py-3 bg-red-950/30 hover:bg-red-900/50 text-red-200 border border-red-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+            onClick={() => {
+              if ((lobby.feedTheKrakenCount || 0) >= 2) {
+                window.alert(t("feedTheKraken.limitReached"));
+              } else {
+                onOpenFeedTheKraken();
+              }
+            }}
+            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+              (lobby.feedTheKrakenCount || 0) >= 2
+                ? "bg-slate-800/50 text-slate-500 border border-slate-800"
+                : "bg-red-950/30 hover:bg-red-900/50 text-red-200 border border-red-900/50"
+            }`}
           >
             <Skull className="w-5 h-5" />
-            {t("feedTheKraken.title")}
+            {(lobby.feedTheKrakenCount || 0) >= 2
+              ? `${t("feedTheKraken.title")} (${t("flogging.used")})`
+              : t("feedTheKraken.title")}
           </button>
 
           <button
             type="button"
-            onClick={onOpenOffWithTongue}
-            className="w-full py-3 bg-amber-900/30 hover:bg-amber-900/50 text-amber-200 border border-amber-800/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+            onClick={() => {
+              if (lobby.isOffWithTongueUsed) {
+                window.alert(t("offWithTongue.alreadyUsed"));
+              } else {
+                onOpenOffWithTongue();
+              }
+            }}
+            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+              lobby.isOffWithTongueUsed
+                ? "bg-slate-800/50 text-slate-500 border border-slate-800"
+                : "bg-amber-900/30 hover:bg-amber-900/50 text-amber-200 border border-amber-800/50"
+            }`}
           >
             <Scissors className="w-5 h-5" />
-            {t("offWithTongue.title")}
+            {lobby.isOffWithTongueUsed
+              ? `${t("offWithTongue.title")} (${t("flogging.used")})`
+              : t("offWithTongue.title")}
           </button>
 
           <button
@@ -502,6 +614,34 @@ export function GameView({
       </div>
 
       {/* Modals have been moved to GamePage */}
+
+      {/* End Session Confirmation Modal */}
+      {showEndSessionConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
+            <h2 className="text-xl font-bold text-white mb-4">
+              {t("game.endSession")}
+            </h2>
+            <p className="text-slate-400 mb-8">{t("game.endSessionDesc")}</p>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setShowEndSessionConfirm(false)}
+                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
+              >
+                {t("game.stay")}
+              </button>
+              <button
+                type="button"
+                onClick={onLeave}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors"
+              >
+                {t("game.leave")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

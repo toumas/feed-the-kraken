@@ -64,7 +64,7 @@ describe("GameView", () => {
   it("renders Denial of Command button and calls callback when clicked", () => {
     const onOpenDenial = vi.fn();
     render(<GameView {...defaultProps} onOpenDenial={onOpenDenial} />);
-    const button = screen.getByText("Denial of Command");
+    const button = screen.getByText("Denial of Command?");
     fireEvent.click(button);
     expect(onOpenDenial).toHaveBeenCalled();
   });
@@ -88,11 +88,12 @@ describe("GameView", () => {
         "You have been thrown overboard or fed to the Kraken. Your journey ends here.",
       ),
     ).toBeDefined();
-    expect(screen.queryByText("Denial of Command")).toBeNull();
+    expect(screen.queryByText("Denial of Command?")).toBeNull();
   });
 
-  it("shows disabled-looking but clickable flogging button when used", () => {
+  it("shows disabled-looking flogging button and shows alert when used", () => {
     const onOpenFlogging = vi.fn();
+    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
     render(
       <GameView
         {...defaultProps}
@@ -105,7 +106,12 @@ describe("GameView", () => {
     expect(button.className).toContain("bg-slate-800/50");
     expect(button.className).toContain("text-slate-500");
     fireEvent.click(button);
-    expect(onOpenFlogging).toHaveBeenCalled();
+    // Should show alert instead of calling onOpenFlogging
+    expect(alertMock).toHaveBeenCalledWith(
+      "Flogging has already been used this game.",
+    );
+    expect(onOpenFlogging).not.toHaveBeenCalled();
+    alertMock.mockRestore();
   });
 
   it("renders End Session button", () => {
@@ -143,6 +149,82 @@ describe("GameView", () => {
     // Click Leave
     fireEvent.click(leaveButton);
     expect(onLeave).toHaveBeenCalled();
+  });
+
+  it("closes End Session modal for eliminated player when Stay is clicked", () => {
+    const eliminatedLobby: LobbyState = {
+      ...mockLobby,
+      players: [
+        {
+          ...mockLobby.players[0],
+          isEliminated: true,
+        },
+      ],
+    };
+
+    render(<GameView {...defaultProps} lobby={eliminatedLobby} />);
+
+    // Click Return to Shore to show the End Session modal
+    fireEvent.click(screen.getByText("Return to Shore"));
+
+    // Modal should appear
+    const stayButton = screen.getByRole("button", { name: /Stay/i });
+    expect(stayButton).toBeDefined();
+
+    // Click Stay
+    fireEvent.click(stayButton);
+
+    // Modal should be closed (Stay button should no longer exist)
+    expect(screen.queryByRole("button", { name: /Stay/i })).toBeNull();
+  });
+
+  it("shows End Session modal for non-eliminated player and calls onLeave", () => {
+    const onLeave = vi.fn();
+
+    render(<GameView {...defaultProps} onLeave={onLeave} />);
+
+    // Click End Session? button
+    const endSessionButton = screen.getByRole("button", {
+      name: /End Session/i,
+    });
+    fireEvent.click(endSessionButton);
+
+    // Modal should appear with Stay and Leave buttons (verify modal is shown)
+    const stayButton = screen.getByRole("button", { name: /Stay/i });
+    const leaveButton = screen.getByRole("button", { name: /Leave/i });
+    expect(stayButton).toBeDefined();
+    expect(leaveButton).toBeDefined();
+
+    // Also verify modal description text is present
+    expect(
+      screen.getByText(
+        "Are you sure you want to leave the game? You won't be able to rejoin with the same role.",
+      ),
+    ).toBeDefined();
+
+    // Click Leave
+    fireEvent.click(leaveButton);
+    expect(onLeave).toHaveBeenCalled();
+  });
+
+  it("closes End Session modal when Stay is clicked", () => {
+    render(<GameView {...defaultProps} />);
+
+    // Click End Session? button
+    const endSessionButton = screen.getByRole("button", {
+      name: /End Session/i,
+    });
+    fireEvent.click(endSessionButton);
+
+    // Modal should appear - check for Stay button which only exists in modal
+    const stayButton = screen.getByRole("button", { name: /Stay/i });
+    expect(stayButton).toBeDefined();
+
+    // Click Stay
+    fireEvent.click(stayButton);
+
+    // Modal should be closed (Stay button should no longer exist)
+    expect(screen.queryByRole("button", { name: /Stay/i })).toBeNull();
   });
 
   it("renders Cabin Search button and calls callback when clicked", () => {
@@ -609,5 +691,213 @@ describe("GameView", () => {
     expect(screen.queryByText(/Sailors/i)).toBeNull();
     expect(screen.queryByText(/Merenkulkijaa/i)).toBeNull();
     expect(screen.queryByText("game.sailors")).toBeNull();
+  });
+
+  // --- Action Limitation Tests ---
+
+  it("shows alert when clicking Cabin Search at limit", () => {
+    const onOpenCabinSearch = vi.fn();
+    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={{ ...mockLobby, cabinSearchCount: 2 }}
+        onOpenCabinSearch={onOpenCabinSearch}
+      />,
+    );
+    revealRole();
+    const button = screen.getByText("Cabin Search (Used)");
+    fireEvent.click(button);
+    expect(alertMock).toHaveBeenCalledWith(
+      "Cabin Search can only be used 2 times per game.",
+    );
+    expect(onOpenCabinSearch).not.toHaveBeenCalled();
+    alertMock.mockRestore();
+  });
+
+  it("shows alert when clicking Feed the Kraken at limit", () => {
+    const onOpenFeedTheKraken = vi.fn();
+    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={{ ...mockLobby, feedTheKrakenCount: 2 }}
+        onOpenFeedTheKraken={onOpenFeedTheKraken}
+      />,
+    );
+    revealRole();
+    const button = screen.getByText("Feed the Kraken (Used)");
+    fireEvent.click(button);
+    expect(alertMock).toHaveBeenCalledWith(
+      "The Kraken can only be fed 2 times per game.",
+    );
+    expect(onOpenFeedTheKraken).not.toHaveBeenCalled();
+    alertMock.mockRestore();
+  });
+
+  it("shows alert when clicking Conversion at limit", () => {
+    const onStartConversion = vi.fn();
+    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={{ ...mockLobby, conversionCount: 3 }}
+        onStartConversion={onStartConversion}
+      />,
+    );
+    const button = screen.getByText("Conversion to Cult (Used)");
+    fireEvent.click(button);
+    expect(alertMock).toHaveBeenCalledWith(
+      "The conversion ritual can only be performed 3 times per game.",
+    );
+    expect(onStartConversion).not.toHaveBeenCalled();
+    alertMock.mockRestore();
+  });
+
+  it("shows alert when clicking Off with Tongue when used", () => {
+    const onOpenOffWithTongue = vi.fn();
+    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={{ ...mockLobby, isOffWithTongueUsed: true }}
+        onOpenOffWithTongue={onOpenOffWithTongue}
+      />,
+    );
+    revealRole();
+    const button = screen.getByText("Off with the Tongue (Used)");
+    fireEvent.click(button);
+    expect(alertMock).toHaveBeenCalledWith(
+      "Off with the Tongue has already been used this game.",
+    );
+    expect(onOpenOffWithTongue).not.toHaveBeenCalled();
+    alertMock.mockRestore();
+  });
+
+  // --- Cult Leader Converted Cultists Display Tests ---
+
+  it("Cult Leader sees placeholder when no players are converted", () => {
+    const lobbyWithCultLeader: LobbyState = {
+      ...mockLobby,
+      players: [
+        {
+          id: "leader1",
+          name: "The Leader",
+          photoUrl: null,
+          isHost: true,
+          isReady: true,
+          isOnline: true,
+          isEliminated: false,
+          isUnconvertible: false,
+          notRole: null,
+          joinedAt: Date.now(),
+          hasTongue: true,
+        },
+        {
+          id: "sailor1",
+          name: "Sailor 1",
+          photoUrl: null,
+          isHost: false,
+          isReady: true,
+          isOnline: true,
+          isEliminated: false,
+          isUnconvertible: false,
+          notRole: null,
+          joinedAt: Date.now(),
+          hasTongue: true,
+        },
+      ],
+      status: "PLAYING",
+      assignments: {
+        leader1: "CULT_LEADER",
+        sailor1: "SAILOR",
+      },
+      originalRoles: {
+        leader1: "CULT_LEADER",
+        sailor1: "SAILOR",
+      },
+      convertedPlayerIds: [], // No converted players
+    };
+
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={lobbyWithCultLeader}
+        myRole="CULT_LEADER"
+        myPlayerId="leader1"
+      />,
+    );
+
+    revealRole();
+
+    // Should show "Your Converts" section
+    expect(screen.getByText("Your Converts")).toBeDefined();
+
+    // Should show placeholder message
+    expect(
+      screen.getByText("Converted cultists will appear here"),
+    ).toBeDefined();
+  });
+
+  it("Cult Leader sees converted players in Your Converts section", () => {
+    const lobbyWithConvertedPlayers: LobbyState = {
+      ...mockLobby,
+      players: [
+        {
+          id: "leader1",
+          name: "The Leader",
+          photoUrl: null,
+          isHost: true,
+          isReady: true,
+          isOnline: true,
+          isEliminated: false,
+          isUnconvertible: false,
+          notRole: null,
+          joinedAt: Date.now(),
+          hasTongue: true,
+        },
+        {
+          id: "converted1",
+          name: "Converted Sailor",
+          photoUrl: null,
+          isHost: false,
+          isReady: true,
+          isOnline: true,
+          isEliminated: false,
+          isUnconvertible: false,
+          notRole: null,
+          joinedAt: Date.now(),
+          hasTongue: true,
+        },
+      ],
+      status: "PLAYING",
+      assignments: {
+        leader1: "CULT_LEADER",
+        converted1: "CULTIST",
+      },
+      originalRoles: {
+        leader1: "CULT_LEADER",
+        converted1: "SAILOR", // Was originally a sailor
+      },
+      convertedPlayerIds: ["converted1"],
+    };
+
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={lobbyWithConvertedPlayers}
+        myRole="CULT_LEADER"
+        myPlayerId="leader1"
+      />,
+    );
+
+    revealRole();
+
+    // Should show "Your Converts" section
+    expect(screen.getByText("Your Converts")).toBeDefined();
+
+    // Should show the converted player's name in the Your Converts section
+    const yourConvertsSection = screen.getByText("Your Converts").parentElement;
+    expect(yourConvertsSection?.textContent).toContain("Converted Sailor");
   });
 });

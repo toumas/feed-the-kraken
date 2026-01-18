@@ -108,13 +108,29 @@ interface OptionsListProps {
 }
 
 function OptionsList({ options }: OptionsListProps) {
+  // Create a stable key from option IDs to detect actual content changes
+  const optionsKey = options.map((o) => o.id).join(",");
+
   const [shuffledOptions, setShuffledOptions] = useState<
     { id: string; text: string }[]
   >([]);
+  const [lastShuffledKey, setLastShuffledKey] = useState<string>("");
 
+  // Only shuffle when option IDs actually change, not on every re-render
   useEffect(() => {
-    setShuffledOptions([...options].sort(() => Math.random() - 0.5));
-  }, [options]);
+    if (optionsKey !== lastShuffledKey) {
+      setShuffledOptions([...options].sort(() => Math.random() - 0.5));
+      setLastShuffledKey(optionsKey);
+    } else {
+      // Update text without reshuffling (for translation changes)
+      setShuffledOptions((prev) =>
+        prev.map((prevOpt) => {
+          const updated = options.find((o) => o.id === prevOpt.id);
+          return updated ? { ...prevOpt, text: updated.text } : prevOpt;
+        }),
+      );
+    }
+  }, [optionsKey, options, lastShuffledKey]);
 
   if (shuffledOptions.length === 0) return null;
 

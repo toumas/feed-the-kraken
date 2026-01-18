@@ -112,6 +112,8 @@ export interface GameContext {
   assignments?: Record<string, Role>;
   originalRoles?: Record<string, Role>;
   isFloggingUsed: boolean;
+  isGunsStashUsed: boolean;
+  isCultCabinSearchUsed: boolean;
   conversionCount: number;
   conversionStatus?: ConversionStatus;
   cabinSearchStatus?: CabinSearchStatus;

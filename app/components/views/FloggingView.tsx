@@ -21,15 +21,12 @@ export function FloggingView({ onDismiss }: { onDismiss: () => void }) {
     }
   }, [error, isPending]);
 
-  // Handle reveal or already used
+  // Handle reveal completion
   useEffect(() => {
     if (floggingReveal) {
       onDismiss();
-    } else if (lobby?.isFloggingUsed) {
-      window.alert(t("flogging.alreadyUsed"));
-      onDismiss();
     }
-  }, [lobby?.isFloggingUsed, floggingReveal, onDismiss, t]);
+  }, [floggingReveal, onDismiss]);
 
   if (!lobby) {
     return (

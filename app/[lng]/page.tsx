@@ -16,30 +16,26 @@ export default function KrakenCompanion() {
   // Check for kick message from localStorage (set when player was kicked)
   useEffect(() => {
     const kickMessage = localStorage.getItem("kraken_kick_message");
-    if (kickMessage) {
-      setError(kickMessage);
-      localStorage.removeItem("kraken_kick_message");
-    }
+    if (!kickMessage) return;
+
+    setError(kickMessage);
+    localStorage.removeItem("kraken_kick_message");
   }, [setError]);
 
-  // Redirect if already in a lobby
+  // Derive redirect target at render time (no state, no effect for the check itself)
+  const hasActiveLobbyCode =
+    typeof window !== "undefined" && localStorage.getItem("kraken_lobby_code");
+  const shouldRedirect = lobby && hasActiveLobbyCode;
+  const redirectRoute = lobby?.status === "PLAYING" ? "/game" : "/lobby";
+
+  // Effect only for the actual navigation side effect
   useEffect(() => {
-    if (lobby) {
-      if (lobby.status === "PLAYING") {
-        router.push("/game");
-      } else {
-        router.push("/lobby");
-      }
-    }
-  }, [lobby, router]);
+    if (!shouldRedirect) return;
+    router.push(redirectRoute);
+  }, [shouldRedirect, redirectRoute, router]);
 
-  const handleCreate = () => {
-    router.push("/identify?next=create");
-  };
-
-  const handleJoin = () => {
-    router.push("/join");
-  };
+  // Return nothing while redirecting to prevent flash of content
+  if (shouldRedirect) return null;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-cyan-900">
@@ -68,7 +64,10 @@ export default function KrakenCompanion() {
 
         {/* View Content */}
         <div className="flex-1 flex flex-col p-4">
-          <HomeView onCreate={handleCreate} onJoin={handleJoin} />
+          <HomeView
+            onCreate={() => router.push("/identify?next=create")}
+            onJoin={() => router.push("/join")}
+          />
         </div>
       </main>
     </div>

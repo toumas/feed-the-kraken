@@ -25,6 +25,7 @@ export default function LobbyPage() {
   const [cancellationMessage, setCancellationMessage] = useState<string | null>(
     null,
   );
+  const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => {
     // If game starts, go to appropriate page based on mode
@@ -44,9 +45,13 @@ export default function LobbyPage() {
   }, [lobby?.roleSelectionStatus]);
 
   const handleLeave = () => {
+    setIsLeaving(true);
     leaveLobby();
     router.push("/");
   };
+
+  // Show nothing while leaving to prevent flash of loading state
+  if (isLeaving) return null;
 
   if (!lobby) {
     // If not connected yet or lost connection, show loading or redirect

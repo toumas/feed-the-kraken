@@ -98,6 +98,8 @@
     "pirateCrew": "Pirate Crew",
     "noPirates": "No other pirates",
     "yourLeader": "Your Leader",
+    "yourConverts": "Your Converts",
+    "noConverts": "Converted cultists will appear here",
     "sailors": "Sailors",
     "eliminatedDesc": "You have been thrown overboard or fed to the Kraken. Your journey ends here.",
     "returnToShore": "Return to Shore",
@@ -146,7 +148,8 @@
     "waitingConfirmation": "Waiting for Confirmation",
     "waitingConfirmationDesc": "The sailor must accept their fate...",
     "cultWins": "CULT WINS!",
-    "cultWinsDesc": "The Cult Leader was fed to the Kraken! The Cult Leader and all Cultists immediately win the game."
+    "cultWinsDesc": "The Cult Leader was fed to the Kraken! The Cult Leader and all Cultists immediately win the game.",
+    "limitReached": "The Kraken can only be fed 2 times per game."
   },
   "flogging": {
     "title": "Flogging",
@@ -179,13 +182,15 @@
     "crew": "Crew Member",
     "request": "wants to search your cabin. Do you allow it?",
     "cult": "Cult",
+    "alreadyUsed": "Cult Cabin Search has already been used this game.",
     "alreadySearched": "Already searched",
     "confirmSearch": "Confirm Search",
     "waitingConfirmation": "Waiting for Confirmation",
     "waitingConfirmationDesc": "The crewmate must allow the search...",
     "searchedTitle": "Cabin Searched",
     "searchedDesc": "Tap 5 times to reveal the loyalty card.",
-    "foundCard": "You found {{name}}'s loyalty card!"
+    "foundCard": "You found {{name}}'s loyalty card!",
+    "limitReached": "Cabin Search can only be used 2 times per game."
   },
   "conversion": {
     "interrupted": "The ritual was interrupted!",
@@ -223,12 +228,14 @@
     "request": "wants to silence you.",
     "requestDesc": "If you accept, you can no longer articulate words (but can make sounds and gesticulate) and can no longer become captain.",
     "alreadySilenced": "Already silenced",
+    "alreadyUsed": "Off with the Tongue has already been used this game.",
     "silenceSailor": "Silence Sailor",
     "waitingConfirmation": "Waiting for Confirmation",
     "waitingConfirmationDesc": "The sailor must accept being silenced..."
   },
   "cultGunsStash": {
     "title": "Cult's Guns Stash",
+    "waitingDescription": "The ritual is about to begin. All players must confirm to proceed.",
     "interrupted": "The ritual was interrupted!",
     "cancelled": "The action has been cancelled.",
     "alreadyReady": "You are already ready.",
@@ -243,7 +250,8 @@
     "receivedCount_plural": "You received {{count}} guns!",
     "useWisely": "Use them wisely.",
     "emptyHands": "Empty Hands",
-    "noGuns": "You did not receive any guns from the stash."
+    "noGuns": "You did not receive any guns from the stash.",
+    "alreadyUsed": "Cult's Guns Stash has already been used this game."
   },
   "roleReveal": {
     "yourRoleIs": "Your role is",
@@ -285,7 +293,7 @@
     "youWereKicked": "You were removed from the lobby by the host."
   },
   "denial": {
-    "title": "Denial of Command",
+    "title": "Denial of Command?",
     "description": "This action is irreversible. You will be eliminated from the game.",
     "confirm": "Yes, I Deny Command"
   },

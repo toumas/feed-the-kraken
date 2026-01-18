@@ -270,6 +270,33 @@ test.describe("Conversion to Cult", () => {
       }
     }
 
+    // 15a. Verify Cult Leader sees "Your Converts" section with the converted player
+    // First, reveal the role again to see the "Your Converts" section
+    const revealButton = cultLeaderPage.getByText(
+      "Tap 5 times to reveal your role.",
+    );
+    for (let i = 0; i < 5; i++) {
+      await revealButton.click();
+    }
+    // Verify "Your Converts" section is visible
+    await expect(cultLeaderPage.getByText("Your Converts")).toBeVisible();
+    // Verify the converted player's name appears in the section
+    const yourConvertsSection = cultLeaderPage
+      .locator("div")
+      .filter({ hasText: "Your Converts" })
+      .last();
+    // Find which player was actually converted (their page is actualConvertedPage)
+    const convertedPlayerName = players.find(
+      (p) => p.page === actualConvertedPage,
+    )?.name;
+    if (convertedPlayerName) {
+      await expect(
+        yourConvertsSection.getByText(convertedPlayerName),
+      ).toBeVisible();
+    }
+    // Hide the role again by tapping once
+    await cultLeaderPage.getByText("Tap once to hide your role.").click();
+
     // ==========================================
     // SECOND CONVERSION
     // ==========================================
@@ -384,6 +411,36 @@ test.describe("Conversion to Cult", () => {
       .getByText("Return to Ship", { exact: true })
       .click();
     await expect(secondConvertedPage).toHaveURL(/\/game/, { timeout: 15000 });
+
+    // 26. Verify Cult Leader sees both converted players in "Your Converts" section
+    const finalRevealButton = cultLeaderPage.getByText(
+      "Tap 5 times to reveal your role.",
+    );
+    for (let i = 0; i < 5; i++) {
+      await finalRevealButton.click();
+    }
+    await expect(cultLeaderPage.getByText("Your Converts")).toBeVisible();
+    const finalConvertsSection = cultLeaderPage
+      .locator("div")
+      .filter({ hasText: "Your Converts" })
+      .last();
+    // Both converted players should be visible
+    const firstConvertedName = players.find(
+      (p) => p.page === actualConvertedPage,
+    )?.name;
+    const secondConvertedName = players.find(
+      (p) => p.page === secondConvertedPage,
+    )?.name;
+    if (firstConvertedName) {
+      await expect(
+        finalConvertsSection.getByText(firstConvertedName),
+      ).toBeVisible();
+    }
+    if (secondConvertedName) {
+      await expect(
+        finalConvertsSection.getByText(secondConvertedName),
+      ).toBeVisible();
+    }
   });
 
   test("Cancelled Conversion", async ({ browser }) => {

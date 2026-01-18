@@ -29,7 +29,11 @@ export default defineConfig({
     },
     {
       name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
+      use: {
+        ...devices["Desktop Firefox"],
+        /* Disable trace to avoid fixture timeout during teardown (known Playwright issue) */
+        trace: "off",
+      },
       /* Exclude visual tests from firefox for consistent snapshots */
       testIgnore: /visual\.spec\.ts/,
     },
