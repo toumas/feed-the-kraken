@@ -474,4 +474,36 @@ describe("Cult Guns Stash Flow - XState", () => {
       vi.useRealTimers();
     });
   });
+
+  describe("Eliminated Players Handling", () => {
+    it("should not require eliminated players to be ready for gunsStashAllReady", () => {
+      // Eliminate player 5 before starting guns stash using Denial of Command
+      actor.send({
+        type: "DENIAL_OF_COMMAND",
+        playerId: "p5",
+      });
+
+      // Verify player is eliminated
+      const afterDenialContext = actor.getSnapshot().context;
+      const eliminatedPlayer = afterDenialContext.players.find(
+        (p) => p.id === "p5",
+      );
+      expect(eliminatedPlayer?.isEliminated).toBe(true);
+
+      // Start guns stash
+      actor.send({ type: "START_CULT_GUNS_STASH", initiatorId: "p1" });
+
+      // Only non-eliminated players (p1-p4) confirm ready
+      for (let i = 1; i <= 4; i++) {
+        actor.send({
+          type: "CONFIRM_CULT_GUNS_STASH_READY",
+          playerId: `p${i}`,
+        });
+      }
+
+      // Should transition to DISTRIBUTION without p5's confirmation
+      const context = actor.getSnapshot().context;
+      expect(context.gunsStashStatus?.state).toBe("DISTRIBUTION");
+    });
+  });
 });
