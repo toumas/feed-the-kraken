@@ -281,9 +281,10 @@ describe("XState Game Machine", () => {
       });
       const context = actor.getSnapshot().context;
       expect(context.isFloggingUsed).toBe(true);
-      // Player should have notRole set
+      // Player should have notRole set and be marked as unconvertible
       const player = context.players.find((p) => p.id === "player_1");
       expect(player?.notRole).toBeDefined();
+      expect(player?.isUnconvertible).toBe(true);
     });
 
     it("should clear floggingStatus when denied", () => {
@@ -738,6 +739,140 @@ describe("XState Game Machine", () => {
         expect(guards.conversionNotAtLimit({ context: contextAtLimit })).toBe(
           false,
         );
+      });
+
+      it("should block START_CONVERSION when no convertible players exist", () => {
+        const snapshot = actor.getSnapshot();
+        const guards = gameMachine.implementations?.guards as GuardsRecord;
+
+        // Create a context with convertible players (should allow)
+        const contextWithConvertible = {
+          ...snapshot.context,
+          assignments: {
+            host: "SAILOR" as const,
+            p1: "SAILOR" as const,
+            p2: "CULTIST" as const,
+            p3: "CULT_LEADER" as const,
+            p4: "PIRATE" as const,
+          },
+          originalRoles: {
+            host: "SAILOR" as const,
+            p1: "SAILOR" as const,
+            p2: "CULTIST" as const,
+            p3: "CULT_LEADER" as const,
+            p4: "PIRATE" as const,
+          },
+        };
+        expect(
+          guards.canStartConversion({ context: contextWithConvertible }),
+        ).toBe(true);
+
+        // Create a context where all non-Cult-Leader players are unconvertible (should block)
+        const contextNoConvertible = {
+          ...snapshot.context,
+          players: snapshot.context.players.map((p) => ({
+            ...p,
+            isUnconvertible: p.id !== "p3", // All except Cult Leader are unconvertible
+          })),
+          assignments: {
+            host: "SAILOR" as const,
+            p1: "SAILOR" as const,
+            p2: "CULTIST" as const,
+            p3: "CULT_LEADER" as const,
+            p4: "PIRATE" as const,
+          },
+          originalRoles: {
+            host: "SAILOR" as const,
+            p1: "SAILOR" as const,
+            p2: "CULTIST" as const,
+            p3: "CULT_LEADER" as const,
+            p4: "PIRATE" as const,
+          },
+        };
+        expect(
+          guards.canStartConversion({ context: contextNoConvertible }),
+        ).toBe(false);
+
+        // Create a context where all eligible players have been converted to Cultist (should block)
+        const contextAllConverted = {
+          ...snapshot.context,
+          assignments: {
+            host: "CULTIST" as const, // converted
+            p1: "CULTIST" as const, // converted
+            p2: "CULTIST" as const, // original cultist - still targetable
+            p3: "CULT_LEADER" as const,
+            p4: "CULTIST" as const, // converted
+          },
+          originalRoles: {
+            host: "SAILOR" as const,
+            p1: "PIRATE" as const,
+            p2: "CULTIST" as const, // original cultist
+            p3: "CULT_LEADER" as const,
+            p4: "SAILOR" as const,
+          },
+        };
+        // Original cultist (p2) is still targetable since Cult Leader doesn't know who they are
+        expect(
+          guards.canStartConversion({ context: contextAllConverted }),
+        ).toBe(true);
+
+        // Create a context where original cultist is also unconvertible (should block)
+        const contextAllConvertedWithUnconvertibleOriginal = {
+          ...contextAllConverted,
+          players: snapshot.context.players.map((p) => ({
+            ...p,
+            isUnconvertible: p.id === "p2", // Original cultist is unconvertible
+          })),
+        };
+        expect(
+          guards.canStartConversion({
+            context: contextAllConvertedWithUnconvertibleOriginal,
+          }),
+        ).toBe(false);
+
+        // Test at conversion count limit (should block)
+        const contextAtLimit = {
+          ...contextWithConvertible,
+          conversionCount: 3,
+        };
+        expect(guards.canStartConversion({ context: contextAtLimit })).toBe(
+          false,
+        );
+
+        // Test with all eligible players eliminated (should block)
+        const contextAllEliminated = {
+          ...contextWithConvertible,
+          conversionCount: 0,
+          players: snapshot.context.players.map((p) => ({
+            ...p,
+            isEliminated: p.id !== "p3", // All except Cult Leader are eliminated
+          })),
+        };
+        expect(
+          guards.canStartConversion({ context: contextAllEliminated }),
+        ).toBe(false);
+
+        // Test with only Cult Leader not eliminated/unconvertible (should block)
+        const contextOnlyCultLeaderAvailable = {
+          ...contextWithConvertible,
+          conversionCount: 0,
+          players: snapshot.context.players.map((p) => ({
+            ...p,
+            isEliminated: p.id !== "p3", // All except Cult Leader are eliminated
+          })),
+          assignments: {
+            host: "SAILOR" as const,
+            p1: "SAILOR" as const,
+            p2: "CULTIST" as const,
+            p3: "CULT_LEADER" as const,
+            p4: "PIRATE" as const,
+          },
+        };
+        expect(
+          guards.canStartConversion({
+            context: contextOnlyCultLeaderAvailable,
+          }),
+        ).toBe(false);
       });
 
       it("should allow FEED_THE_KRAKEN_REQUEST up to 2 times", () => {

@@ -220,6 +220,7 @@
     "proveWorthDesc": "Vastaa oikein miellyttääksesi Krakenia.",
     "ritualBegun": "Rituaali on alkanut. Kaikkien pelaajien on hyväksyttävä jatkaakseen.",
     "limitReached": "Liittämisrituaali voidaan suorittaa vain 3 kertaa pelin aikana.",
+    "noConvertiblePlayers": "Ei käännytettäviä pelaajia jäljellä.",
     "alreadyAccepted": "Olet jo hyväksynyt rituaalin."
   },
   "offWithTongue": {

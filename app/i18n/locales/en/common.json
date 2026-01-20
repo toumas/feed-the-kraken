@@ -220,6 +220,7 @@
     "proveWorthDesc": "Answer correctly to please the Kraken.",
     "ritualBegun": "A ritual has begun. All players must accept to proceed.",
     "limitReached": "The conversion ritual can only be performed 3 times per game.",
+    "noConvertiblePlayers": "No convertible players remaining.",
     "alreadyAccepted": "You have already accepted the ritual."
   },
   "offWithTongue": {

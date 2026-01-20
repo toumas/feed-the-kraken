@@ -135,10 +135,9 @@ export function getRoleColor(role: Role | null): string {
 /**
  * Sorts players with the current player first, then alphabetically by name.
  */
-export function sortPlayersWithSelfFirst<T extends { id: string; name: string }>(
-  players: T[],
-  myPlayerId: string,
-): T[] {
+export function sortPlayersWithSelfFirst<
+  T extends { id: string; name: string },
+>(players: T[], myPlayerId: string): T[] {
   return [...players].sort((a, b) => {
     if (a.id === myPlayerId) return -1;
     if (b.id === myPlayerId) return 1;
