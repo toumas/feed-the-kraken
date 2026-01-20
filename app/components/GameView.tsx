@@ -107,6 +107,20 @@ export function GameView({
   const me = lobby.players.find((p) => p.id === myPlayerId);
   const isEliminated = me?.isEliminated;
 
+  // Compute if conversion is disabled (at limit OR no convertible players)
+  const wasConvertedToCultist = (playerId: string) =>
+    lobby.assignments?.[playerId] === "CULTIST" &&
+    lobby.originalRoles?.[playerId] !== "CULTIST";
+  const hasConvertiblePlayers = lobby.players.some(
+    (p) =>
+      !p.isEliminated &&
+      !p.isUnconvertible &&
+      !wasConvertedToCultist(p.id) &&
+      lobby.assignments?.[p.id] !== "CULT_LEADER",
+  );
+  const isConversionDisabled =
+    (lobby.conversionCount || 0) >= 3 || !hasConvertiblePlayers;
+
   if (isEliminated) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center space-y-6 animate-in zoom-in-95 duration-700">
@@ -522,18 +536,20 @@ export function GameView({
             onClick={() => {
               if ((lobby.conversionCount || 0) >= 3) {
                 window.alert(t("conversion.limitReached"));
+              } else if (!hasConvertiblePlayers) {
+                window.alert(t("conversion.noConvertiblePlayers"));
               } else {
                 onStartConversion();
               }
             }}
             className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
-              (lobby.conversionCount || 0) >= 3
+              isConversionDisabled
                 ? "bg-slate-800/50 text-slate-500 border border-slate-800"
                 : "bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50"
             }`}
           >
             <Eye className="w-5 h-5" />
-            {(lobby.conversionCount || 0) >= 3
+            {isConversionDisabled
               ? `${t("conversion.title")} (${t("flogging.used")})`
               : t("conversion.title")}
           </button>

@@ -114,6 +114,81 @@ describe("GameView", () => {
     alertMock.mockRestore();
   });
 
+  it("calls onOpenFlogging when flogging is not used", () => {
+    const onOpenFlogging = vi.fn();
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={{ ...mockLobby, isFloggingUsed: false }}
+        onOpenFlogging={onOpenFlogging}
+      />,
+    );
+    revealRole();
+    const button = screen.getByText("Flogging");
+    fireEvent.click(button);
+    expect(onOpenFlogging).toHaveBeenCalled();
+  });
+
+  it("calls onOpenFeedTheKraken when not at limit", () => {
+    const onOpenFeedTheKraken = vi.fn();
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={{ ...mockLobby, feedTheKrakenCount: 0 }}
+        onOpenFeedTheKraken={onOpenFeedTheKraken}
+      />,
+    );
+    revealRole();
+    const button = screen.getByText("Feed the Kraken");
+    fireEvent.click(button);
+    expect(onOpenFeedTheKraken).toHaveBeenCalled();
+  });
+
+  it("calls onOpenOffWithTongue when not used", () => {
+    const onOpenOffWithTongue = vi.fn();
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={{ ...mockLobby, isOffWithTongueUsed: false }}
+        onOpenOffWithTongue={onOpenOffWithTongue}
+      />,
+    );
+    revealRole();
+    const button = screen.getByText("Off with the Tongue");
+    fireEvent.click(button);
+    expect(onOpenOffWithTongue).toHaveBeenCalled();
+  });
+
+  it("calls onStartCabinSearch when cult cabin search is not used", () => {
+    const onStartCabinSearch = vi.fn();
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={{ ...mockLobby, isCultCabinSearchUsed: false }}
+        onStartCabinSearch={onStartCabinSearch}
+      />,
+    );
+    revealRole();
+    const button = screen.getByText("Cabin Search (Cult)");
+    fireEvent.click(button);
+    expect(onStartCabinSearch).toHaveBeenCalled();
+  });
+
+  it("calls onStartGunsStash when guns stash is not used", () => {
+    const onStartGunsStash = vi.fn();
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={{ ...mockLobby, isGunsStashUsed: false }}
+        onStartGunsStash={onStartGunsStash}
+      />,
+    );
+    revealRole();
+    const button = screen.getByText("Cult's Guns Stash");
+    fireEvent.click(button);
+    expect(onStartGunsStash).toHaveBeenCalled();
+  });
+
   it("renders End Session button", () => {
     render(<GameView {...defaultProps} />);
     revealRole();
@@ -750,6 +825,122 @@ describe("GameView", () => {
     expect(alertMock).toHaveBeenCalledWith(
       "The conversion ritual can only be performed 3 times per game.",
     );
+    expect(onStartConversion).not.toHaveBeenCalled();
+    alertMock.mockRestore();
+  });
+
+  it("shows alert when clicking Conversion with no convertible players", () => {
+    const onStartConversion = vi.fn();
+    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
+
+    // Create a lobby where all non-Cult-Leader players are unconvertible
+    const lobbyNoConvertible: LobbyState = {
+      ...mockLobby,
+      players: [
+        {
+          ...mockLobby.players[0],
+          id: "leader1",
+          name: "Cult Leader",
+          isUnconvertible: false,
+        },
+        {
+          ...mockLobby.players[0],
+          id: "sailor1",
+          name: "Sailor 1",
+          isUnconvertible: true,
+        },
+        {
+          ...mockLobby.players[0],
+          id: "sailor2",
+          name: "Sailor 2",
+          isUnconvertible: true,
+        },
+      ],
+      status: "PLAYING",
+      conversionCount: 0,
+      assignments: {
+        leader1: "CULT_LEADER",
+        sailor1: "SAILOR",
+        sailor2: "SAILOR",
+      },
+      originalRoles: {
+        leader1: "CULT_LEADER",
+        sailor1: "SAILOR",
+        sailor2: "SAILOR",
+      },
+    };
+
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={lobbyNoConvertible}
+        onStartConversion={onStartConversion}
+      />,
+    );
+    const button = screen.getByText("Conversion to Cult (Used)");
+
+    // Button should be styled as disabled
+    expect(button.className).toContain("bg-slate-800/50");
+    expect(button.className).toContain("text-slate-500");
+
+    fireEvent.click(button);
+    expect(alertMock).toHaveBeenCalledWith("No convertible players remaining.");
+    expect(onStartConversion).not.toHaveBeenCalled();
+    alertMock.mockRestore();
+  });
+
+  it("shows alert when clicking Conversion with all players already converted", () => {
+    const onStartConversion = vi.fn();
+    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
+
+    // Create a lobby where all eligible players have been converted (wasConvertedToCultist check)
+    const lobbyAllConverted: LobbyState = {
+      ...mockLobby,
+      players: [
+        {
+          ...mockLobby.players[0],
+          id: "leader1",
+          name: "Cult Leader",
+          isUnconvertible: false,
+        },
+        {
+          ...mockLobby.players[0],
+          id: "converted1",
+          name: "Converted 1",
+          isUnconvertible: false,
+        },
+        {
+          ...mockLobby.players[0],
+          id: "converted2",
+          name: "Converted 2",
+          isUnconvertible: false,
+        },
+      ],
+      status: "PLAYING",
+      conversionCount: 0,
+      assignments: {
+        leader1: "CULT_LEADER",
+        converted1: "CULTIST", // converted
+        converted2: "CULTIST", // converted
+      },
+      originalRoles: {
+        leader1: "CULT_LEADER",
+        converted1: "SAILOR", // was sailor, now cultist
+        converted2: "PIRATE", // was pirate, now cultist
+      },
+    };
+
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={lobbyAllConverted}
+        onStartConversion={onStartConversion}
+      />,
+    );
+    const button = screen.getByText("Conversion to Cult (Used)");
+
+    fireEvent.click(button);
+    expect(alertMock).toHaveBeenCalledWith("No convertible players remaining.");
     expect(onStartConversion).not.toHaveBeenCalled();
     alertMock.mockRestore();
   });

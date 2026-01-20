@@ -169,6 +169,28 @@ export const gameMachine = setup({
     cabinSearchNotUsed: ({ context }) => context.isCultCabinSearchUsed !== true,
     floggingNotUsed: ({ context }) => context.isFloggingUsed !== true,
     conversionNotAtLimit: ({ context }) => (context.conversionCount || 0) < 3,
+    canStartConversion: ({ context }) => {
+      // Combined guard: check both count limit AND convertible players exist
+      if ((context.conversionCount || 0) >= 3) return false;
+
+      // Check if there are any eligible targets for conversion:
+      // - Not eliminated
+      // - Not unconvertible
+      // - Not already converted to Cultist
+      // - Not Cult Leader
+      const wasConvertedToCultist = (playerId: string) =>
+        context.assignments?.[playerId] === "CULTIST" &&
+        context.originalRoles?.[playerId] !== "CULTIST";
+
+      const eligibleTargets = context.players.filter(
+        (p) =>
+          !p.isEliminated &&
+          !p.isUnconvertible &&
+          !wasConvertedToCultist(p.id) &&
+          context.assignments?.[p.id] !== "CULT_LEADER",
+      );
+      return eligibleTargets.length > 0;
+    },
     feedTheKrakenNotAtLimit: ({ context }) =>
       (context.feedTheKrakenCount || 0) < 2,
     cabinSearchNotAtLimit: ({ context }) => (context.cabinSearchCount || 0) < 2,
@@ -1046,7 +1068,9 @@ export const gameMachine = setup({
           result: { notRole: notRole as Role },
         },
         players: context.players.map((p) =>
-          p.id === targetId ? { ...p, notRole: notRole as Role } : p,
+          p.id === targetId
+            ? { ...p, notRole: notRole as Role, isUnconvertible: true }
+            : p,
         ),
       };
     }),
@@ -1370,7 +1394,7 @@ export const gameMachine = setup({
         idle: {
           on: {
             START_CONVERSION: {
-              guard: "conversionNotAtLimit",
+              guard: "canStartConversion",
               target: "conversion",
               actions: "startConversion",
             },
