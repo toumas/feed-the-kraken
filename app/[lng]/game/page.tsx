@@ -123,33 +123,42 @@ export default function GamePage() {
     );
   }
 
+  // Check if the current player is eliminated
+  const me = lobby.players.find((p) => p.id === myPlayerId);
+  const isEliminated = me?.isEliminated;
+
   // Determine Active View
   let activeView = "DASHBOARD";
 
-  // 1. Role Selection
+  // 1. Role Selection (all players, including eliminated, can see role selection)
   if (lobby.roleSelectionStatus?.state === "SELECTING") {
     activeView = "ROLE_SELECTION";
   }
+  // For eliminated players, skip Cult Ritual views - they stay on DASHBOARD (which shows eliminated screen)
   // 2. Conversion
   else if (
-    lobby.conversionStatus?.state === "ACTIVE" ||
-    (lobby.conversionStatus?.state === "COMPLETED" && !isConversionDismissed)
+    !isEliminated &&
+    (lobby.conversionStatus?.state === "ACTIVE" ||
+      (lobby.conversionStatus?.state === "COMPLETED" && !isConversionDismissed))
   ) {
     activeView = "CONVERSION";
   }
   // 3. Cult Cabin Search
   else if (
-    lobby.cabinSearchStatus?.state === "SETUP" ||
-    lobby.cabinSearchStatus?.state === "ACTIVE" ||
-    (lobby.cabinSearchStatus?.state === "COMPLETED" && !isCabinSearchDismissed)
+    !isEliminated &&
+    (lobby.cabinSearchStatus?.state === "SETUP" ||
+      lobby.cabinSearchStatus?.state === "ACTIVE" ||
+      (lobby.cabinSearchStatus?.state === "COMPLETED" &&
+        !isCabinSearchDismissed))
   ) {
     activeView = "CULT_CABIN_SEARCH";
   }
   // 4. Cult Guns Stash
   else if (
-    lobby.gunsStashStatus?.state === "WAITING_FOR_PLAYERS" ||
-    lobby.gunsStashStatus?.state === "DISTRIBUTION" ||
-    (lobby.gunsStashStatus?.state === "COMPLETED" && !isGunsStashDismissed)
+    !isEliminated &&
+    (lobby.gunsStashStatus?.state === "WAITING_FOR_PLAYERS" ||
+      lobby.gunsStashStatus?.state === "DISTRIBUTION" ||
+      (lobby.gunsStashStatus?.state === "COMPLETED" && !isGunsStashDismissed))
   ) {
     activeView = "CULT_GUNS_STASH";
   }
@@ -440,7 +449,8 @@ export default function GamePage() {
         )}
 
       {/* Conversion Pending Modal */}
-      {lobby.conversionStatus &&
+      {!isEliminated &&
+        lobby.conversionStatus &&
         lobby.conversionStatus.state === "PENDING" &&
         !isConversionDismissed && (
           <ReadyCheckModal.Root
