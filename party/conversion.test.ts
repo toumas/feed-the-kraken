@@ -275,7 +275,7 @@ describe("Conversion Flow - XState", () => {
       expect(beforeContext.conversionStatus?.round?.leaderChoice).toBeNull();
 
       // Advance timer past the quiz duration
-      vi.advanceTimersByTime(16000);
+      vi.advanceTimersByTime(31000);
 
       const afterContext = actor.getSnapshot().context;
 
@@ -322,7 +322,7 @@ describe("Conversion Flow - XState", () => {
         });
 
         // Advance timer
-        vi.advanceTimersByTime(16000);
+        vi.advanceTimersByTime(31000);
 
         const afterContext = actor.getSnapshot().context;
 
@@ -372,7 +372,7 @@ describe("Conversion Flow - XState", () => {
           });
 
           // Advance timer to complete first conversion
-          vi.advanceTimersByTime(16000);
+          vi.advanceTimersByTime(31000);
 
           const afterFirstContext = testActor.getSnapshot().context;
           expect(afterFirstContext.conversionStatus?.state).toBe("COMPLETED");
@@ -396,7 +396,7 @@ describe("Conversion Flow - XState", () => {
           }
 
           // Don't pick anyone - let timer expire for random selection
-          vi.advanceTimersByTime(16000);
+          vi.advanceTimersByTime(31000);
 
           const afterSecondContext = testActor.getSnapshot().context;
           expect(afterSecondContext.conversionStatus?.state).toBe("COMPLETED");

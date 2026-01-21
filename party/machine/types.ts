@@ -52,6 +52,7 @@ export interface ConversionStatus {
 export interface ConversionRound {
   startTime: number;
   duration: number;
+  endTime: number; // startTime + duration for client-side timer sync
   playerQuestions: Record<string, number>;
   leaderChoice: string | null;
   playerAnswers: Record<string, string>;
@@ -79,6 +80,7 @@ export interface CabinSearchStatus {
   state: "SETUP" | "ACTIVE" | "COMPLETED" | "CANCELLED";
   cancellationReason?: string;
   startTime?: number;
+  endTime?: number; // startTime + 30000 for client-side timer sync
   playerQuestions?: Record<string, number>;
   playerAnswers?: Record<string, string>;
   result?: { correctAnswers: string[] };
@@ -89,6 +91,7 @@ export interface GunsStashStatus {
   state: "WAITING_FOR_PLAYERS" | "DISTRIBUTION" | "COMPLETED" | "CANCELLED";
   readyPlayers: string[];
   startTime?: number;
+  endTime?: number; // startTime + 30000 for client-side timer sync
   distribution?: Record<string, number>;
   playerQuestions?: Record<string, number>;
   playerAnswers?: Record<string, string>;

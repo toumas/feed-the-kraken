@@ -34,16 +34,15 @@ export function CultCabinSearchView({ onDismiss }: { onDismiss: () => void }) {
 
   // Timer Logic
   useEffect(() => {
-    if (cabinSearchStatus?.state === "ACTIVE" && cabinSearchStatus.startTime) {
-      const startTime = cabinSearchStatus.startTime;
+    if (cabinSearchStatus?.state === "ACTIVE" && cabinSearchStatus.endTime) {
+      const endTime = cabinSearchStatus.endTime;
       const interval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const remaining = Math.max(0, Math.ceil((15000 - elapsed) / 1000));
+        const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
         setTimeLeft(remaining);
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [cabinSearchStatus?.state, cabinSearchStatus?.startTime]);
+  }, [cabinSearchStatus?.state, cabinSearchStatus?.endTime]);
 
   // Clear any stale errors when the component mounts
   useEffect(() => {
