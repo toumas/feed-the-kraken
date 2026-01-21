@@ -55,6 +55,7 @@ export type LobbyState = {
     round?: {
       startTime: number;
       duration: number;
+      endTime: number; // startTime + duration for client-side timer sync
       playerQuestions: Record<string, number>; // playerId -> questionIndex
       leaderChoice: string | null;
       playerAnswers: Record<string, string>; // playerId -> answer
@@ -75,7 +76,8 @@ export type LobbyState = {
     claims: Record<string, "CAPTAIN" | "NAVIGATOR" | "LIEUTENANT" | "CREW">;
     state: "SETUP" | "ACTIVE" | "COMPLETED" | "CANCELLED";
     cancellationReason?: string;
-    startTime?: number; // For the 15m timer
+    startTime?: number; // For the 30s timer
+    endTime?: number; // startTime + 30000 for client-side timer sync
     playerQuestions?: Record<string, number>; // playerId -> questionIndex
     playerAnswers?: Record<string, string>; // playerId -> answer
     result?: {
@@ -87,6 +89,7 @@ export type LobbyState = {
     state: "WAITING_FOR_PLAYERS" | "DISTRIBUTION" | "COMPLETED" | "CANCELLED";
     readyPlayers: string[]; // List of playerIds who have Pressed "Ready"
     startTime?: number; // For the timer during distribution
+    endTime?: number; // startTime + 30000 for client-side timer sync
     distribution?: Record<string, number>; // playerId -> number of guns given
     playerQuestions?: Record<string, number>; // playerId -> questionIndex
     playerAnswers?: Record<string, string>; // playerId -> answer

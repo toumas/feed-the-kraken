@@ -272,7 +272,7 @@ describe("Cult Cabin Search Flow - XState", () => {
       });
 
       // Wait for timer to complete
-      vi.advanceTimersByTime(16000);
+      vi.advanceTimersByTime(31000);
 
       const context = actor.getSnapshot().context;
       expect(context.cabinSearchStatus?.state).toBe("COMPLETED");
@@ -314,7 +314,7 @@ describe("Cult Cabin Search Flow - XState", () => {
       });
 
       // Wait for timer to complete
-      vi.advanceTimersByTime(16000);
+      vi.advanceTimersByTime(31000);
       expect(actor.getSnapshot().context.isCultCabinSearchUsed).toBe(true);
 
       // Reset the game

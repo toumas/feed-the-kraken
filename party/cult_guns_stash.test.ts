@@ -338,7 +338,7 @@ describe("Cult Guns Stash Flow - XState", () => {
       });
 
       // Advance timers to trigger the 15100ms timeout
-      vi.advanceTimersByTime(16000);
+      vi.advanceTimersByTime(31000);
 
       const context = actor.getSnapshot().context;
 
@@ -376,7 +376,7 @@ describe("Cult Guns Stash Flow - XState", () => {
       });
 
       // Advance timers
-      vi.advanceTimersByTime(16000);
+      vi.advanceTimersByTime(31000);
 
       const context = actor.getSnapshot().context;
 
@@ -402,7 +402,7 @@ describe("Cult Guns Stash Flow - XState", () => {
       // Don't submit any distribution
 
       // Advance timers
-      vi.advanceTimersByTime(16000);
+      vi.advanceTimersByTime(31000);
 
       const context = actor.getSnapshot().context;
 
@@ -428,7 +428,7 @@ describe("Cult Guns Stash Flow - XState", () => {
       }
 
       // Advance timers to complete
-      vi.advanceTimersByTime(16000);
+      vi.advanceTimersByTime(31000);
 
       const context = actor.getSnapshot().context;
       expect(context.gunsStashStatus?.state).toBe("COMPLETED");
@@ -464,7 +464,7 @@ describe("Cult Guns Stash Flow - XState", () => {
       }
 
       // Complete the guns stash
-      vi.advanceTimersByTime(16000);
+      vi.advanceTimersByTime(31000);
       expect(actor.getSnapshot().context.isGunsStashUsed).toBe(true);
 
       // Reset the game

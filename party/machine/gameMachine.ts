@@ -145,7 +145,7 @@ export const gameMachine = setup({
       )
         return false;
       const elapsed = Date.now() - context.cabinSearchStatus.startTime;
-      return elapsed >= 15000; // 15 second quiz timer
+      return elapsed >= 30000; // 30 second quiz timer
     },
     cabinSearchActive: ({ context }) =>
       context.cabinSearchStatus?.state === "ACTIVE",
@@ -563,6 +563,7 @@ export const gameMachine = setup({
             round: {
               startTime: Date.now(),
               duration: QUIZ_DURATION_MS,
+              endTime: Date.now() + QUIZ_DURATION_MS,
               playerQuestions,
               leaderChoice: null,
               playerAnswers: {},
@@ -823,6 +824,7 @@ export const gameMachine = setup({
           claims: newClaims,
           state: "ACTIVE" as const,
           startTime: Date.now(),
+          endTime: Date.now() + 30000,
           playerQuestions,
           playerAnswers: {},
         },
@@ -940,6 +942,7 @@ export const gameMachine = setup({
           ...context.gunsStashStatus,
           state: "DISTRIBUTION" as const,
           startTime: Date.now(),
+          endTime: Date.now() + 30000,
           playerQuestions,
           playerAnswers: {},
         },

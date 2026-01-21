@@ -56,19 +56,15 @@ export function CultGunsStashView({ onDismiss }: { onDismiss: () => void }) {
 
   // Timer Logic
   useEffect(() => {
-    if (
-      gunsStashStatus?.state === "DISTRIBUTION" &&
-      gunsStashStatus.startTime
-    ) {
-      const startTime = gunsStashStatus.startTime;
+    if (gunsStashStatus?.state === "DISTRIBUTION" && gunsStashStatus.endTime) {
+      const endTime = gunsStashStatus.endTime;
       const interval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const remaining = Math.max(0, Math.ceil((15000 - elapsed) / 1000));
+        const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
         setTimeLeft(remaining);
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [gunsStashStatus?.state, gunsStashStatus?.startTime]);
+  }, [gunsStashStatus?.state, gunsStashStatus?.endTime]);
 
   if (!gunsStashStatus) return null;
 

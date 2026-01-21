@@ -38,20 +38,17 @@ export function ConversionView({ onDismiss }: ConversionViewProps) {
 
   // Timer Logic
   useEffect(() => {
-    if (conversionStatus?.state === "ACTIVE" && round) {
+    if (conversionStatus?.state === "ACTIVE" && round?.endTime) {
+      const endTime = round.endTime;
       const interval = setInterval(() => {
-        const elapsed = Date.now() - round.startTime;
-        const remaining = Math.max(
-          0,
-          Math.ceil((round.duration - elapsed) / 1000),
-        );
+        const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
         setTimeLeft(remaining);
       }, 1000);
       return () => clearInterval(interval);
     } else {
       setTimeLeft(0);
     }
-  }, [conversionStatus?.state, round]);
+  }, [conversionStatus?.state, round?.endTime]);
 
   const handleSubmit = useEffectEvent(() => {
     if (isSubmitted) return;
