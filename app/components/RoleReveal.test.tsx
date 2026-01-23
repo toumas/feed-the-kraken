@@ -55,7 +55,9 @@ describe("RoleReveal", () => {
     expect(screen.queryByText("Role Hidden")).toBeNull();
   });
 
-  it("hides content on 1 click when already revealed", () => {
+  it("pauses auto-hide timer when holding HideInstruction button and resumes with remaining time", () => {
+    vi.useFakeTimers();
+
     render(
       <RoleReveal.Root defaultRevealed={true}>
         <RoleReveal.Hidden />
@@ -69,14 +71,43 @@ describe("RoleReveal", () => {
     // Initially revealed
     expect(screen.getByText("Secret Content")).toBeDefined();
 
-    // 1 click on HideInstruction - should hide
-    const hideButton = screen.getByText("Tap once to hide your role.");
-    fireEvent.click(hideButton);
+    // Wait 4 seconds (1 second remaining)
+    act(() => {
+      vi.advanceTimersByTime(4000);
+    });
+
+    // Start holding the button - timer paused with 1 second remaining
+    const hideButton = screen.getByText("Hold to pause countdown.");
+    fireEvent.mouseDown(hideButton);
+
+    // Advance time by 10 seconds while paused - should NOT hide
+    act(() => {
+      vi.advanceTimersByTime(10000);
+    });
+
+    // Content should still be visible
+    expect(screen.getByText("Secret Content")).toBeDefined();
+
+    // Release the button
+    fireEvent.mouseUp(hideButton);
+
+    // Advance less than 1 second - should still be visible
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(screen.getByText("Secret Content")).toBeDefined();
+
+    // Advance 500ms more (total: 1 second remaining) - should hide now
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
 
     // Hidden content should now be visible
     expect(screen.getByText("Role Hidden")).toBeDefined();
     // Revealed content should no longer be in the DOM
     expect(screen.queryByText("Secret Content")).toBeNull();
+
+    vi.useRealTimers();
   });
 
   it("reveals content on 5 Enter key presses", () => {
@@ -99,7 +130,9 @@ describe("RoleReveal", () => {
     expect(screen.getByText("Secret Content")).toBeDefined();
   });
 
-  it("hides content on 1 click of HideInstruction when already revealed", () => {
+  it("pauses auto-hide timer on touch when holding HideInstruction button", () => {
+    vi.useFakeTimers();
+
     render(
       <RoleReveal.Root defaultRevealed={true}>
         <RoleReveal.Hidden />
@@ -110,13 +143,16 @@ describe("RoleReveal", () => {
       </RoleReveal.Root>,
     );
 
-    const button = screen.getByText("Tap once to hide your role.");
-    fireEvent.click(button);
+    const hideButton = screen.getByText("Hold to pause countdown.");
+    fireEvent.touchStart(hideButton);
 
-    // Hidden content should now be visible
-    expect(screen.getByText("Role Hidden")).toBeDefined();
-    // Revealed content should not be in the DOM
-    expect(screen.queryByText("Secret Content")).toBeNull();
+    // Advance time while holding - should NOT hide
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(screen.getByText("Secret Content")).toBeDefined();
+
+    vi.useRealTimers();
   });
 
   it("renders hide instruction when revealed", () => {
@@ -128,7 +164,7 @@ describe("RoleReveal", () => {
       </RoleReveal.Root>,
     );
 
-    expect(screen.getByText("Tap once to hide your role.")).toBeDefined();
+    expect(screen.getByText("Hold to pause countdown.")).toBeDefined();
   });
 
   it("renders with custom children in Hidden", () => {
@@ -149,7 +185,7 @@ describe("RoleReveal", () => {
     expect(screen.getByText("Tap 5 times to reveal your role.")).toBeDefined();
   });
 
-  it("auto-hides revealed content after 3 seconds", () => {
+  it("auto-hides revealed content after 5 seconds", () => {
     vi.useFakeTimers();
 
     render(
@@ -171,9 +207,9 @@ describe("RoleReveal", () => {
     // Content should be revealed
     expect(screen.getByText("Secret Content")).toBeDefined();
 
-    // Advance time by 3 seconds
+    // Advance time by 5 seconds
     act(() => {
-      vi.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(5000);
     });
 
     // Content should be hidden again

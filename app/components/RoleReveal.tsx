@@ -1,18 +1,24 @@
 "use client";
 
-import { EyeOff } from "lucide-react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { EyeOff, Pause } from "lucide-react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useT } from "../i18n/client";
 import { cn } from "../utils";
+
+const AUTO_HIDE_DURATION_MS = 5000;
 
 // --- Context ---
 interface RoleRevealContextValue {
   isRevealed: boolean;
+  isPaused: boolean;
   tapCount: number;
   revealTimestamp: number | null;
+  remainingTimeMs: number;
   startReveal: () => void;
   endReveal: () => void;
   handleTap: () => void;
+  handlePauseStart: () => void;
+  handlePauseEnd: () => void;
 }
 
 const RoleRevealContext = createContext<RoleRevealContextValue | null>(null);
@@ -37,30 +43,70 @@ interface RootProps {
 
 function Root({ children, className, defaultRevealed = false }: RootProps) {
   const [isRevealed, setIsRevealed] = useState(defaultRevealed);
+  const [isPaused, setIsPaused] = useState(false);
   const [taps, setTaps] = useState<number[]>([]);
   const [revealTimestamp, setRevealTimestamp] = useState<number | null>(
+    defaultRevealed ? Date.now() : null,
+  );
+  // remainingTimeMs is exposed for context but managed via ref for timer logic
+  const [remainingTimeMs, setRemainingTimeMs] = useState(AUTO_HIDE_DURATION_MS);
+
+  // Use ref to track remaining time for timer calculations (avoids effect re-triggers)
+  const remainingTimeMsRef = useRef(AUTO_HIDE_DURATION_MS);
+  const timerStartTimeRef = useRef<number | null>(
     defaultRevealed ? Date.now() : null,
   );
 
   const startReveal = () => {
     setRevealTimestamp(Date.now());
+    remainingTimeMsRef.current = AUTO_HIDE_DURATION_MS;
+    setRemainingTimeMs(AUTO_HIDE_DURATION_MS);
+    timerStartTimeRef.current = Date.now();
     setIsRevealed(true);
   };
   const endReveal = () => {
     setRevealTimestamp(null);
+    remainingTimeMsRef.current = AUTO_HIDE_DURATION_MS;
+    setRemainingTimeMs(AUTO_HIDE_DURATION_MS);
+    timerStartTimeRef.current = null;
     setIsRevealed(false);
+    setIsPaused(false);
   };
 
-  // Auto-hide after 3 seconds when revealed
+  const handlePauseStart = () => {
+    if (!isPaused && timerStartTimeRef.current) {
+      // Calculate remaining time when pausing
+      const elapsed = Date.now() - timerStartTimeRef.current;
+      const remaining = Math.max(0, remainingTimeMsRef.current - elapsed);
+      remainingTimeMsRef.current = remaining;
+      setRemainingTimeMs(remaining);
+    }
+    setIsPaused(true);
+  };
+
+  const handlePauseEnd = () => {
+    if (isPaused) {
+      // Reset timer start to now so remaining time is used correctly
+      timerStartTimeRef.current = Date.now();
+    }
+    setIsPaused(false);
+  };
+
+  // Auto-hide when revealed and not paused
   useEffect(() => {
-    if (!isRevealed) return;
+    if (!isRevealed || isPaused) return;
+
+    // Initialize timerStartTimeRef when effect runs (for defaultRevealed case)
+    if (!timerStartTimeRef.current) {
+      timerStartTimeRef.current = Date.now();
+    }
 
     const timer = setTimeout(() => {
       setIsRevealed(false);
-    }, 3000);
+    }, remainingTimeMsRef.current);
 
     return () => clearTimeout(timer);
-  }, [isRevealed]);
+  }, [isRevealed, isPaused]);
 
   const handleTap = () => {
     if (isRevealed) {
@@ -86,11 +132,15 @@ function Root({ children, className, defaultRevealed = false }: RootProps) {
     <RoleRevealContext.Provider
       value={{
         isRevealed,
+        isPaused,
         tapCount,
         revealTimestamp,
+        remainingTimeMs,
         startReveal,
         endReveal,
         handleTap,
+        handlePauseStart,
+        handlePauseEnd,
       }}
     >
       <div className={cn("relative w-full", className)}>{children}</div>
@@ -258,16 +308,20 @@ interface HideInstructionProps {
   className?: string;
 }
 
-const AUTO_HIDE_DURATION_MS = 3000;
-
 function HideInstruction({ className }: HideInstructionProps) {
   const { t } = useT("common");
-  const { handleTap, revealTimestamp } = useRoleReveal();
+  const { isPaused, revealTimestamp, handlePauseStart, handlePauseEnd } =
+    useRoleReveal();
 
   return (
     <button
       type="button"
-      onClick={handleTap}
+      onMouseDown={handlePauseStart}
+      onMouseUp={handlePauseEnd}
+      onMouseLeave={handlePauseEnd}
+      onTouchStart={handlePauseStart}
+      onTouchEnd={handlePauseEnd}
+      onTouchCancel={handlePauseEnd}
       onContextMenu={(e) => e.preventDefault()}
       className={cn(
         "relative overflow-hidden px-6 py-4 bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-200 border border-cyan-800/50 rounded-xl font-bold transition-all cursor-pointer select-none touch-none focus:outline-none focus:ring-2 focus:ring-cyan-500/50",
@@ -280,6 +334,7 @@ function HideInstruction({ className }: HideInstructionProps) {
         className="absolute bottom-0 left-0 h-1 bg-cyan-400"
         style={{
           animation: `countdown-shrink ${AUTO_HIDE_DURATION_MS}ms linear forwards`,
+          animationPlayState: isPaused ? "paused" : "running",
         }}
       />
       <style>{`
@@ -288,7 +343,10 @@ function HideInstruction({ className }: HideInstructionProps) {
           to { width: 0%; }
         }
       `}</style>
-      {t("roleReveal.hideInstruction")}
+      <span className="flex items-center gap-2">
+        <Pause className="w-5 h-5" />
+        {t("roleReveal.hideInstruction")}
+      </span>
     </button>
   );
 }

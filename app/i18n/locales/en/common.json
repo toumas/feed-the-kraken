@@ -259,7 +259,7 @@
     "teamInfo": "Your team:",
     "hidden": "Role Hidden",
     "instruction": "Tap 5 times to reveal your role.",
-    "hideInstruction": "Tap once to hide your role.",
+    "hideInstruction": "Hold to pause countdown.",
     "warning": "Make sure nobody is watching!"
   },
   "connection": {
