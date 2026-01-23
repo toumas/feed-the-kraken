@@ -1560,8 +1560,8 @@ export const gameMachine = setup({
                 },
               },
               after: {
-                // Timer starts when entering active state (15 seconds + buffer)
-                15100: {
+                // Timer starts when entering active state (30 seconds + buffer)
+                [QUIZ_DURATION_MS + 100]: {
                   actions: "completeCabinSearch",
                   target: "#game.playing.idle",
                 },
@@ -1604,8 +1604,8 @@ export const gameMachine = setup({
                 },
               },
               after: {
-                // Timer for distribution phase (15 seconds + buffer)
-                15100: {
+                // Timer for distribution phase (30 seconds + buffer)
+                [QUIZ_DURATION_MS + 100]: {
                   actions: "completeGunsStash",
                   target: "#game.playing.idle",
                 },
