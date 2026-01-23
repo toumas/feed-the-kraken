@@ -281,7 +281,7 @@ test.describe("Cult Cabin Search Flow", () => {
     }
 
     // 12. Wait for results (COMPLETED state)
-    // The quiz timer is 15 seconds from when ACTIVE state started
+    // The quiz timer is 30 seconds from when ACTIVE state started
     // Account for time spent doing verifications + timer + buffer
     // All players see "Ritual Complete" heading in COMPLETED state
     await expect(

@@ -160,8 +160,8 @@ test.describe("Cult Guns Stash Flow", () => {
       }
     }
 
-    // 9. Wait for completion (15 seconds)
-    await hostPage.waitForTimeout(16000);
+    // 9. Wait for completion (30 seconds)
+    await hostPage.waitForTimeout(31000);
 
     // 10. Verify COMPLETED state
     await expect(
@@ -359,8 +359,8 @@ test.describe("Cult Guns Stash Flow", () => {
       await readyButton.click();
     }
 
-    // 6. Wait for completion (15 seconds)
-    await hostPage.waitForTimeout(18000);
+    // 6. Wait for completion (30 seconds)
+    await hostPage.waitForTimeout(33000);
 
     // 7. Verify COMPLETED state and dismiss
     await expect(

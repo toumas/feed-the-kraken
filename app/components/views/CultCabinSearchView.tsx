@@ -2,6 +2,7 @@
 
 import { CheckCircle, Clock, Eye, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { QUIZ_DURATION_MS } from "../../../party/machine/constants";
 import { useGame } from "../../context/GameContext";
 import { QUIZ_QUESTIONS } from "../../data/quiz";
 import { useT } from "../../i18n/client";
@@ -25,7 +26,7 @@ export function CultCabinSearchView({ onDismiss }: { onDismiss: () => void }) {
   } = useGame();
   const { t } = useT("common");
 
-  const [timeLeft, setTimeLeft] = useState(15); // 15 seconds
+  const [timeLeft, setTimeLeft] = useState(QUIZ_DURATION_MS / 1000);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
 
   const cabinSearchStatus = lobby?.cabinSearchStatus;
@@ -235,7 +236,7 @@ export function CultCabinSearchView({ onDismiss }: { onDismiss: () => void }) {
               <div className="flex items-center gap-2 text-2xl font-mono font-bold text-white bg-slate-900 px-4 py-2 rounded-lg border border-slate-800">
                 <Clock className="w-5 h-5 text-slate-400" />
                 <span
-                  className={timeLeft <= 60 ? "text-red-500 animate-pulse" : ""}
+                  className={timeLeft <= 10 ? "text-red-500 animate-pulse" : ""}
                 >
                   {Math.floor(timeLeft / 60)}:
                   {String(timeLeft % 60).padStart(2, "0")}
