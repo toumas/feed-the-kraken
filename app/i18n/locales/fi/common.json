@@ -259,7 +259,7 @@
     "teamInfo": "Tiimisi:",
     "hidden": "Rooli piilotettu",
     "instruction": "Napauta 5 kertaa paljastaaksesi roolisi.",
-    "hideInstruction": "Napauta kerran piilottaaksesi roolisi.",
+    "hideInstruction": "Paina pohjaan pysäyttääksesi ajastimen.",
     "warning": "Varmista, ettei kukaan muu näe!"
   },
   "connection": {
