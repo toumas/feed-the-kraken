@@ -191,7 +191,8 @@
     "searchedTitle": "Cabin Searched",
     "searchedDesc": "Tap 5 times to reveal the loyalty card.",
     "foundCard": "You found {{name}}'s loyalty card!",
-    "limitReached": "Cabin Search can only be used 2 times per game."
+    "limitReached": "Cabin Search can only be used 2 times per game.",
+    "confirmCloseWithoutReveal": "You haven't revealed the card yet. Are you sure you want to close? You won't be able to see it again."
   },
   "conversion": {
     "interrupted": "The ritual was interrupted!",

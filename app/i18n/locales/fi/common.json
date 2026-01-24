@@ -191,7 +191,8 @@
     "searchedTitle": "Hytti tarkastettu",
     "searchedDesc": "Napauta 5 kertaa paljastaaksesi roolikortti.",
     "foundCard": "{{name}}",
-    "limitReached": "Hytin tarkastusta voi käyttää vain 2 kertaa pelissä."
+    "limitReached": "Hytin tarkastusta voi käyttää vain 2 kertaa pelissä.",
+    "confirmCloseWithoutReveal": "Et ole vielä paljastanut korttia. Oletko varma, että haluat sulkea? Et voi nähdä sitä enää uudelleen."
   },
   "conversion": {
     "interrupted": "Rituaali keskeytyi!",
