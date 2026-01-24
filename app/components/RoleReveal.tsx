@@ -42,7 +42,12 @@ interface RootProps {
   onReveal?: () => void;
 }
 
-function Root({ children, className, defaultRevealed = false, onReveal }: RootProps) {
+function Root({
+  children,
+  className,
+  defaultRevealed = false,
+  onReveal,
+}: RootProps) {
   const [isRevealed, setIsRevealed] = useState(defaultRevealed);
   const [isPaused, setIsPaused] = useState(false);
   const [taps, setTaps] = useState<number[]>([]);
@@ -214,7 +219,9 @@ function Hidden({ children, className, instruction }: HiddenProps) {
         onContextMenu={(e) => e.preventDefault()}
         className="flex flex-col items-center gap-3 px-6 py-4 bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-200 border border-cyan-800/50 rounded-xl font-bold transition-all cursor-pointer select-none touch-none focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
       >
-        <span className="text-lg">{instruction || t("roleReveal.instruction")}</span>
+        <span className="text-lg">
+          {instruction || t("roleReveal.instruction")}
+        </span>
         {/* Tap progress indicator */}
         <div className="flex gap-2">
           {[...Array(5)].map((_, i) => (

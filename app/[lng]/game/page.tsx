@@ -19,6 +19,7 @@ const Activity = (React.Activity || React.unstable_Activity) as ComponentType<{
 import { Eye, Scissors, Skull } from "lucide-react";
 import { Avatar } from "../../components/Avatar";
 import { CancellationModal } from "../../components/CancellationModal";
+import { ConfirmationModal } from "../../components/ConfirmationModal";
 import { GameView } from "../../components/GameView";
 import { InlineError } from "../../components/InlineError";
 import { ReadyCheckModal } from "../../components/ReadyCheckModal";
@@ -315,12 +316,10 @@ export default function GamePage() {
         )}
 
       {cabinSearchPrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
-            <h2 className="text-xl font-bold text-white mb-4">
-              {t("cabinSearch.title")}
-            </h2>
-            <p className="text-slate-300 mb-6">
+        <ConfirmationModal.Root isOpen={true}>
+          <ConfirmationModal.Header title={t("cabinSearch.title")} />
+          <ConfirmationModal.Body>
+            <p>
               <span className="font-bold text-white">
                 {cabinSearchPrompt.searcherName}
               </span>{" "}
@@ -328,57 +327,53 @@ export default function GamePage() {
                 name: cabinSearchPrompt.searcherName,
               })}
             </p>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => handleCabinSearchResponse(false)}
-                className="flex-1 py-3 bg-red-900/50 hover:bg-red-900 text-red-200 rounded-xl font-bold transition-colors"
-              >
-                {t("actions.deny")}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleCabinSearchResponse(true)}
-                className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold transition-colors"
-              >
-                {t("actions.allow")}
-              </button>
-            </div>
-          </div>
-        </div>
+          </ConfirmationModal.Body>
+          <ConfirmationModal.Actions>
+            <ConfirmationModal.Button
+              variant="secondary"
+              className="bg-red-900/50 hover:bg-red-900 text-red-200"
+              onClick={() => handleCabinSearchResponse(false)}
+            >
+              {t("actions.deny")}
+            </ConfirmationModal.Button>
+            <ConfirmationModal.Button
+              variant="primary"
+              onClick={() => handleCabinSearchResponse(true)}
+            >
+              {t("actions.allow")}
+            </ConfirmationModal.Button>
+          </ConfirmationModal.Actions>
+        </ConfirmationModal.Root>
       )}
 
       {/* Flogging Confirmation Modal (Target) */}
       {floggingConfirmationPrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
-            <h2 className="text-xl font-bold text-white mb-4">
-              {t("flogging.title")}
-            </h2>
-            <p className="text-slate-300 mb-6">
+        <ConfirmationModal.Root isOpen={true}>
+          <ConfirmationModal.Header title={t("flogging.title")} />
+          <ConfirmationModal.Body>
+            <p>
               <span className="font-bold text-white">
                 {floggingConfirmationPrompt.hostName}
               </span>{" "}
               {t("flogging.request")}
             </p>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => handleFloggingConfirmationResponse(false)}
-                className="flex-1 py-3 bg-red-900/50 hover:bg-red-900 text-red-200 rounded-xl font-bold transition-colors"
-              >
-                {t("actions.deny")}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFloggingConfirmationResponse(true)}
-                className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold transition-colors"
-              >
-                {t("actions.allow")}
-              </button>
-            </div>
-          </div>
-        </div>
+          </ConfirmationModal.Body>
+          <ConfirmationModal.Actions>
+            <ConfirmationModal.Button
+              variant="secondary"
+              className="bg-red-900/50 hover:bg-red-900 text-red-200"
+              onClick={() => handleFloggingConfirmationResponse(false)}
+            >
+              {t("actions.deny")}
+            </ConfirmationModal.Button>
+            <ConfirmationModal.Button
+              variant="primary"
+              onClick={() => handleFloggingConfirmationResponse(true)}
+            >
+              {t("actions.allow")}
+            </ConfirmationModal.Button>
+          </ConfirmationModal.Actions>
+        </ConfirmationModal.Root>
       )}
 
       {floggingReveal && (
@@ -518,38 +513,34 @@ export default function GamePage() {
 
       {/* Feed the Kraken Confirmation Modal (Target) */}
       {feedTheKrakenPrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-slate-900 border border-red-900/50 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300 mx-4">
-            <div className="flex items-center gap-3 mb-6">
-              <Skull className="w-8 h-8 text-red-500" />
-              <h2 className="text-xl font-bold text-white">
-                {t("feedTheKraken.title")}
-              </h2>
-            </div>
-            <p className="text-slate-300 mb-6">
+        <ConfirmationModal.Root isOpen={true}>
+          <ConfirmationModal.Header
+            title={t("feedTheKraken.title")}
+            icon={<Skull className="w-8 h-8 text-red-500" />}
+          />
+          <ConfirmationModal.Body>
+            <p>
               <span className="font-bold text-white">
                 {feedTheKrakenPrompt.captainName}
               </span>{" "}
               {t("feedTheKraken.request")}
             </p>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => handleFeedTheKrakenResponse(false)}
-                className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl font-bold transition-colors"
-              >
-                {t("actions.deny")}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFeedTheKrakenResponse(true)}
-                className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors"
-              >
-                {t("feedTheKraken.acceptFate")}
-              </button>
-            </div>
-          </div>
-        </div>
+          </ConfirmationModal.Body>
+          <ConfirmationModal.Actions>
+            <ConfirmationModal.Button
+              variant="secondary"
+              onClick={() => handleFeedTheKrakenResponse(false)}
+            >
+              {t("actions.deny")}
+            </ConfirmationModal.Button>
+            <ConfirmationModal.Button
+              variant="destructive"
+              onClick={() => handleFeedTheKrakenResponse(true)}
+            >
+              {t("feedTheKraken.acceptFate")}
+            </ConfirmationModal.Button>
+          </ConfirmationModal.Actions>
+        </ConfirmationModal.Root>
       )}
 
       {feedTheKrakenResult && (
@@ -613,112 +604,100 @@ export default function GamePage() {
 
       {/* Off with the Tongue Confirmation Modal (Target) */}
       {offWithTonguePrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-slate-900 border border-amber-900/50 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300 mx-4">
-            <div className="flex items-center gap-3 mb-6">
-              <Scissors className="w-8 h-8 text-amber-500" />
-              <h2 className="text-xl font-bold text-white">
-                {t("offWithTongue.title")}
-              </h2>
-            </div>
-            <p className="text-slate-300 mb-4">
+        <ConfirmationModal.Root isOpen={true}>
+          <ConfirmationModal.Header
+            title={t("offWithTongue.title")}
+            icon={<Scissors className="w-8 h-8 text-amber-500" />}
+          />
+          <ConfirmationModal.Body>
+            <p className="mb-4">
               <span className="font-bold text-white">
                 {offWithTonguePrompt.captainName}
               </span>{" "}
               {t("offWithTongue.request")}
             </p>
-            <p className="text-sm text-slate-400 mb-6">
+            <p className="text-sm text-slate-400">
               {t("offWithTongue.requestDesc")}
             </p>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => handleOffWithTongueResponse(false)}
-                className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl font-bold transition-colors"
-              >
-                {t("actions.deny")}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleOffWithTongueResponse(true)}
-                className="flex-1 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold transition-colors"
-              >
-                {t("actions.allow")}
-              </button>
-            </div>
-          </div>
-        </div>
+          </ConfirmationModal.Body>
+          <ConfirmationModal.Actions>
+            <ConfirmationModal.Button
+              variant="secondary"
+              onClick={() => handleOffWithTongueResponse(false)}
+            >
+              {t("actions.deny")}
+            </ConfirmationModal.Button>
+            <ConfirmationModal.Button
+              className="bg-amber-600 hover:bg-amber-500 text-white"
+              onClick={() => handleOffWithTongueResponse(true)}
+            >
+              {t("actions.allow")}
+            </ConfirmationModal.Button>
+          </ConfirmationModal.Actions>
+        </ConfirmationModal.Root>
       )}
       {/* Reset Game Confirmation Modal */}
       {showResetConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-slate-900 border border-red-900/50 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300 mx-4">
-            <h2 className="text-xl font-bold text-white mb-4">
-              {t("game.resetGame")}
-            </h2>
-            <p className="text-slate-400 mb-8">
+        <ConfirmationModal.Root isOpen={true}>
+          <ConfirmationModal.Header title={t("game.resetGame")} />
+          <ConfirmationModal.Body>
+            <p>
               {t(
                 "game.resetGameDesc",
                 "Are you sure you want to reset the game? This action cannot be undone.",
               )}
             </p>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => setShowResetConfirm(false)}
-                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
-              >
-                {t("actions.cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowResetConfirm(false);
-                  handleResetGame();
-                }}
-                className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors"
-              >
-                {t("game.resetGame")}
-              </button>
-            </div>
-          </div>
-        </div>
+          </ConfirmationModal.Body>
+          <ConfirmationModal.Actions>
+            <ConfirmationModal.Button
+              variant="secondary"
+              onClick={() => setShowResetConfirm(false)}
+            >
+              {t("actions.cancel")}
+            </ConfirmationModal.Button>
+            <ConfirmationModal.Button
+              variant="destructive"
+              onClick={() => {
+                setShowResetConfirm(false);
+                handleResetGame();
+              }}
+            >
+              {t("game.resetGame")}
+            </ConfirmationModal.Button>
+          </ConfirmationModal.Actions>
+        </ConfirmationModal.Root>
       )}
 
       {/* Back to Lobby Confirmation Modal */}
       {showBackToLobbyConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300 mx-4">
-            <h2 className="text-xl font-bold text-white mb-4">
-              {t("game.backToLobby")}
-            </h2>
-            <p className="text-slate-400 mb-8">
+        <ConfirmationModal.Root isOpen={true}>
+          <ConfirmationModal.Header title={t("game.backToLobby")} />
+          <ConfirmationModal.Body>
+            <p>
               {t(
                 "game.backToLobbyDesc",
                 "Are you sure you want to go back to the lobby? The current game state will be lost.",
               )}
             </p>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => setShowBackToLobbyConfirm(false)}
-                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
-              >
-                {t("actions.cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowBackToLobbyConfirm(false);
-                  handleBackToLobby();
-                }}
-                className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors"
-              >
-                {t("actions.confirm")}
-              </button>
-            </div>
-          </div>
-        </div>
+          </ConfirmationModal.Body>
+          <ConfirmationModal.Actions>
+            <ConfirmationModal.Button
+              variant="secondary"
+              onClick={() => setShowBackToLobbyConfirm(false)}
+            >
+              {t("actions.cancel")}
+            </ConfirmationModal.Button>
+            <ConfirmationModal.Button
+              variant="destructive"
+              onClick={() => {
+                setShowBackToLobbyConfirm(false);
+                handleBackToLobby();
+              }}
+            >
+              {t("actions.confirm")}
+            </ConfirmationModal.Button>
+          </ConfirmationModal.Actions>
+        </ConfirmationModal.Root>
       )}
     </>
   );
