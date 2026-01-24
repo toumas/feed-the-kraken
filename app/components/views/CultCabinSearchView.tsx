@@ -45,11 +45,6 @@ export function CultCabinSearchView({ onDismiss }: { onDismiss: () => void }) {
     }
   }, [cabinSearchStatus?.state, cabinSearchStatus?.endTime]);
 
-  // Clear any stale errors when the component mounts
-  useEffect(() => {
-    setError(null);
-  }, [setError]);
-
   if (!lobby || !cabinSearchStatus) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -204,6 +199,7 @@ export function CultCabinSearchView({ onDismiss }: { onDismiss: () => void }) {
           <button
             type="button"
             onClick={() => {
+              setError(null);
               cancelCabinSearch();
             }}
             className="w-full py-3 bg-red-900/30 hover:bg-red-900/50 text-red-200 rounded-xl font-bold transition-colors border border-red-900/50"

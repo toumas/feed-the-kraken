@@ -255,7 +255,10 @@ export default function GamePage() {
         !isCabinSearchDismissed && (
           <CancellationModal.Root
             isOpen={true}
-            onDismiss={() => setIsCabinSearchDismissed(true)}
+            onDismiss={() => {
+              setError(null);
+              setIsCabinSearchDismissed(true);
+            }}
           >
             <CancellationModal.Header title={t("cabinSearch.title")} />
             <CancellationModal.Body
@@ -274,7 +277,10 @@ export default function GamePage() {
               })()}
             />
             <CancellationModal.Action
-              onClick={() => setIsCabinSearchDismissed(true)}
+              onClick={() => {
+                setError(null);
+                setIsCabinSearchDismissed(true);
+              }}
             />
           </CancellationModal.Root>
         )}
