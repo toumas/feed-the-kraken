@@ -9,7 +9,8 @@ import { InlineError } from "../InlineError";
 import { PlayerSelectionList } from "../PlayerSelectionList";
 
 export function OffWithTongueView({ onDismiss }: { onDismiss: () => void }) {
-  const { lobby, myPlayerId, handleOffWithTongueRequest, error } = useGame();
+  const { lobby, myPlayerId, handleOffWithTongueRequest, error, setError } =
+    useGame();
   const { t } = useT("common");
   const [isPending, setIsPending] = useState(false);
 
@@ -55,7 +56,7 @@ export function OffWithTongueView({ onDismiss }: { onDismiss: () => void }) {
         {/* Error Toast */}
         {error && (
           <div className="mx-6 mt-4">
-            <InlineError message={error} onDismiss={() => {}} />
+            <InlineError message={error} onDismiss={() => setError(null)} />
           </div>
         )}
 

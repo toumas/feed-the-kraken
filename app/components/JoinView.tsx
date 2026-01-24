@@ -21,7 +21,6 @@ export function JoinView({ onJoin }: JoinViewProps) {
     e.preventDefault();
     if (code.length < 4) {
       setError(t("join.invalidCode"));
-      setTimeout(() => setError(null), 3000);
       return;
     }
     onJoin(code);

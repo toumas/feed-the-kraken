@@ -16,6 +16,7 @@ export function FeedTheKrakenView({ onDismiss }: { onDismiss: () => void }) {
     isFeedTheKrakenPending,
     feedTheKrakenResult,
     error,
+    setError,
   } = useGame();
   const { t } = useT("common");
   const [isPending, setIsPending] = useState(false);
@@ -67,7 +68,7 @@ export function FeedTheKrakenView({ onDismiss }: { onDismiss: () => void }) {
         {/* Error Toast */}
         {error && (
           <div className="mx-6 mt-4">
-            <InlineError message={error} onDismiss={() => {}} />
+            <InlineError message={error} onDismiss={() => setError(null)} />
           </div>
         )}
 

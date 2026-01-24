@@ -24,6 +24,7 @@ export function CabinSearchView({ onDismiss }: CabinSearchViewProps) {
     cabinSearchResult,
     clearCabinSearchResult,
     error,
+    setError,
   } = useGame();
   const { t } = useT("common");
   const [isPending, setIsPending] = useState(false);
@@ -111,7 +112,7 @@ export function CabinSearchView({ onDismiss }: CabinSearchViewProps) {
         {/* Error Toast */}
         {error && (
           <div className="mx-6 mt-4">
-            <InlineError message={error} onDismiss={() => {}} />
+            <InlineError message={error} onDismiss={() => setError(null)} />
           </div>
         )}
 

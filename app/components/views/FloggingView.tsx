@@ -9,8 +9,14 @@ import { InlineError } from "../InlineError";
 import { PlayerSelectionList } from "../PlayerSelectionList";
 
 export function FloggingView({ onDismiss }: { onDismiss: () => void }) {
-  const { lobby, myPlayerId, handleFloggingRequest, error, floggingReveal } =
-    useGame();
+  const {
+    lobby,
+    myPlayerId,
+    handleFloggingRequest,
+    error,
+    setError,
+    floggingReveal,
+  } = useGame();
   const { t } = useT("common");
   const [isPending, setIsPending] = useState(false);
 
@@ -56,7 +62,7 @@ export function FloggingView({ onDismiss }: { onDismiss: () => void }) {
         {/* Error Toast */}
         {error && (
           <div className="mx-6 mt-4">
-            <InlineError message={error} onDismiss={() => {}} />
+            <InlineError message={error} onDismiss={() => setError(null)} />
           </div>
         )}
 
