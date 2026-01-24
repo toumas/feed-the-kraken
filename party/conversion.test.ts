@@ -137,6 +137,10 @@ describe("Conversion Flow - XState", () => {
     const context = actor.getSnapshot().context;
     expect(context.conversionStatus?.responses.p2).toBe(false);
     expect(context.conversionStatus?.state).toBe("CANCELLED");
+    // Cancellation reason should include player name in i18n format
+    expect(context.conversionStatus?.cancellationReason).toBe(
+      "actions.cancelledByPlayer|name:P2",
+    );
   });
 
   it("should automatically ready the initiator", () => {

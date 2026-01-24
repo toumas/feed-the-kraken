@@ -134,7 +134,8 @@
     "skip": "Ohita",
     "allow": "Hyväksy",
     "accepted": "Hyväksytty",
-    "pending": "Odotetaan..."
+    "pending": "Odotetaan...",
+    "cancelledByPlayer": "{{name}} peruutti toiminnon"
   },
   "feedTheKraken": {
     "submit": "Syötä Krakenille",

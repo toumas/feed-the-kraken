@@ -52,6 +52,7 @@ export type LobbyState = {
     initiatorId: string;
     responses: Record<string, boolean>;
     state: "PENDING" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+    cancellationReason?: string;
     round?: {
       startTime: number;
       duration: number;
