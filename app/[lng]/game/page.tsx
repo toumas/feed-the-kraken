@@ -440,7 +440,18 @@ export default function GamePage() {
             <CancellationModal.Header title={t("conversion.title")} />
             <CancellationModal.Body
               message={t("conversion.interrupted")}
-              reason={t("conversion.failed")}
+              reason={(() => {
+                if (!lobby.conversionStatus.cancellationReason)
+                  return t("conversion.failed");
+                const [key, ...paramStrings] =
+                  lobby.conversionStatus.cancellationReason.split("|");
+                const params: Record<string, string> = {};
+                paramStrings.forEach((p) => {
+                  const [k, v] = p.split(":");
+                  if (k && v) params[k] = v;
+                });
+                return t(key, params);
+              })()}
             />
             <CancellationModal.Action
               onClick={() => setIsConversionDismissed(true)}

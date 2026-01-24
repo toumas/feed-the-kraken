@@ -134,7 +134,8 @@
     "skip": "Skip",
     "allow": "Accept",
     "accepted": "Accepted",
-    "pending": "Pending..."
+    "pending": "Pending...",
+    "cancelledByPlayer": "Cancelled by {{name}}"
   },
   "feedTheKraken": {
     "submit": "Feed to Kraken",

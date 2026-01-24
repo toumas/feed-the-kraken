@@ -187,6 +187,43 @@ describe("XState Game Machine", () => {
         (sailors === 3 && pirates === 1) || (sailors === 2 && pirates === 2);
       expect(isValid).toBe(true);
     });
+
+    it("should set cancellationReason when role selection is cancelled", () => {
+      const actor = createTestActor();
+      actor.send({
+        type: "CREATE_LOBBY",
+        playerId: "host_1",
+        playerName: "Host",
+        playerPhoto: null,
+        code: "ABC123",
+      });
+      for (let i = 1; i <= 4; i++) {
+        actor.send({
+          type: "JOIN_LOBBY",
+          playerId: `player_${i}`,
+          playerName: `Player ${i}`,
+          playerPhoto: null,
+        });
+      }
+      // Set to manual mode
+      actor.send({ type: "SET_ROLE_DISTRIBUTION_MODE", mode: "manual" });
+      // Start game in manual mode
+      actor.send({ type: "START_GAME", playerId: "host_1" });
+
+      // Should be in role selection state
+      const snapshot = actor.getSnapshot();
+      expect(snapshot.value).toEqual({ playing: "roleSelection" });
+
+      // Cancel role selection
+      actor.send({ type: "CANCEL_ROLE_SELECTION", playerId: "player_1" });
+
+      const context = actor.getSnapshot().context;
+      expect(context.roleSelectionStatus?.state).toBe("CANCELLED");
+      // Cancellation reason should include player name in i18n format
+      expect(context.roleSelectionStatus?.cancellationReason).toBe(
+        "actions.cancelledByPlayer|name:Player 1",
+      );
+    });
   });
 
   describe("Conversion Flow", () => {

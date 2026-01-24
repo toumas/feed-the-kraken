@@ -46,6 +46,7 @@ export interface ConversionStatus {
   initiatorId: string;
   responses: Record<string, boolean>;
   state: "PENDING" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+  cancellationReason?: string;
   round?: ConversionRound;
 }
 

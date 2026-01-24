@@ -488,11 +488,14 @@ export const gameMachine = setup({
         !context.roleSelectionStatus
       )
         return {};
+      const playerName =
+        context.players.find((p) => p.id === event.playerId)?.name ??
+        event.playerId;
       return {
         roleSelectionStatus: {
           ...context.roleSelectionStatus,
           state: "CANCELLED" as const,
-          cancellationReason: `Cancelled by player ${event.playerId}`,
+          cancellationReason: `actions.cancelledByPlayer|name:${playerName}`,
         },
       };
     }),
@@ -533,11 +536,15 @@ export const gameMachine = setup({
       // If anyone declines, immediately cancel
       const anyDeclined = Object.values(newResponses).some((v) => v === false);
       if (anyDeclined) {
+        const playerName =
+          context.players.find((p) => p.id === event.playerId)?.name ??
+          event.playerId;
         return {
           conversionStatus: {
             ...context.conversionStatus,
             responses: newResponses,
             state: "CANCELLED" as const,
+            cancellationReason: `actions.cancelledByPlayer|name:${playerName}`,
           },
         };
       }
@@ -883,11 +890,14 @@ export const gameMachine = setup({
         !context.cabinSearchStatus
       )
         return {};
+      const playerName =
+        context.players.find((p) => p.id === event.playerId)?.name ??
+        event.playerId;
       return {
         cabinSearchStatus: {
           ...context.cabinSearchStatus,
           state: "CANCELLED" as const,
-          cancellationReason: `Cancelled by player ${event.playerId}`,
+          cancellationReason: `actions.cancelledByPlayer|name:${playerName}`,
         },
       };
     }),
@@ -1024,11 +1034,14 @@ export const gameMachine = setup({
     cancelGunsStash: assign(({ context, event }) => {
       if (event.type !== "CANCEL_CULT_GUNS_STASH" || !context.gunsStashStatus)
         return {};
+      const playerName =
+        context.players.find((p) => p.id === event.playerId)?.name ??
+        event.playerId;
       return {
         gunsStashStatus: {
           ...context.gunsStashStatus,
           state: "CANCELLED" as const,
-          cancellationReason: `Cancelled by player ${event.playerId}`,
+          cancellationReason: `actions.cancelledByPlayer|name:${playerName}`,
         },
       };
     }),

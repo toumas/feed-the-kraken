@@ -153,6 +153,12 @@ describe("Cult Cabin Search Flow - XState", () => {
       context.cabinSearchStatus === undefined ||
         context.cabinSearchStatus?.state === "CANCELLED",
     ).toBe(true);
+    // Cancellation reason should include player name in i18n format
+    if (context.cabinSearchStatus?.state === "CANCELLED") {
+      expect(context.cabinSearchStatus?.cancellationReason).toBe(
+        "actions.cancelledByPlayer|name:P2",
+      );
+    }
   });
 
   it("should allow player to change role during SETUP", () => {

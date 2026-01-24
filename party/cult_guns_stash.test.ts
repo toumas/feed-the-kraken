@@ -141,6 +141,12 @@ describe("Cult Guns Stash Flow - XState", () => {
       context.gunsStashStatus === undefined ||
         context.gunsStashStatus?.state === "CANCELLED",
     ).toBe(true);
+    // Cancellation reason should include player name in i18n format
+    if (context.gunsStashStatus?.state === "CANCELLED") {
+      expect(context.gunsStashStatus?.cancellationReason).toBe(
+        "actions.cancelledByPlayer|name:P2",
+      );
+    }
   });
 
   it("should not start during active cabin search", () => {
