@@ -28,6 +28,7 @@ export function CabinSearchView({ onDismiss }: CabinSearchViewProps) {
   } = useGame();
   const { t } = useT("common");
   const [isPending, setIsPending] = useState(false);
+  const [hasRevealed, setHasRevealed] = useState(false);
 
   // Clear pending state if error occurs (e.g. denial)
   useEffect(() => {
@@ -156,8 +157,11 @@ export function CabinSearchView({ onDismiss }: CabinSearchViewProps) {
         {cabinSearchResult && resultRoleInfo && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="w-full max-w-md mx-4">
-              <RoleReveal.Root className="max-w-sm mx-auto">
-                <RoleReveal.Hidden>
+              <RoleReveal.Root
+                className="max-w-sm mx-auto"
+                onReveal={() => setHasRevealed(true)}
+              >
+                <RoleReveal.Hidden instruction={t("cabinSearch.searchedDesc")}>
                   <div className="w-32 h-32 rounded-full bg-slate-800/50 flex items-center justify-center mb-6 border-4 border-slate-700/50">
                     <Search className="w-16 h-16 text-slate-500" />
                   </div>
@@ -213,6 +217,9 @@ export function CabinSearchView({ onDismiss }: CabinSearchViewProps) {
               <button
                 type="button"
                 onClick={() => {
+                  if (!hasRevealed && !window.confirm(t("cabinSearch.confirmCloseWithoutReveal"))) {
+                    return;
+                  }
                   clearCabinSearchResult();
                   onDismiss();
                 }}

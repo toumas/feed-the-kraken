@@ -39,9 +39,10 @@ interface RootProps {
   children: React.ReactNode;
   className?: string;
   defaultRevealed?: boolean;
+  onReveal?: () => void;
 }
 
-function Root({ children, className, defaultRevealed = false }: RootProps) {
+function Root({ children, className, defaultRevealed = false, onReveal }: RootProps) {
   const [isRevealed, setIsRevealed] = useState(defaultRevealed);
   const [isPaused, setIsPaused] = useState(false);
   const [taps, setTaps] = useState<number[]>([]);
@@ -63,6 +64,7 @@ function Root({ children, className, defaultRevealed = false }: RootProps) {
     setRemainingTimeMs(AUTO_HIDE_DURATION_MS);
     timerStartTimeRef.current = Date.now();
     setIsRevealed(true);
+    onReveal?.();
   };
   const endReveal = () => {
     setRevealTimestamp(null);
@@ -180,9 +182,10 @@ function Canvas({ children, className, ...props }: CanvasProps) {
 interface HiddenProps {
   children?: React.ReactNode;
   className?: string;
+  instruction?: string;
 }
 
-function Hidden({ children, className }: HiddenProps) {
+function Hidden({ children, className, instruction }: HiddenProps) {
   const { isRevealed, tapCount, handleTap } = useRoleReveal();
   const { t } = useT("common");
 
@@ -211,7 +214,7 @@ function Hidden({ children, className }: HiddenProps) {
         onContextMenu={(e) => e.preventDefault()}
         className="flex flex-col items-center gap-3 px-6 py-4 bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-200 border border-cyan-800/50 rounded-xl font-bold transition-all cursor-pointer select-none touch-none focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
       >
-        <span className="text-lg">{t("roleReveal.instruction")}</span>
+        <span className="text-lg">{instruction || t("roleReveal.instruction")}</span>
         {/* Tap progress indicator */}
         <div className="flex gap-2">
           {[...Array(5)].map((_, i) => (
