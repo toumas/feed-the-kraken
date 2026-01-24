@@ -1,14 +1,13 @@
 "use client";
 
 import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
-
 import { JoinView } from "../../components/JoinView";
+import { useLocalizedRouter } from "../../hooks/useLocalizedRouter";
 
 import { useT } from "../../i18n/client";
 
 export default function JoinPage() {
-  const router = useRouter();
+  const router = useLocalizedRouter();
 
   const { t } = useT("common");
 

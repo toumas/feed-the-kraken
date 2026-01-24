@@ -614,10 +614,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               );
               // Reset the flag
               wasInLobbyRef.current = false;
-              // Clear lobbyRef to prevent beforeunload dialog
-              lobbyRef.current = null;
+              // Preserve language in redirect by extracting from current pathname
+              const pathParts = window.location.pathname.split("/");
+              const currentLng =
+                pathParts[1] === "fi" || pathParts[1] === "en"
+                  ? pathParts[1]
+                  : "en";
               // Force navigate to home page (unmounts socket)
-              window.location.href = "/";
+              window.location.href = `/${currentLng}/`;
               return; // Don't process further
             }
 

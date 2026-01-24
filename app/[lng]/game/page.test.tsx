@@ -11,6 +11,7 @@ vi.mock("next/navigation", () => ({
     replace: mockReplace,
     prefetch: vi.fn(),
   }),
+  useParams: () => ({ lng: "en" }),
 }));
 
 // Mock i18n
@@ -413,7 +414,7 @@ describe("GamePage", () => {
         status: "WAITING",
       };
       render(<GamePage />);
-      expect(mockPush).toHaveBeenCalledWith("/lobby");
+      expect(mockPush).toHaveBeenCalledWith("/en/lobby", undefined);
     });
   });
 
