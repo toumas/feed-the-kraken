@@ -7,6 +7,7 @@ import { useT } from "../../i18n/client";
 import type { Role } from "../../types";
 import { getPossibleRolesForPlayerCount } from "../../utils/role-utils";
 import { Avatar } from "../Avatar";
+import { ConfirmationModal } from "../ConfirmationModal";
 import { InlineError } from "../InlineError";
 
 export function RoleSelectionView() {
@@ -161,12 +162,12 @@ export function RoleSelectionView() {
 
       {/* Confirmation Modal */}
       {showConfirmModal && pendingRole && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-sm mx-4 shadow-2xl">
-            <h2 className="text-xl font-bold text-slate-100 mb-4 text-center">
-              {t("roleSelection.confirmTitle")}
-            </h2>
-
+        <ConfirmationModal.Root isOpen={true}>
+          <ConfirmationModal.Header
+            title={t("roleSelection.confirmTitle")}
+            className="justify-center"
+          />
+          <ConfirmationModal.Body>
             <div className="p-4 rounded-xl border border-slate-700 bg-slate-800/50 mb-4">
               <p
                 className={`text-2xl font-bold text-center ${getRoleColorClass(pendingRole)}`}
@@ -178,30 +179,24 @@ export function RoleSelectionView() {
               </p>
             </div>
 
-            <div className="bg-amber-950/50 border border-amber-500/50 rounded-lg p-3 mb-6">
+            <div className="bg-amber-950/50 border border-amber-500/50 rounded-lg p-3">
               <p className="text-sm text-amber-200 text-center">
                 ⚠️ {t("roleSelection.warning")}
               </p>
             </div>
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setShowConfirmModal(false)}
-                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-medium transition-colors"
-              >
-                {t("actions.cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmRole}
-                className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold transition-all"
-              >
-                {t("actions.confirm")}
-              </button>
-            </div>
-          </div>
-        </div>
+          </ConfirmationModal.Body>
+          <ConfirmationModal.Actions>
+            <ConfirmationModal.Button
+              variant="secondary"
+              onClick={() => setShowConfirmModal(false)}
+            >
+              {t("actions.cancel")}
+            </ConfirmationModal.Button>
+            <ConfirmationModal.Button onClick={handleConfirmRole}>
+              {t("actions.confirm")}
+            </ConfirmationModal.Button>
+          </ConfirmationModal.Actions>
+        </ConfirmationModal.Root>
       )}
     </div>
   );

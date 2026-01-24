@@ -11,6 +11,7 @@ import { GameHeader } from "../GameHeader";
 import { InlineError } from "../InlineError";
 import { PlayerSelectionList } from "../PlayerSelectionList";
 import { RoleReveal } from "../RoleReveal";
+import { ConfirmationModal } from "../ConfirmationModal";
 
 interface CabinSearchViewProps {
   onDismiss: () => void;
@@ -29,6 +30,7 @@ export function CabinSearchView({ onDismiss }: CabinSearchViewProps) {
   const { t } = useT("common");
   const [isPending, setIsPending] = useState(false);
   const [hasRevealed, setHasRevealed] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   // Clear pending state if error occurs (e.g. denial)
   useEffect(() => {
@@ -153,7 +155,6 @@ export function CabinSearchView({ onDismiss }: CabinSearchViewProps) {
           </div>
         )}
 
-        {/* Result Overlay */}
         {cabinSearchResult && resultRoleInfo && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="w-full max-w-md mx-4">
@@ -217,7 +218,8 @@ export function CabinSearchView({ onDismiss }: CabinSearchViewProps) {
               <button
                 type="button"
                 onClick={() => {
-                  if (!hasRevealed && !window.confirm(t("cabinSearch.confirmCloseWithoutReveal"))) {
+                  if (!hasRevealed) {
+                    setShowCloseConfirm(true);
                     return;
                   }
                   clearCabinSearchResult();
@@ -229,6 +231,34 @@ export function CabinSearchView({ onDismiss }: CabinSearchViewProps) {
               </button>
             </div>
           </div>
+        )}
+
+        {/* Close Confirmation Modal */}
+        {showCloseConfirm && (
+          <ConfirmationModal.Root isOpen={true}>
+            <ConfirmationModal.Header title={t("cabinSearch.title")} />
+            <ConfirmationModal.Body>
+              <p>{t("cabinSearch.confirmCloseWithoutReveal")}</p>
+            </ConfirmationModal.Body>
+            <ConfirmationModal.Actions>
+              <ConfirmationModal.Button
+                variant="secondary"
+                onClick={() => setShowCloseConfirm(false)}
+              >
+                {t("actions.cancel")}
+              </ConfirmationModal.Button>
+              <ConfirmationModal.Button
+                variant="primary"
+                onClick={() => {
+                  setShowCloseConfirm(false);
+                  clearCabinSearchResult();
+                  onDismiss();
+                }}
+              >
+                {t("actions.confirm")}
+              </ConfirmationModal.Button>
+            </ConfirmationModal.Actions>
+          </ConfirmationModal.Root>
         )}
       </main>
     </div>
