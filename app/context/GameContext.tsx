@@ -662,7 +662,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             if (k && v) params[k] = v;
           });
           setError(currentT(key, params));
-          setTimeout(() => setError(null), 3000);
           break;
         }
 
