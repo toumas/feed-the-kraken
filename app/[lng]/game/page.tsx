@@ -589,6 +589,13 @@ export default function GamePage() {
                     </p>
                   </div>
                 </div>
+                <p className="text-sm font-bold text-amber-500 mt-1 mb-6">
+                  {t("feedTheKraken.notCultLeader", {
+                    name: lobby.players.find(
+                      (p) => p.id === feedTheKrakenResult.targetPlayerId,
+                    )?.name,
+                  })}
+                </p>
               </>
             )}
             <button

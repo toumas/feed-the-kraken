@@ -150,6 +150,7 @@
     "waitingConfirmationDesc": "The sailor must accept their fate...",
     "cultWins": "CULT WINS!",
     "cultWinsDesc": "The Cult Leader was fed to the Kraken! The Cult Leader and all Cultists immediately win the game.",
+    "notCultLeader": "{{name}} was not the Cult Leader",
     "limitReached": "The Kraken can only be fed 2 times per game."
   },
   "flogging": {

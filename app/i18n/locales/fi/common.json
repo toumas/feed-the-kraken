@@ -150,6 +150,7 @@
     "waitingConfirmationDesc": "Henkilöstön jäsenen täytyy hyväksyä kohtalonsa...",
     "cultWins": "KULTTI VOITTAA!",
     "cultWinsDesc": "Kulttijohtaja syötettiin Krakenille! Kulttijohtaja ja kaikki kultistit voittavat pelin välittömästi.",
+    "notCultLeader": "{{name}} ei ollut Kulttijohtaja",
     "limitReached": "Krakenia voi ruokkia vain 2 kertaa pelissä."
   },
   "flogging": {

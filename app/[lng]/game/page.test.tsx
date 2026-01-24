@@ -155,6 +155,10 @@ const createMockPlayer = (overrides: Partial<Player> = {}): Player => ({
 // Mock GameContext values
 let mockLobby: LobbyState | null = null;
 let mockMyPlayerId = "p1";
+let mockFeedTheKrakenResult: {
+  targetPlayerId: string;
+  cultVictory: boolean;
+} | null = null;
 const mockLeaveLobby = vi.fn();
 
 vi.mock("../../context/GameContext", () => ({
@@ -185,7 +189,7 @@ vi.mock("../../context/GameContext", () => ({
     setIsGunsStashDismissed: vi.fn(),
     handleFeedTheKrakenResponse: vi.fn(),
     feedTheKrakenPrompt: null,
-    feedTheKrakenResult: null,
+    feedTheKrakenResult: mockFeedTheKrakenResult,
     clearFeedTheKrakenResult: vi.fn(),
     offWithTonguePrompt: null,
     handleOffWithTongueResponse: vi.fn(),
@@ -203,6 +207,7 @@ describe("GamePage", () => {
       players: [createMockPlayer()],
       status: "PLAYING",
     };
+    mockFeedTheKrakenResult = null;
   });
 
   afterEach(() => {
@@ -260,6 +265,7 @@ describe("GamePage", () => {
           round: {
             startTime: Date.now(),
             duration: 15000,
+            endTime: Date.now() + 15000,
             playerQuestions: {},
             leaderChoice: null,
             playerAnswers: {},
@@ -310,6 +316,7 @@ describe("GamePage", () => {
           round: {
             startTime: Date.now(),
             duration: 15000,
+            endTime: Date.now() + 15000,
             playerQuestions: {},
             leaderChoice: null,
             playerAnswers: {},
@@ -357,6 +364,7 @@ describe("GamePage", () => {
           initiatorId: "p2",
           readyPlayers: [],
           startTime: Date.now(),
+          endTime: Date.now() + 15000,
           playerQuestions: {},
           playerAnswers: {},
         },
@@ -375,6 +383,7 @@ describe("GamePage", () => {
           initiatorId: "p2",
           claims: {},
           startTime: Date.now(),
+          endTime: Date.now() + 15000,
           playerQuestions: {},
           playerAnswers: {},
         },
@@ -395,6 +404,7 @@ describe("GamePage", () => {
           round: {
             startTime: Date.now(),
             duration: 15000,
+            endTime: Date.now() + 15000,
             playerQuestions: {},
             leaderChoice: null,
             playerAnswers: {},
@@ -431,6 +441,7 @@ describe("GamePage", () => {
           round: {
             startTime: Date.now(),
             duration: 15000,
+            endTime: Date.now() + 15000,
             playerQuestions: {},
             leaderChoice: "p2",
             playerAnswers: {},
@@ -486,6 +497,7 @@ describe("GamePage", () => {
           round: {
             startTime: Date.now(),
             duration: 15000,
+            endTime: Date.now() + 15000,
             playerQuestions: {},
             leaderChoice: "p2",
             playerAnswers: {},
@@ -539,6 +551,7 @@ describe("GamePage", () => {
           initiatorId: "p1",
           claims: {},
           startTime: Date.now(),
+          endTime: Date.now() + 15000,
           playerQuestions: {},
           playerAnswers: {},
         },
@@ -557,6 +570,7 @@ describe("GamePage", () => {
           initiatorId: "p1",
           readyPlayers: [],
           startTime: Date.now(),
+          endTime: Date.now() + 15000,
           playerQuestions: {},
           playerAnswers: {},
         },
@@ -580,6 +594,7 @@ describe("GamePage", () => {
           round: {
             startTime: Date.now(),
             duration: 15000,
+            endTime: Date.now() + 15000,
             playerQuestions: {},
             leaderChoice: null,
             playerAnswers: {},
@@ -604,6 +619,38 @@ describe("GamePage", () => {
       };
       render(<GamePage />);
       expect(screen.getByTestId("role-selection-view")).toBeDefined();
+    });
+  });
+  describe("Feed the Kraken Result", () => {
+    it("shows result modal with 'not Cult Leader' message when cultVictory is false", () => {
+      mockLobby = {
+        code: "TEST",
+        players: [
+          createMockPlayer(),
+          createMockPlayer({ id: "p2", name: "Player 2" }),
+        ],
+        status: "PLAYING",
+      };
+      mockFeedTheKrakenResult = { targetPlayerId: "p2", cultVictory: false };
+
+      render(<GamePage />);
+      expect(screen.getByText("feedTheKraken.notCultLeader")).toBeDefined();
+    });
+
+    it("does not show 'not Cult Leader' message when cultVictory is true", () => {
+      mockLobby = {
+        code: "TEST",
+        players: [
+          createMockPlayer(),
+          createMockPlayer({ id: "p2", name: "Player 2" }),
+        ],
+        status: "PLAYING",
+      };
+      mockFeedTheKrakenResult = { targetPlayerId: "p2", cultVictory: true };
+
+      render(<GamePage />);
+      expect(screen.queryByText("feedTheKraken.notCultLeader")).toBeNull();
+      expect(screen.getByText("feedTheKraken.cultWins")).toBeDefined();
     });
   });
 });
