@@ -1,14 +1,15 @@
 "use client";
 
 import { ArrowLeft } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { ProfileEditor } from "../../components/ProfileEditor";
 import { useGame } from "../../context/GameContext";
+import { useLocalizedRouter } from "../../hooks/useLocalizedRouter";
 import { useT } from "../../i18n/client";
 
 function IdentifyContent() {
-  const router = useRouter();
+  const router = useLocalizedRouter();
   const searchParams = useSearchParams();
   const nextAction = searchParams.get("next"); // "create" | "join"
   const code = searchParams.get("code");

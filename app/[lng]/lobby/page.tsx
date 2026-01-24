@@ -1,14 +1,14 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { InlineError } from "../../components/InlineError";
 import { LobbyView } from "../../components/LobbyView";
 import { useGame } from "../../context/GameContext";
+import { useLocalizedRouter } from "../../hooks/useLocalizedRouter";
 import { useT } from "../../i18n/client";
 
 export default function LobbyPage() {
-  const router = useRouter();
+  const router = useLocalizedRouter();
   const {
     lobby,
     myPlayerId,

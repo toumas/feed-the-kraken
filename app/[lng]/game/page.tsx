@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import React, {
   type ComponentType,
   type ReactNode,
@@ -8,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { useLocalizedRouter } from "../../hooks/useLocalizedRouter";
 
 // Activity is available in React 19+ but types might be missing in some versions
 // @ts-expect-error
@@ -45,7 +45,7 @@ type LocalView =
   | "DENIAL";
 
 export default function GamePage() {
-  const router = useRouter();
+  const router = useLocalizedRouter();
   const {
     lobby,
     myRole,

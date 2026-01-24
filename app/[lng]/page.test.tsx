@@ -106,7 +106,7 @@ describe("KrakenCompanion (Home Page)", () => {
       render(<KrakenCompanion />);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith("/lobby");
+        expect(mockPush).toHaveBeenCalledWith("/en/lobby", undefined);
       });
     });
 
@@ -117,7 +117,7 @@ describe("KrakenCompanion (Home Page)", () => {
       render(<KrakenCompanion />);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith("/game");
+        expect(mockPush).toHaveBeenCalledWith("/en/game", undefined);
       });
     });
 

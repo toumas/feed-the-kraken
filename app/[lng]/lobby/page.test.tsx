@@ -9,6 +9,7 @@ vi.mock("next/navigation", () => ({
     replace: vi.fn(),
     prefetch: vi.fn(),
   }),
+  useParams: () => ({ lng: "en" }),
 }));
 
 // Mock i18n
@@ -78,7 +79,7 @@ describe("LobbyPage", () => {
       // Should render nothing after leaving
       expect(container.innerHTML).toBe("");
       expect(mockLeaveLobby).toHaveBeenCalled();
-      expect(mockPush).toHaveBeenCalledWith("/");
+      expect(mockPush).toHaveBeenCalledWith("/en/", undefined);
     });
   });
 
@@ -87,7 +88,7 @@ describe("LobbyPage", () => {
       mockLobby = { status: "PLAYING" };
       render(<LobbyPage />);
 
-      expect(mockPush).toHaveBeenCalledWith("/game");
+      expect(mockPush).toHaveBeenCalledWith("/en/game", undefined);
     });
   });
 });

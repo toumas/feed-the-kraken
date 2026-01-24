@@ -1,15 +1,15 @@
 "use client";
 import { Anchor } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { HomeView } from "../components/HomeView";
 import { InlineError } from "../components/InlineError";
 import { LanguageSelector } from "../components/LanguageSelector";
 import { useGame } from "../context/GameContext";
+import { useLocalizedRouter } from "../hooks/useLocalizedRouter";
 import { useT } from "../i18n/client";
 
 export default function KrakenCompanion() {
-  const router = useRouter();
+  const router = useLocalizedRouter();
   const { lobby, error, setError } = useGame();
   const { t } = useT("common");
 
