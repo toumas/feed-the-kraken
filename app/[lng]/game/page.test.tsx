@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LobbyState, Player } from "../../types";
 
@@ -45,7 +45,38 @@ vi.mock("react", async () => {
 
 // Mock child components
 vi.mock("../../components/GameView", () => ({
-  GameView: () => <div data-testid="game-view">Game View</div>,
+  GameView: ({
+    onOpenCabinSearch,
+    onOpenFeedTheKraken,
+    onOpenFlogging,
+    onOpenOffWithTongue,
+    onOpenDenial,
+  }: {
+    onOpenCabinSearch?: () => void;
+    onOpenFeedTheKraken?: () => void;
+    onOpenFlogging?: () => void;
+    onOpenOffWithTongue?: () => void;
+    onOpenDenial?: () => void;
+  }) => (
+    <div data-testid="game-view">
+      Game View
+      <button type="button" onClick={onOpenCabinSearch} data-testid="open-cabin-search">
+        Open Cabin Search
+      </button>
+      <button type="button" onClick={onOpenFeedTheKraken} data-testid="open-feed-kraken">
+        Open Feed Kraken
+      </button>
+      <button type="button" onClick={onOpenFlogging} data-testid="open-flogging">
+        Open Flogging
+      </button>
+      <button type="button" onClick={onOpenOffWithTongue} data-testid="open-off-with-tongue">
+        Open Off With Tongue
+      </button>
+      <button type="button" onClick={onOpenDenial} data-testid="open-denial">
+        Open Denial
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock("../../components/views/RoleSelectionView", () => ({
@@ -160,6 +191,7 @@ let mockFeedTheKrakenResult: {
   cultVictory: boolean;
 } | null = null;
 const mockLeaveLobby = vi.fn();
+const mockSetError = vi.fn();
 
 vi.mock("../../context/GameContext", () => ({
   useGame: () => ({
@@ -168,7 +200,7 @@ vi.mock("../../context/GameContext", () => ({
     myPlayerId: mockMyPlayerId,
     leaveLobby: mockLeaveLobby,
     error: null,
-    setError: vi.fn(),
+    setError: mockSetError,
     cabinSearchPrompt: null,
     handleCabinSearchResponse: vi.fn(),
     floggingConfirmationPrompt: null,
@@ -651,6 +683,38 @@ describe("GamePage", () => {
       render(<GamePage />);
       expect(screen.queryByText("feedTheKraken.notCultLeader")).toBeNull();
       expect(screen.getByText("feedTheKraken.cultWins")).toBeDefined();
+    });
+  });
+
+  describe("Error Clearing on View Transitions", () => {
+    it("clears error when opening Cabin Search view", () => {
+      render(<GamePage />);
+      fireEvent.click(screen.getByTestId("open-cabin-search"));
+      expect(mockSetError).toHaveBeenCalledWith(null);
+    });
+
+    it("clears error when opening Feed The Kraken view", () => {
+      render(<GamePage />);
+      fireEvent.click(screen.getByTestId("open-feed-kraken"));
+      expect(mockSetError).toHaveBeenCalledWith(null);
+    });
+
+    it("clears error when opening Flogging view", () => {
+      render(<GamePage />);
+      fireEvent.click(screen.getByTestId("open-flogging"));
+      expect(mockSetError).toHaveBeenCalledWith(null);
+    });
+
+    it("clears error when opening Off With Tongue view", () => {
+      render(<GamePage />);
+      fireEvent.click(screen.getByTestId("open-off-with-tongue"));
+      expect(mockSetError).toHaveBeenCalledWith(null);
+    });
+
+    it("clears error when opening Denial view", () => {
+      render(<GamePage />);
+      fireEvent.click(screen.getByTestId("open-denial"));
+      expect(mockSetError).toHaveBeenCalledWith(null);
     });
   });
 });

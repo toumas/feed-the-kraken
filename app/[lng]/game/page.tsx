@@ -111,6 +111,7 @@ export default function GamePage() {
 
   const handleDismissLocalView = () => {
     setLocalView("NONE");
+    setError(null);
   };
 
   if (!lobby || lobby.status !== "PLAYING") {
@@ -234,11 +235,26 @@ export default function GamePage() {
               onLeave={handleLeave}
               className=""
               // Pass callbacks to open local views
-              onOpenCabinSearch={() => setLocalView("CABIN_SEARCH")}
-              onOpenFeedTheKraken={() => setLocalView("FEED_KRAKEN")}
-              onOpenFlogging={() => setLocalView("FLOGGING")}
-              onOpenOffWithTongue={() => setLocalView("OFF_WITH_TONGUE")}
-              onOpenDenial={() => setLocalView("DENIAL")}
+              onOpenCabinSearch={() => {
+                setError(null);
+                setLocalView("CABIN_SEARCH");
+              }}
+              onOpenFeedTheKraken={() => {
+                setError(null);
+                setLocalView("FEED_KRAKEN");
+              }}
+              onOpenFlogging={() => {
+                setError(null);
+                setLocalView("FLOGGING");
+              }}
+              onOpenOffWithTongue={() => {
+                setError(null);
+                setLocalView("OFF_WITH_TONGUE");
+              }}
+              onOpenDenial={() => {
+                setError(null);
+                setLocalView("DENIAL");
+              }}
               // Standard props
 
               onStartConversion={handleStartConversion}
