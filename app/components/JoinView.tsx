@@ -39,8 +39,12 @@ export function JoinView({ onJoin }: JoinViewProps) {
             maxLength={6}
             value={code}
             onChange={(e) => {
-              setCode(e.target.value.toUpperCase());
+              const newValue = e.target.value.toUpperCase();
+              setCode(newValue);
               setError(null); // Clear error when typing
+              if (newValue.length === 6) {
+                onJoin(newValue);
+              }
             }}
             placeholder="XP7K9L"
             className="w-full bg-slate-900 border-2 border-slate-700 focus:border-cyan-500 rounded-xl px-4 py-5 text-center text-3xl font-mono tracking-[0.5em] uppercase text-white placeholder:text-slate-700 outline-none transition-colors"

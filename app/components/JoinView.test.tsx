@@ -97,5 +97,15 @@ describe("JoinView", () => {
 
       expect(onJoin).toHaveBeenCalledWith("ABCD");
     });
+
+    it("auto-submits when 6 characters are typed", () => {
+      const onJoin = vi.fn();
+      render(<JoinView {...defaultProps} onJoin={onJoin} />);
+
+      const input = screen.getByPlaceholderText("XP7K9L");
+      fireEvent.change(input, { target: { value: "ABCDEF" } });
+
+      expect(onJoin).toHaveBeenCalledWith("ABCDEF");
+    });
   });
 });
