@@ -112,6 +112,7 @@ export type LobbyState = {
     targetPlayerId: string;
     cultVictory: boolean;
   };
+  captainId?: string;
 };
 
 export type ConnectionStatus =

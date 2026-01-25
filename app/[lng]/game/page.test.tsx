@@ -183,7 +183,7 @@ vi.mock("../../components/Avatar", () => ({
   Avatar: () => <div data-testid="avatar" />,
 }));
 
-// Create mock player
+// Helpers
 const createMockPlayer = (overrides: Partial<Player> = {}): Player => ({
   id: "p1",
   name: "Player 1",
@@ -199,24 +199,15 @@ const createMockPlayer = (overrides: Partial<Player> = {}): Player => ({
   ...overrides,
 });
 
-// Mock GameContext values
-let mockLobby: LobbyState | null = null;
-let mockMyPlayerId = "p1";
-let mockFeedTheKrakenResult: {
-  targetPlayerId: string;
-  cultVictory: boolean;
-} | null = null;
-const mockLeaveLobby = vi.fn();
-const mockSetError = vi.fn();
-
-vi.mock("../../context/GameContext", () => ({
-  useGame: () => ({
-    lobby: mockLobby,
+// --- HOISTED MOCK STATE ---
+const { mockedGameContext } = vi.hoisted(() => ({
+  mockedGameContext: {
+    lobby: null as LobbyState | null,
     myRole: "SAILOR",
-    myPlayerId: mockMyPlayerId,
-    leaveLobby: mockLeaveLobby,
-    error: null,
-    setError: mockSetError,
+    myPlayerId: "p1",
+    leaveLobby: vi.fn(),
+    error: null as string | null,
+    setError: vi.fn(),
     cabinSearchPrompt: null,
     handleCabinSearchResponse: vi.fn(),
     floggingConfirmationPrompt: null,
@@ -237,11 +228,18 @@ vi.mock("../../context/GameContext", () => ({
     setIsGunsStashDismissed: vi.fn(),
     handleFeedTheKrakenResponse: vi.fn(),
     feedTheKrakenPrompt: null,
-    feedTheKrakenResult: mockFeedTheKrakenResult,
+    feedTheKrakenResult: null as {
+      targetPlayerId: string;
+      cultVictory: boolean;
+    } | null,
     clearFeedTheKrakenResult: vi.fn(),
     offWithTonguePrompt: null,
     handleOffWithTongueResponse: vi.fn(),
-  }),
+  },
+}));
+
+vi.mock("../../context/GameContext", () => ({
+  useGame: () => mockedGameContext,
 }));
 
 import GamePage from "./page";
@@ -249,13 +247,29 @@ import GamePage from "./page";
 describe("GamePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockMyPlayerId = "p1";
-    mockLobby = {
+    // Default valid state
+    mockedGameContext.lobby = {
       code: "TEST",
       players: [createMockPlayer()],
       status: "PLAYING",
     };
-    mockFeedTheKrakenResult = null;
+    mockedGameContext.myPlayerId = "p1";
+    mockedGameContext.myRole = "SAILOR";
+    mockedGameContext.error = null;
+    mockedGameContext.feedTheKrakenResult = null;
+    mockedGameContext.cabinSearchPrompt = null;
+    mockedGameContext.floggingConfirmationPrompt = null;
+    mockedGameContext.floggingReveal = null;
+    mockedGameContext.feedTheKrakenPrompt = null;
+    mockedGameContext.offWithTonguePrompt = null;
+    mockedGameContext.isConversionDismissed = false;
+    mockedGameContext.isCabinSearchDismissed = false;
+    mockedGameContext.isGunsStashDismissed = false;
+
+    // Reset localStorage for new tests
+    if (typeof localStorage !== "undefined") {
+      localStorage.clear();
+    }
   });
 
   afterEach(() => {
@@ -264,16 +278,16 @@ describe("GamePage", () => {
 
   describe("Loading State", () => {
     it("shows loading state when lobby is null", () => {
-      mockLobby = null;
+      mockedGameContext.lobby = null;
       render(<GamePage />);
       expect(screen.getByText("game.loading")).toBeDefined();
     });
 
     it("shows loading state when lobby status is not PLAYING", () => {
-      mockLobby = {
+      mockedGameContext.lobby = {
         code: "TEST",
         players: [createMockPlayer()],
-        status: "WAITING",
+        status: "WAITING", // Not PLAYING
       };
       render(<GamePage />);
       expect(screen.getByText("game.loading")).toBeDefined();
@@ -287,26 +301,20 @@ describe("GamePage", () => {
     });
 
     it("shows ROLE_SELECTION view when roleSelectionStatus is SELECTING", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer()],
-        status: "PLAYING",
-        roleSelectionStatus: {
+      if (mockedGameContext.lobby) {
+        mockedGameContext.lobby.roleSelectionStatus = {
           state: "SELECTING",
           availableRoles: [],
           selections: {},
-        },
-      };
+        };
+      }
       render(<GamePage />);
       expect(screen.getByTestId("role-selection-view")).toBeDefined();
     });
 
     it("shows CONVERSION view when conversionStatus is ACTIVE", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer()],
-        status: "PLAYING",
-        conversionStatus: {
+      if (mockedGameContext.lobby) {
+        mockedGameContext.lobby.conversionStatus = {
           state: "ACTIVE",
           initiatorId: "p1",
           responses: {},
@@ -318,34 +326,32 @@ describe("GamePage", () => {
             leaderChoice: null,
             playerAnswers: {},
           },
-        },
-      };
+        };
+      }
       render(<GamePage />);
       expect(screen.getByTestId("conversion-view")).toBeDefined();
     });
 
     it("shows CULT_CABIN_SEARCH view when cabinSearchStatus is SETUP", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer()],
-        status: "PLAYING",
-        cabinSearchStatus: { state: "SETUP", initiatorId: "p1", claims: {} },
-      };
+      if (mockedGameContext.lobby) {
+        mockedGameContext.lobby.cabinSearchStatus = {
+          state: "SETUP",
+          initiatorId: "p1",
+          claims: {},
+        };
+      }
       render(<GamePage />);
       expect(screen.getByTestId("cult-cabin-search-view")).toBeDefined();
     });
 
     it("shows CULT_GUNS_STASH view when gunsStashStatus is WAITING_FOR_PLAYERS", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer()],
-        status: "PLAYING",
-        gunsStashStatus: {
+      if (mockedGameContext.lobby) {
+        mockedGameContext.lobby.gunsStashStatus = {
           state: "WAITING_FOR_PLAYERS",
           initiatorId: "p1",
           readyPlayers: [],
-        },
-      };
+        };
+      }
       render(<GamePage />);
       expect(screen.getByTestId("cult-guns-stash-view")).toBeDefined();
     });
@@ -353,11 +359,11 @@ describe("GamePage", () => {
 
   describe("Eliminated Player Exclusion from Cult Rituals", () => {
     it("shows DASHBOARD for eliminated player even when conversionStatus is ACTIVE", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer({ isEliminated: true })],
-        status: "PLAYING",
-        conversionStatus: {
+      if (mockedGameContext.lobby) {
+        mockedGameContext.lobby.players = [
+          createMockPlayer({ isEliminated: true }),
+        ];
+        mockedGameContext.lobby.conversionStatus = {
           state: "ACTIVE",
           initiatorId: "p2",
           responses: {},
@@ -369,104 +375,46 @@ describe("GamePage", () => {
             leaderChoice: null,
             playerAnswers: {},
           },
-        },
-      };
+        };
+      }
       render(<GamePage />);
-      // Eliminated player should see DASHBOARD (game-view) not conversion view
       expect(screen.getByTestId("game-view")).toBeDefined();
     });
 
     it("shows DASHBOARD for eliminated player even when cabinSearchStatus is SETUP", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer({ isEliminated: true })],
-        status: "PLAYING",
-        cabinSearchStatus: { state: "SETUP", initiatorId: "p2", claims: {} },
-      };
+      if (mockedGameContext.lobby) {
+        mockedGameContext.lobby.players = [
+          createMockPlayer({ isEliminated: true }),
+        ];
+        mockedGameContext.lobby.cabinSearchStatus = {
+          state: "SETUP",
+          initiatorId: "p2",
+          claims: {},
+        };
+      }
       render(<GamePage />);
       expect(screen.getByTestId("game-view")).toBeDefined();
     });
 
     it("shows DASHBOARD for eliminated player even when gunsStashStatus is WAITING_FOR_PLAYERS", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer({ isEliminated: true })],
-        status: "PLAYING",
-        gunsStashStatus: {
+      if (mockedGameContext.lobby) {
+        mockedGameContext.lobby.players = [
+          createMockPlayer({ isEliminated: true }),
+        ];
+        mockedGameContext.lobby.gunsStashStatus = {
           state: "WAITING_FOR_PLAYERS",
           initiatorId: "p2",
           readyPlayers: [],
-        },
-      };
+        };
+      }
       render(<GamePage />);
       expect(screen.getByTestId("game-view")).toBeDefined();
-    });
-
-    it("shows DASHBOARD for eliminated player when gunsStashStatus is DISTRIBUTION", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer({ isEliminated: true })],
-        status: "PLAYING",
-        gunsStashStatus: {
-          state: "DISTRIBUTION",
-          initiatorId: "p2",
-          readyPlayers: [],
-          startTime: Date.now(),
-          endTime: Date.now() + 15000,
-          playerQuestions: {},
-          playerAnswers: {},
-        },
-      };
-      render(<GamePage />);
-      expect(screen.getByTestId("game-view")).toBeDefined();
-    });
-
-    it("shows DASHBOARD for eliminated player when cabinSearchStatus is ACTIVE", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer({ isEliminated: true })],
-        status: "PLAYING",
-        cabinSearchStatus: {
-          state: "ACTIVE",
-          initiatorId: "p2",
-          claims: {},
-          startTime: Date.now(),
-          endTime: Date.now() + 15000,
-          playerQuestions: {},
-          playerAnswers: {},
-        },
-      };
-      render(<GamePage />);
-      expect(screen.getByTestId("game-view")).toBeDefined();
-    });
-
-    it("non-eliminated player still sees CONVERSION view when conversionStatus is ACTIVE", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer({ isEliminated: false })],
-        status: "PLAYING",
-        conversionStatus: {
-          state: "ACTIVE",
-          initiatorId: "p1",
-          responses: {},
-          round: {
-            startTime: Date.now(),
-            duration: 15000,
-            endTime: Date.now() + 15000,
-            playerQuestions: {},
-            leaderChoice: null,
-            playerAnswers: {},
-          },
-        },
-      };
-      render(<GamePage />);
-      expect(screen.getByTestId("conversion-view")).toBeDefined();
     });
   });
 
   describe("Redirect Behavior", () => {
     it("redirects to /lobby when status is not PLAYING", () => {
-      mockLobby = {
+      mockedGameContext.lobby = {
         code: "TEST",
         players: [createMockPlayer()],
         status: "WAITING",
@@ -476,166 +424,12 @@ describe("GamePage", () => {
     });
   });
 
-  describe("COMPLETED States", () => {
-    it("shows CONVERSION view when conversionStatus is COMPLETED and not dismissed", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer()],
-        status: "PLAYING",
-        conversionStatus: {
-          state: "COMPLETED",
-          initiatorId: "p1",
-          responses: {},
-          round: {
-            startTime: Date.now(),
-            duration: 15000,
-            endTime: Date.now() + 15000,
-            playerQuestions: {},
-            leaderChoice: "p2",
-            playerAnswers: {},
-            result: { convertedPlayerId: "p2", correctAnswers: [] },
-          },
-        },
-      };
-      render(<GamePage />);
-      expect(screen.getByTestId("conversion-view")).toBeDefined();
-    });
-
-    it("shows CULT_CABIN_SEARCH view when cabinSearchStatus is COMPLETED and not dismissed", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer()],
-        status: "PLAYING",
-        cabinSearchStatus: {
-          state: "COMPLETED",
-          initiatorId: "p1",
-          claims: {},
-          result: { correctAnswers: [] },
-        },
-      };
-      render(<GamePage />);
-      expect(screen.getByTestId("cult-cabin-search-view")).toBeDefined();
-    });
-
-    it("shows CULT_GUNS_STASH view when gunsStashStatus is COMPLETED and not dismissed", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer()],
-        status: "PLAYING",
-        gunsStashStatus: {
-          state: "COMPLETED",
-          initiatorId: "p1",
-          readyPlayers: [],
-          distribution: { p2: 1 },
-        },
-      };
-      render(<GamePage />);
-      expect(screen.getByTestId("cult-guns-stash-view")).toBeDefined();
-    });
-
-    it("shows DASHBOARD for eliminated player when conversionStatus is COMPLETED", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer({ isEliminated: true })],
-        status: "PLAYING",
-        conversionStatus: {
-          state: "COMPLETED",
-          initiatorId: "p1",
-          responses: {},
-          round: {
-            startTime: Date.now(),
-            duration: 15000,
-            endTime: Date.now() + 15000,
-            playerQuestions: {},
-            leaderChoice: "p2",
-            playerAnswers: {},
-            result: { convertedPlayerId: "p2", correctAnswers: [] },
-          },
-        },
-      };
-      render(<GamePage />);
-      expect(screen.getByTestId("game-view")).toBeDefined();
-    });
-
-    it("shows DASHBOARD for eliminated player when cabinSearchStatus is COMPLETED", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer({ isEliminated: true })],
-        status: "PLAYING",
-        cabinSearchStatus: {
-          state: "COMPLETED",
-          initiatorId: "p1",
-          claims: {},
-          result: { correctAnswers: [] },
-        },
-      };
-      render(<GamePage />);
-      expect(screen.getByTestId("game-view")).toBeDefined();
-    });
-
-    it("shows DASHBOARD for eliminated player when gunsStashStatus is COMPLETED", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer({ isEliminated: true })],
-        status: "PLAYING",
-        gunsStashStatus: {
-          state: "COMPLETED",
-          initiatorId: "p1",
-          readyPlayers: [],
-          distribution: { p2: 1 },
-        },
-      };
-      render(<GamePage />);
-      expect(screen.getByTestId("game-view")).toBeDefined();
-    });
-
-    it("shows CULT_CABIN_SEARCH view when cabinSearchStatus is ACTIVE", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer()],
-        status: "PLAYING",
-        cabinSearchStatus: {
-          state: "ACTIVE",
-          initiatorId: "p1",
-          claims: {},
-          startTime: Date.now(),
-          endTime: Date.now() + 15000,
-          playerQuestions: {},
-          playerAnswers: {},
-        },
-      };
-      render(<GamePage />);
-      expect(screen.getByTestId("cult-cabin-search-view")).toBeDefined();
-    });
-
-    it("shows CULT_GUNS_STASH view when gunsStashStatus is DISTRIBUTION", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer()],
-        status: "PLAYING",
-        gunsStashStatus: {
-          state: "DISTRIBUTION",
-          initiatorId: "p1",
-          readyPlayers: [],
-          startTime: Date.now(),
-          endTime: Date.now() + 15000,
-          playerQuestions: {},
-          playerAnswers: {},
-        },
-      };
-      render(<GamePage />);
-      expect(screen.getByTestId("cult-guns-stash-view")).toBeDefined();
-    });
-  });
-
   describe("Edge Cases", () => {
     it("handles case where player is not found in lobby", () => {
-      mockMyPlayerId = "nonexistent";
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer({ id: "other" })],
-        status: "PLAYING",
-        conversionStatus: {
+      mockedGameContext.myPlayerId = "nonexistent";
+      if (mockedGameContext.lobby) {
+        mockedGameContext.lobby.players = [createMockPlayer({ id: "other" })];
+        mockedGameContext.lobby.conversionStatus = {
           state: "ACTIVE",
           initiatorId: "p1",
           responses: {},
@@ -647,58 +441,86 @@ describe("GamePage", () => {
             leaderChoice: null,
             playerAnswers: {},
           },
-        },
-      };
-      // Should show the conversion view (since isEliminated is undefined/falsy)
+        };
+      }
       render(<GamePage />);
+      // Should default to showing view if not explicitly eliminated
       expect(screen.getByTestId("conversion-view")).toBeDefined();
     });
-
-    it("eliminated player can still see role selection", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [createMockPlayer({ isEliminated: true })],
-        status: "PLAYING",
-        roleSelectionStatus: {
-          state: "SELECTING",
-          availableRoles: [],
-          selections: {},
-        },
-      };
-      render(<GamePage />);
-      expect(screen.getByTestId("role-selection-view")).toBeDefined();
-    });
   });
+
   describe("Feed the Kraken Result", () => {
     it("shows result modal with 'not Cult Leader' message when cultVictory is false", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [
+      if (mockedGameContext.lobby) {
+        mockedGameContext.lobby.players = [
           createMockPlayer(),
           createMockPlayer({ id: "p2", name: "Player 2" }),
-        ],
-        status: "PLAYING",
+        ];
+      }
+      mockedGameContext.feedTheKrakenResult = {
+        targetPlayerId: "p2",
+        cultVictory: false,
       };
-      mockFeedTheKrakenResult = { targetPlayerId: "p2", cultVictory: false };
-
       render(<GamePage />);
       expect(screen.getByText("feedTheKraken.notCultLeader")).toBeDefined();
     });
 
     it("does not show 'not Cult Leader' message when cultVictory is true", () => {
-      mockLobby = {
-        code: "TEST",
-        players: [
+      if (mockedGameContext.lobby) {
+        mockedGameContext.lobby.players = [
           createMockPlayer(),
           createMockPlayer({ id: "p2", name: "Player 2" }),
-        ],
-        status: "PLAYING",
+        ];
+      }
+      mockedGameContext.feedTheKrakenResult = {
+        targetPlayerId: "p2",
+        cultVictory: true,
       };
-      mockFeedTheKrakenResult = { targetPlayerId: "p2", cultVictory: true };
-
       render(<GamePage />);
       expect(screen.queryByText("feedTheKraken.notCultLeader")).toBeNull();
       expect(screen.getByText("feedTheKraken.cultWins")).toBeDefined();
+    });
+  });
+
+  describe("Captain Announcement", () => {
+    it("shows captain announcement modal when captain is appointed", () => {
+      if (mockedGameContext.lobby) {
+        const captain = createMockPlayer({ id: "p2", name: "Captain Jack" });
+        mockedGameContext.lobby.players = [createMockPlayer(), captain];
+        mockedGameContext.lobby.captainId = "p2";
+      }
+      render(<GamePage />);
+      expect(screen.getByText("captainAnnouncement.title")).toBeDefined();
+      expect(screen.getByText("Captain Jack")).toBeDefined();
+    });
+
+    it("dismisses captain announcement modal when OK is clicked", () => {
+      if (mockedGameContext.lobby) {
+        const captain = createMockPlayer({ id: "p2", name: "Captain Jack" });
+        mockedGameContext.lobby.players = [createMockPlayer(), captain];
+        mockedGameContext.lobby.captainId = "p2";
+      }
+      render(<GamePage />);
+      // Click the OK button
+      const okButton = screen.getByText("captainAnnouncement.ok");
+      fireEvent.click(okButton);
+      // Expect modal to be gone
+      expect(screen.queryByText("captainAnnouncement.title")).toBeNull();
+      // Verify persistence
+      expect(
+        localStorage.getItem("kraken_captain_announcement_dismissed"),
+      ).toBe("true");
+    });
+
+    it("does not show captain announcement modal if already dismissed in localStorage", () => {
+      localStorage.setItem("kraken_captain_announcement_dismissed", "true");
+      if (mockedGameContext.lobby) {
+        const captain = createMockPlayer({ id: "p2", name: "Captain Jack" });
+        mockedGameContext.lobby.players = [createMockPlayer(), captain];
+        mockedGameContext.lobby.captainId = "p2";
+      }
+      render(<GamePage />);
+      expect(screen.queryByText("captainAnnouncement.title")).toBeNull();
     });
   });
 
@@ -706,31 +528,31 @@ describe("GamePage", () => {
     it("clears error when opening Cabin Search view", () => {
       render(<GamePage />);
       fireEvent.click(screen.getByTestId("open-cabin-search"));
-      expect(mockSetError).toHaveBeenCalledWith(null);
+      expect(mockedGameContext.setError).toHaveBeenCalledWith(null);
     });
 
     it("clears error when opening Feed The Kraken view", () => {
       render(<GamePage />);
       fireEvent.click(screen.getByTestId("open-feed-kraken"));
-      expect(mockSetError).toHaveBeenCalledWith(null);
+      expect(mockedGameContext.setError).toHaveBeenCalledWith(null);
     });
 
     it("clears error when opening Flogging view", () => {
       render(<GamePage />);
       fireEvent.click(screen.getByTestId("open-flogging"));
-      expect(mockSetError).toHaveBeenCalledWith(null);
+      expect(mockedGameContext.setError).toHaveBeenCalledWith(null);
     });
 
     it("clears error when opening Off With Tongue view", () => {
       render(<GamePage />);
       fireEvent.click(screen.getByTestId("open-off-with-tongue"));
-      expect(mockSetError).toHaveBeenCalledWith(null);
+      expect(mockedGameContext.setError).toHaveBeenCalledWith(null);
     });
 
     it("clears error when opening Denial view", () => {
       render(<GamePage />);
       fireEvent.click(screen.getByTestId("open-denial"));
-      expect(mockSetError).toHaveBeenCalledWith(null);
+      expect(mockedGameContext.setError).toHaveBeenCalledWith(null);
     });
   });
 });

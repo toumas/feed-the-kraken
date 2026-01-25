@@ -352,5 +352,10 @@
     "q9_b": "Rangaistus",
     "q9_c": "Kalan kypsentämistä",
     "q9_d": "Nopeaa purjehdusta"
+  },
+  "captainAnnouncement": {
+    "title": "Ensimmäinen kapteeni valittu!",
+    "message": "Miehistö on valinnut ensimmäisen johtajansa. Ensimmäinen kapteeni on:",
+    "ok": "Matkaan!"
   }
 }
