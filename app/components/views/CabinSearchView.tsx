@@ -7,11 +7,11 @@ import { useT } from "../../i18n/client";
 import type { Role } from "../../types";
 import { getRoleColor } from "../../utils/role-utils";
 import { Avatar } from "../Avatar";
+import { ConfirmationModal } from "../ConfirmationModal";
 import { GameHeader } from "../GameHeader";
 import { InlineError } from "../InlineError";
 import { PlayerSelectionList } from "../PlayerSelectionList";
 import { RoleReveal } from "../RoleReveal";
-import { ConfirmationModal } from "../ConfirmationModal";
 
 interface CabinSearchViewProps {
   onDismiss: () => void;

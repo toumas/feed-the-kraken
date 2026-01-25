@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CabinSearchView } from "./CabinSearchView";
 import type { GameContextValue } from "../../context/GameContext";
+import { CabinSearchView } from "./CabinSearchView";
 
 // Mock the GameContext
 const mockUseGame = vi.fn();
