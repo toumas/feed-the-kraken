@@ -60,16 +60,32 @@ vi.mock("../../components/GameView", () => ({
   }) => (
     <div data-testid="game-view">
       Game View
-      <button type="button" onClick={onOpenCabinSearch} data-testid="open-cabin-search">
+      <button
+        type="button"
+        onClick={onOpenCabinSearch}
+        data-testid="open-cabin-search"
+      >
         Open Cabin Search
       </button>
-      <button type="button" onClick={onOpenFeedTheKraken} data-testid="open-feed-kraken">
+      <button
+        type="button"
+        onClick={onOpenFeedTheKraken}
+        data-testid="open-feed-kraken"
+      >
         Open Feed Kraken
       </button>
-      <button type="button" onClick={onOpenFlogging} data-testid="open-flogging">
+      <button
+        type="button"
+        onClick={onOpenFlogging}
+        data-testid="open-flogging"
+      >
         Open Flogging
       </button>
-      <button type="button" onClick={onOpenOffWithTongue} data-testid="open-off-with-tongue">
+      <button
+        type="button"
+        onClick={onOpenOffWithTongue}
+        data-testid="open-off-with-tongue"
+      >
         Open Off With Tongue
       </button>
       <button type="button" onClick={onOpenDenial} data-testid="open-denial">
