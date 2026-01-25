@@ -352,5 +352,10 @@
     "q9_b": "A punishment",
     "q9_c": "Cooking fish",
     "q9_d": "Sailing fast"
+  },
+  "captainAnnouncement": {
+    "title": "First Captain Appointed!",
+    "message": "The crew has chosen their first leader. The First Captain is:",
+    "ok": "To the Voyage!"
   }
 }

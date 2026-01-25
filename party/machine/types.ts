@@ -165,6 +165,7 @@ export interface GameContext {
     result?: { outcome: "SILENCED" };
   };
   feedTheKrakenStatus?: FeedTheKrakenStatus;
+  captainId?: string;
   initialGameState?: InitialGameState;
 }
 

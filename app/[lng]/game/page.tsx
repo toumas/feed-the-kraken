@@ -16,7 +16,7 @@ const Activity = (React.Activity || React.unstable_Activity) as ComponentType<{
   children: ReactNode;
 }>;
 
-import { Eye, Scissors, Skull } from "lucide-react";
+import { Eye, Megaphone, Scissors, Skull } from "lucide-react";
 import { Avatar } from "../../components/Avatar";
 import { CancellationModal } from "../../components/CancellationModal";
 import { ConfirmationModal } from "../../components/ConfirmationModal";
@@ -92,6 +92,24 @@ export default function GamePage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showBackToLobbyConfirm, setShowBackToLobbyConfirm] = useState(false);
 
+  const [isCaptainAnnouncementDismissed, setIsCaptainAnnouncementDismissed] =
+    useState(() => {
+      if (typeof window !== "undefined") {
+        return (
+          localStorage.getItem("kraken_captain_announcement_dismissed") ===
+          "true"
+        );
+      }
+      return false;
+    });
+
+  // Persist dismissal state
+  useEffect(() => {
+    if (typeof window !== "undefined" && isCaptainAnnouncementDismissed) {
+      localStorage.setItem("kraken_captain_announcement_dismissed", "true");
+    }
+  }, [isCaptainAnnouncementDismissed]);
+
   const isLeavingRef = useRef(false);
 
   useEffect(() => {
@@ -124,6 +142,8 @@ export default function GamePage() {
       </div>
     );
   }
+
+  const firstCaptain = lobby.players.find((p) => p.id === lobby.captainId);
 
   // Check if the current player is eliminated
   const me = lobby.players.find((p) => p.id === myPlayerId);
@@ -718,6 +738,38 @@ export default function GamePage() {
               }}
             >
               {t("actions.confirm")}
+            </ConfirmationModal.Button>
+          </ConfirmationModal.Actions>
+        </ConfirmationModal.Root>
+      )}
+      {/* Captain Announcement Modal */}
+      {firstCaptain && !isCaptainAnnouncementDismissed && (
+        <ConfirmationModal.Root isOpen={true}>
+          <ConfirmationModal.Header
+            title={t("captainAnnouncement.title")}
+            icon={<Megaphone className="w-8 h-8 text-cyan-500" />}
+          />
+          <ConfirmationModal.Body>
+            <div className="flex flex-col items-center gap-6 py-4">
+              <div className="flex flex-col items-center gap-3">
+                <Avatar
+                  url={firstCaptain.photoUrl}
+                  size="lg"
+                  className="ring-4 ring-cyan-500/50"
+                />
+                <span className="text-2xl font-bold text-white">
+                  {firstCaptain.name}
+                </span>
+              </div>
+            </div>
+          </ConfirmationModal.Body>
+          <ConfirmationModal.Actions>
+            <ConfirmationModal.Button
+              variant="primary"
+              className="w-full py-4 text-lg"
+              onClick={() => setIsCaptainAnnouncementDismissed(true)}
+            >
+              {t("captainAnnouncement.ok")}
             </ConfirmationModal.Button>
           </ConfirmationModal.Actions>
         </ConfirmationModal.Root>

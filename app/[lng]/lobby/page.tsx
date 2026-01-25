@@ -34,6 +34,13 @@ export default function LobbyPage() {
     }
   }, [lobby?.status, router]);
 
+  // Clear captain announcement dismissal when back in lobby so it shows again for next game
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("kraken_captain_announcement_dismissed");
+    }
+  }, []);
+
   // Show cancellation message when role selection is cancelled
   useEffect(() => {
     if (

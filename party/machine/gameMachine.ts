@@ -336,6 +336,8 @@ export const gameMachine = setup({
       const playerCount = context.players.length;
       const roles = getRolesForPlayerCount(playerCount);
       const shuffled = shuffleArray(roles);
+      const captainId =
+        context.players[Math.floor(Math.random() * context.players.length)].id;
 
       const assignments: Record<string, Role> = {};
       context.players.forEach((p, index) => {
@@ -344,6 +346,7 @@ export const gameMachine = setup({
 
       return {
         assignments,
+        captainId,
         originalRoles: { ...assignments },
         isFloggingUsed: false,
         isGunsStashUsed: false,
@@ -447,6 +450,9 @@ export const gameMachine = setup({
 
       return {
         assignments,
+        captainId:
+          context.players[Math.floor(Math.random() * context.players.length)]
+            .id,
         originalRoles: { ...assignments },
         roleSelectionStatus: {
           ...context.roleSelectionStatus,
@@ -1201,6 +1207,7 @@ export const gameMachine = setup({
         feedTheKrakenStatus: undefined,
         feedTheKrakenResult: undefined,
         offWithTongueStatus: undefined,
+        captainId: context.captainId,
 
         players: context.players.map((p) => {
           const initial = context.initialGameState?.players.find(
@@ -1229,6 +1236,7 @@ export const gameMachine = setup({
     backToLobby: assign(({ context }) => ({
       assignments: undefined,
       originalRoles: undefined,
+      captainId: undefined,
       roleSelectionStatus: undefined,
       isFloggingUsed: false,
       isGunsStashUsed: false,

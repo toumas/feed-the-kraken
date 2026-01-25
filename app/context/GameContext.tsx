@@ -590,6 +590,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               floggingStatus: ctx.floggingStatus,
               feedTheKrakenStatus: ctx.feedTheKrakenStatus,
               offWithTongueStatus: ctx.offWithTongueStatus,
+              captainId: ctx.captainId,
             };
 
             // Detect if current player was kicked (lobby exists but player not in list)
