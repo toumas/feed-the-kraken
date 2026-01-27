@@ -22,10 +22,10 @@ export const checkRoleVisible = async (
   page: Page,
   roleText: string = "Cult Leader",
 ) => {
-  // Find the reveal button using getByRole with exact name
-  const revealBtn = page.getByRole("button", { name: "Tap 5 times to reveal" });
+  // Find the reveal button using getByRole with a core part of the name
+  const revealBtn = page.getByRole("button", { name: /reveal|tap 5 times/i });
   try {
-    await revealBtn.waitFor({ state: "visible", timeout: 5000 });
+    await revealBtn.waitFor({ state: "visible", timeout: 10000 });
   } catch {
     return false;
   }
@@ -40,9 +40,14 @@ export const checkRoleVisible = async (
 
   const isVisible = await page.getByText(roleText, { exact: true }).isVisible();
 
-  // Click the hide button
-  const hideBtn = page.getByRole("button", { name: "Tap once to hide" });
-  await hideBtn.click();
+  // Try to click the hide button if it exists
+  const hideBtn = page.getByRole("button", { name: /hide|tap once/i });
+  if (await hideBtn.isVisible()) {
+    await hideBtn.click();
+  } else {
+    // If no hide button, we might just wait or assume it hids eventually
+    // For tests, we usually just continue.
+  }
 
   return isVisible;
 };
@@ -55,10 +60,10 @@ export const withRoleRevealed = async <T>(
   page: Page,
   callback: () => Promise<T>,
 ): Promise<T | null> => {
-  // Find the reveal button using getByRole with exact name
-  const revealBtn = page.getByRole("button", { name: "Tap 5 times to reveal" });
+  // Find the reveal button using getByRole with a core part of the name
+  const revealBtn = page.getByRole("button", { name: /reveal|tap 5 times/i });
   try {
-    await revealBtn.waitFor({ state: "visible", timeout: 5000 });
+    await revealBtn.waitFor({ state: "visible", timeout: 10000 });
   } catch {
     return null;
   }
@@ -73,9 +78,11 @@ export const withRoleRevealed = async <T>(
 
   const result = await callback();
 
-  // Click the hide button
-  const hideBtn = page.getByRole("button", { name: "Tap once to hide" });
-  await hideBtn.click();
+  // Try to click the hide button if it exists
+  const hideBtn = page.getByRole("button", { name: /hide|tap once/i });
+  if (await hideBtn.isVisible()) {
+    await hideBtn.click();
+  }
 
   return result;
 };

@@ -633,6 +633,31 @@ export const gameMachine = setup({
     completeConversion: assign(({ context }) => {
       if (!context.conversionStatus?.round || !context.assignments) return {};
 
+      // Requirement: If Cult Leader is eliminated, no conversion happens.
+      const cultLeaderId = Object.entries(context.assignments).find(
+        ([_, role]) => role === "CULT_LEADER",
+      )?.[0];
+      const isCultLeaderEliminated = context.players.find(
+        (p) => p.id === cultLeaderId,
+      )?.isEliminated;
+
+      if (isCultLeaderEliminated) {
+        return {
+          conversionStatus: {
+            ...context.conversionStatus,
+            state: "COMPLETED" as const,
+            round: {
+              ...context.conversionStatus.round,
+              leaderChoice: null,
+              result: {
+                convertedPlayerId: null,
+                correctAnswers: [],
+              },
+            },
+          },
+        };
+      }
+
       // Get leader's choice, or pick randomly if not selected
       let targetId = context.conversionStatus.round.leaderChoice;
 
@@ -999,6 +1024,26 @@ export const gameMachine = setup({
 
     completeGunsStash: assign(({ context }) => {
       if (!context.gunsStashStatus) return {};
+
+      // Requirement: If Cult Leader is eliminated, no guns are distributed.
+      const cultLeaderId = Object.entries(context.assignments || {}).find(
+        ([_, role]) => role === "CULT_LEADER",
+      )?.[0];
+      const isCultLeaderEliminated = context.players.find(
+        (p) => p.id === cultLeaderId,
+      )?.isEliminated;
+
+      if (isCultLeaderEliminated) {
+        return {
+          isGunsStashUsed: true,
+          gunsStashStatus: {
+            ...context.gunsStashStatus,
+            state: "COMPLETED" as const,
+            distribution: {}, // No guns distributed
+            results: { correctAnswers: [] },
+          },
+        };
+      }
 
       // Get current distribution or empty object
       const currentDistribution = context.gunsStashStatus.distribution || {};
