@@ -1118,15 +1118,15 @@ export const gameMachine = setup({
         return { isFloggingUsed: true };
       const targetId = context.floggingStatus.targetPlayerId;
       const targetRole = context.assignments[targetId];
-      // Determine a "not role" - reveal what the player is NOT
-      const notRole =
-        targetRole === "CULT_LEADER"
-          ? "SAILOR"
-          : targetRole === "CULTIST"
-            ? "PIRATE"
-            : targetRole === "PIRATE"
-              ? "SAILOR"
-              : "PIRATE";
+      // Build deck: Sailor, Pirate, Cultist (Cult Leader counts as Cultist)
+      // Remove card matching current role, then pick randomly from remaining
+      const isCult = targetRole === "CULT_LEADER" || targetRole === "CULTIST";
+      const deck: Role[] = isCult
+        ? ["SAILOR", "PIRATE"]
+        : targetRole === "SAILOR"
+          ? ["PIRATE", "CULTIST"]
+          : ["SAILOR", "CULTIST"]; // targetRole === "PIRATE"
+      const notRole = deck[Math.floor(Math.random() * deck.length)];
       return {
         isFloggingUsed: true,
         floggingStatus: {

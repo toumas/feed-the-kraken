@@ -335,6 +335,57 @@ describe("XState Game Machine", () => {
       expect(context.floggingStatus).toBeUndefined();
       expect(context.isFloggingUsed).toBe(false);
     });
+
+    it("should reveal a randomized notRole that is not the target's current role", () => {
+      // Run multiple times to cover different random outcomes and assignments
+      for (let i = 0; i < 10; i++) {
+        const actor = createTestActor();
+        actor.send({
+          type: "CREATE_LOBBY",
+          playerId: "host_1",
+          playerName: "Host",
+          playerPhoto: null,
+          code: "TEST123",
+        });
+
+        for (let j = 1; j <= 4; j++) {
+          actor.send({
+            type: "JOIN_LOBBY",
+            playerId: `player_${j}`,
+            playerName: `Player ${j}`,
+            playerPhoto: null,
+          });
+        }
+
+        actor.send({ type: "START_GAME", playerId: "host_1" });
+
+        const midContext = actor.getSnapshot().context;
+        const targetId = "player_1";
+        const targetRole = midContext.assignments?.[targetId];
+        expect(targetRole).toBeDefined();
+
+        actor.send({ type: "FLOGGING_REQUEST", targetPlayerId: targetId });
+        actor.send({
+          type: "FLOGGING_CONFIRMATION_RESPONSE",
+          hostId: "host_1",
+          confirmed: true,
+        });
+
+        const finalContext = actor.getSnapshot().context;
+        const revealedNotRole = finalContext.floggingStatus?.result?.notRole;
+
+        expect(revealedNotRole).toBeDefined();
+
+        if (targetRole === "SAILOR") {
+          expect(["PIRATE", "CULTIST"]).toContain(revealedNotRole);
+        } else if (targetRole === "PIRATE") {
+          expect(["SAILOR", "CULTIST"]).toContain(revealedNotRole);
+        } else {
+          // CULTIST or CULT_LEADER
+          expect(["SAILOR", "PIRATE"]).toContain(revealedNotRole);
+        }
+      }
+    });
   });
 
   describe("Captain Cabin Search Flow", () => {

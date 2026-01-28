@@ -39,7 +39,6 @@ test("Flogging Flow: Host flogs Player 1", async ({ browser }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Join Crew" }).click();
     await page.getByPlaceholder("XP7K9L").fill(code);
-    await page.getByRole("button", { name: "Board Ship" }).click();
     await completeIdentifyPage(page);
     await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
     players.push({ context, page, name: playerName });
@@ -51,6 +50,18 @@ test("Flogging Flow: Host flogs Player 1", async ({ browser }) => {
   await expect(hostPage.getByText("Crew Status")).toBeVisible({
     timeout: 10000,
   });
+
+  // Handle Captain Announcement Modal
+  await expect(hostPage.getByText("First Captain Appointed!")).toBeVisible();
+  await hostPage.getByRole("button", { name: "To the Voyage!" }).click();
+  await expect(hostPage.getByText("First Captain Appointed!")).toBeHidden();
+
+  const player1Page = players[0].page;
+  await expect(player1Page.getByText("First Captain Appointed!")).toBeVisible({
+    timeout: 10000,
+  });
+  await player1Page.getByRole("button", { name: "To the Voyage!" }).click();
+  await expect(player1Page.getByText("First Captain Appointed!")).toBeHidden();
 
   // 4. Host initiates Flogging on Player 1
   await hostPage.getByRole("button", { name: "Flogging" }).click();
@@ -69,7 +80,6 @@ test("Flogging Flow: Host flogs Player 1", async ({ browser }) => {
   await expect(hostPage.getByText("Waiting for Confirmation")).toBeVisible();
 
   // 5. Player 1 confirms
-  const player1Page = players[0].page;
   await expect(
     player1Page.getByRole("heading", { name: "Flogging" }),
   ).toBeVisible({ timeout: 10000 });
@@ -89,7 +99,9 @@ test("Flogging Flow: Host flogs Player 1", async ({ browser }) => {
   await expect(hostPage.getByText("Is Definitely")).toBeVisible();
   const resultElement = hostPage.locator("p.text-3xl.font-bold");
   await expect(resultElement).toBeVisible();
-  await expect(resultElement).toHaveText(/NOT (PIRATE|SAILOR|CULT LEADER)/i);
+  await expect(resultElement).toHaveText(
+    /NOT (PIRATE|SAILOR|CULT LEADER|CULTIST)/i,
+  );
 
   // 7. Host closes reveal
   await hostPage.getByRole("button", { name: "Done" }).click();
@@ -133,7 +145,6 @@ test("Flogging Flow: Player 1 denies flogging", async ({ browser }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Join Crew" }).click();
   await page.getByPlaceholder("XP7K9L").fill(code);
-  await page.getByRole("button", { name: "Board Ship" }).click();
   await completeIdentifyPage(page);
   await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
@@ -146,6 +157,22 @@ test("Flogging Flow: Player 1 denies flogging", async ({ browser }) => {
   await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
   await hostPage.getByRole("button", { name: "Start Voyage" }).click();
   await expect(hostPage.getByText("Crew Status")).toBeVisible();
+
+  // Handle Captain Announcement Modal
+  await expect(hostPage.getByText("First Captain Appointed!")).toBeVisible();
+  await hostPage.getByRole("button", { name: "To the Voyage!" }).click();
+  await expect(hostPage.getByText("First Captain Appointed!")).toBeHidden();
+
+  const player1_denial = page;
+  await expect(
+    player1_denial.getByText("First Captain Appointed!"),
+  ).toBeVisible({
+    timeout: 10000,
+  });
+  await player1_denial.getByRole("button", { name: "To the Voyage!" }).click();
+  await expect(
+    player1_denial.getByText("First Captain Appointed!"),
+  ).toBeHidden();
 
   // 5. Host initiates Flogging on Player 1
   await hostPage.getByRole("button", { name: "Flogging" }).click();
@@ -210,7 +237,6 @@ test("Flogging Flow: Restriction (Once per game)", async ({ browser }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Join Crew" }).click();
   await page.getByPlaceholder("XP7K9L").fill(code);
-  await page.getByRole("button", { name: "Board Ship" }).click();
   await completeIdentifyPage(page);
   await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
@@ -223,6 +249,24 @@ test("Flogging Flow: Restriction (Once per game)", async ({ browser }) => {
   await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
   await hostPage.getByRole("button", { name: "Start Voyage" }).click();
   await expect(hostPage.getByText("Crew Status")).toBeVisible();
+
+  // Handle Captain Announcement Modal
+  await expect(hostPage.getByText("First Captain Appointed!")).toBeVisible();
+  await hostPage.getByRole("button", { name: "To the Voyage!" }).click();
+  await expect(hostPage.getByText("First Captain Appointed!")).toBeHidden();
+
+  const player1_restriction = page;
+  await expect(
+    player1_restriction.getByText("First Captain Appointed!"),
+  ).toBeVisible({
+    timeout: 10000,
+  });
+  await player1_restriction
+    .getByRole("button", { name: "To the Voyage!" })
+    .click();
+  await expect(
+    player1_restriction.getByText("First Captain Appointed!"),
+  ).toBeHidden();
 
   // 5. Host initiates Flogging on Player 1
   await hostPage.getByRole("button", { name: "Flogging" }).click();
