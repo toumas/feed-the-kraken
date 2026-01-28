@@ -1214,10 +1214,7 @@ export const gameMachine = setup({
           // If not Cult Leader, they are eliminated.
           return {
             ...p,
-            isEliminated: !isCultLeader, // Eliminated only if NOT cult victory (game ends anyway if cult wins)
-            // Actually, if Cult Wins, game enters some finished state or just shows victory.
-            // Standard logic: if Cult Leader is fed, Cult wins immediately.
-            // If not, target is eliminated.
+            isEliminated: true,
           };
         }),
         feedTheKrakenCount: (context.feedTheKrakenCount || 0) + 1,

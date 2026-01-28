@@ -145,6 +145,12 @@ describe("Feed the Kraken - XState", () => {
       const snapshot = actor.getSnapshot();
       expect(snapshot.value).toEqual({ playing: "idle" });
 
+      // Assert Cult Leader is eliminated (NEW REQUIREMENT)
+      const targetPlayer = snapshot.context.players.find(
+        (p) => p.id === cultLeaderPlayerId,
+      );
+      expect(targetPlayer?.isEliminated).toBe(true);
+
       // Assert status is COMPLETED and Cult Victory
       expect(snapshot.context.feedTheKrakenStatus).toMatchObject({
         state: "COMPLETED",
