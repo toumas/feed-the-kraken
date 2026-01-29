@@ -596,9 +596,6 @@ export default function GamePage() {
               </>
             ) : (
               <>
-                <div className="w-24 h-24 bg-red-500/20 rounded-full flex items-center justify-center mb-6 border-4 border-red-500/50">
-                  <Skull className="w-12 h-12 text-red-500" />
-                </div>
                 <h2 className="text-2xl font-bold text-white mb-4 text-center">
                   {t("feedTheKraken.resultTitle")}
                 </h2>
