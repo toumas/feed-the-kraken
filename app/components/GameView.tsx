@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Avatar } from "../components/Avatar";
+import { InlineError } from "../components/InlineError";
 import { RoleReveal } from "../components/RoleReveal";
 import { useT } from "../i18n/client";
 import type { LobbyState, Role } from "../types";
@@ -106,6 +107,15 @@ export function GameView({
   const roleInfo = getRoleDetails(myRole);
   const me = lobby.players.find((p) => p.id === myPlayerId);
   const isEliminated = me?.isEliminated;
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  const handleAction = (callback: () => void) => {
+    if (isEliminated) {
+      setLocalError(t("game.eliminatedCannotAct"));
+      return;
+    }
+    callback();
+  };
 
   // Compute if conversion is disabled (at limit OR no convertible players)
   const wasConvertedToCultist = (playerId: string) =>
@@ -121,57 +131,6 @@ export function GameView({
   const isConversionDisabled =
     (lobby.conversionCount || 0) >= 3 || !hasConvertiblePlayers;
 
-  if (isEliminated) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center space-y-6 animate-in zoom-in-95 duration-700">
-        <div className="text-center space-y-4">
-          <Skull className="w-24 h-24 text-slate-600 mx-auto" />
-          <h2 className="text-3xl font-bold text-slate-500">
-            {t("game.eliminated")}
-          </h2>
-          <p className="text-slate-400 max-w-xs mx-auto">
-            {t("game.eliminatedDesc")}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowEndSessionConfirm(true)}
-          className="px-6 py-3 bg-slate-800/50 hover:bg-slate-800 text-slate-400 rounded-xl font-medium transition-colors border border-slate-700"
-        >
-          {t("game.returnToShore")}
-        </button>
-
-        {/* End Session Confirmation Modal */}
-        {showEndSessionConfirm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
-              <h2 className="text-xl font-bold text-white mb-4">
-                {t("game.endSession")}
-              </h2>
-              <p className="text-slate-400 mb-8">{t("game.endSessionDesc")}</p>
-              <div className="flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => setShowEndSessionConfirm(false)}
-                  className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors"
-                >
-                  {t("game.stay")}
-                </button>
-                <button
-                  type="button"
-                  onClick={onLeave}
-                  className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors"
-                >
-                  {t("game.leave")}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
     <div
       data-testid="game-view"
@@ -180,6 +139,15 @@ export function GameView({
         className,
       )}
     >
+      {localError && (
+        <div className="fixed top-0 inset-x-0 z-50 p-4 animate-in slide-in-from-top duration-300">
+          <InlineError
+            message={localError}
+            onDismiss={() => setLocalError(null)}
+          />
+        </div>
+      )}
+
       <RoleReveal.Root className="max-w-sm mx-auto">
         <RoleReveal.Hidden />
         <RoleReveal.Revealed className="space-y-6">
@@ -441,17 +409,20 @@ export function GameView({
           <button
             type="button"
             onClick={() => {
-              if ((lobby.cabinSearchCount || 0) >= 2) {
-                window.alert(t("cabinSearch.limitReached"));
-              } else {
-                onOpenCabinSearch();
-              }
+              handleAction(() => {
+                if ((lobby.cabinSearchCount || 0) >= 2) {
+                  window.alert(t("cabinSearch.limitReached"));
+                } else {
+                  onOpenCabinSearch();
+                }
+              });
             }}
-            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+            className={cn(
+              "w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2",
               (lobby.cabinSearchCount || 0) >= 2
                 ? "bg-slate-800/50 text-slate-500 border border-slate-800"
-                : "bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-200 border border-cyan-800/50"
-            }`}
+                : "bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-200 border border-cyan-800/50",
+            )}
           >
             <Search className="w-5 h-5" />
             {(lobby.cabinSearchCount || 0) >= 2
@@ -462,17 +433,20 @@ export function GameView({
           <button
             type="button"
             onClick={() => {
-              if (lobby.isCultCabinSearchUsed) {
-                window.alert(t("cabinSearch.alreadyUsed"));
-              } else {
-                onStartCabinSearch();
-              }
+              handleAction(() => {
+                if (lobby.isCultCabinSearchUsed) {
+                  window.alert(t("cabinSearch.alreadyUsed"));
+                } else {
+                  onStartCabinSearch();
+                }
+              });
             }}
-            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+            className={cn(
+              "w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2",
               lobby.isCultCabinSearchUsed
                 ? "bg-slate-800/50 text-slate-500 border border-slate-800"
-                : "bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50"
-            }`}
+                : "bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50",
+            )}
           >
             <Eye className="w-5 h-5" />
             {lobby.isCultCabinSearchUsed
@@ -483,17 +457,20 @@ export function GameView({
           <button
             type="button"
             onClick={() => {
-              if (lobby.isGunsStashUsed) {
-                window.alert(t("cultGunsStash.alreadyUsed"));
-              } else {
-                onStartGunsStash();
-              }
+              handleAction(() => {
+                if (lobby.isGunsStashUsed) {
+                  window.alert(t("cultGunsStash.alreadyUsed"));
+                } else {
+                  onStartGunsStash();
+                }
+              });
             }}
-            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+            className={cn(
+              "w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2",
               lobby.isGunsStashUsed
                 ? "bg-slate-800/50 text-slate-500 border border-slate-800"
-                : "bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50"
-            }`}
+                : "bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50",
+            )}
           >
             <Target className="w-5 h-5" />
             {lobby.isGunsStashUsed
@@ -503,7 +480,7 @@ export function GameView({
 
           <button
             type="button"
-            onClick={onOpenDenial}
+            onClick={() => handleAction(onOpenDenial)}
             className="w-full py-3 bg-red-950/30 hover:bg-red-900/50 text-red-200 border border-red-900/50 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
           >
             <AlertTriangle className="w-5 h-5" />
@@ -513,17 +490,20 @@ export function GameView({
           <button
             type="button"
             onClick={() => {
-              if (lobby.isFloggingUsed) {
-                window.alert(t("flogging.alreadyUsed"));
-              } else {
-                onOpenFlogging();
-              }
+              handleAction(() => {
+                if (lobby.isFloggingUsed) {
+                  window.alert(t("flogging.alreadyUsed"));
+                } else {
+                  onOpenFlogging();
+                }
+              });
             }}
-            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+            className={cn(
+              "w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2",
               lobby.isFloggingUsed
                 ? "bg-slate-800/50 text-slate-500 border border-slate-800"
-                : "bg-amber-900/30 hover:bg-amber-900/50 text-amber-200 border border-amber-800/50"
-            }`}
+                : "bg-amber-900/30 hover:bg-amber-900/50 text-amber-200 border border-amber-800/50",
+            )}
           >
             <Gavel className="w-5 h-5" />
             {lobby.isFloggingUsed
@@ -534,19 +514,22 @@ export function GameView({
           <button
             type="button"
             onClick={() => {
-              if ((lobby.conversionCount || 0) >= 3) {
-                window.alert(t("conversion.limitReached"));
-              } else if (!hasConvertiblePlayers) {
-                window.alert(t("conversion.noConvertiblePlayers"));
-              } else {
-                onStartConversion();
-              }
+              handleAction(() => {
+                if ((lobby.conversionCount || 0) >= 3) {
+                  window.alert(t("conversion.limitReached"));
+                } else if (!hasConvertiblePlayers) {
+                  window.alert(t("conversion.noConvertiblePlayers"));
+                } else {
+                  onStartConversion();
+                }
+              });
             }}
-            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+            className={cn(
+              "w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2",
               isConversionDisabled
                 ? "bg-slate-800/50 text-slate-500 border border-slate-800"
-                : "bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50"
-            }`}
+                : "bg-amber-950/30 hover:bg-amber-900/50 text-amber-200 border border-amber-900/50",
+            )}
           >
             <Eye className="w-5 h-5" />
             {isConversionDisabled
@@ -557,17 +540,20 @@ export function GameView({
           <button
             type="button"
             onClick={() => {
-              if ((lobby.feedTheKrakenCount || 0) >= 2) {
-                window.alert(t("feedTheKraken.limitReached"));
-              } else {
-                onOpenFeedTheKraken();
-              }
+              handleAction(() => {
+                if ((lobby.feedTheKrakenCount || 0) >= 2) {
+                  window.alert(t("feedTheKraken.limitReached"));
+                } else {
+                  onOpenFeedTheKraken();
+                }
+              });
             }}
-            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+            className={cn(
+              "w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2",
               (lobby.feedTheKrakenCount || 0) >= 2
                 ? "bg-slate-800/50 text-slate-500 border border-slate-800"
-                : "bg-red-950/30 hover:bg-red-900/50 text-red-200 border border-red-900/50"
-            }`}
+                : "bg-red-950/30 hover:bg-red-900/50 text-red-200 border border-red-900/50",
+            )}
           >
             <Skull className="w-5 h-5" />
             {(lobby.feedTheKrakenCount || 0) >= 2
@@ -578,17 +564,20 @@ export function GameView({
           <button
             type="button"
             onClick={() => {
-              if (lobby.isOffWithTongueUsed) {
-                window.alert(t("offWithTongue.alreadyUsed"));
-              } else {
-                onOpenOffWithTongue();
-              }
+              handleAction(() => {
+                if (lobby.isOffWithTongueUsed) {
+                  window.alert(t("offWithTongue.alreadyUsed"));
+                } else {
+                  onOpenOffWithTongue();
+                }
+              });
             }}
-            className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${
+            className={cn(
+              "w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2",
               lobby.isOffWithTongueUsed
                 ? "bg-slate-800/50 text-slate-500 border border-slate-800"
-                : "bg-amber-900/30 hover:bg-amber-900/50 text-amber-200 border border-amber-800/50"
-            }`}
+                : "bg-amber-900/30 hover:bg-amber-900/50 text-amber-200 border border-amber-800/50",
+            )}
           >
             <Scissors className="w-5 h-5" />
             {lobby.isOffWithTongueUsed

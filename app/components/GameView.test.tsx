@@ -82,13 +82,42 @@ describe("GameView", () => {
 
     render(<GameView {...defaultProps} lobby={eliminatedLobby} />);
 
-    expect(screen.getByText("Eliminated")).toBeDefined();
+    // Should see the eliminated status in crew list
+    expect(screen.getAllByText("Eliminated").length).toBeGreaterThan(0);
+
+    // Should still see the dashboard (e.g. Denial of Command button)
+    expect(screen.getByText("Denial of Command?")).toBeDefined();
+  });
+
+  it("shows error when eliminated player tries restricted action", () => {
+    const onOpenCabinSearch = vi.fn();
+    const eliminatedLobby: LobbyState = {
+      ...mockLobby,
+      players: [
+        {
+          ...mockLobby.players[0],
+          isEliminated: true,
+        },
+      ],
+    };
+
+    render(
+      <GameView
+        {...defaultProps}
+        lobby={eliminatedLobby}
+        onOpenCabinSearch={onOpenCabinSearch}
+      />,
+    );
+    revealRole();
+
+    const button = screen.getByRole("button", { name: "Cabin Search" });
+    fireEvent.click(button);
+
+    // Should show error message instead of calling callback
+    expect(onOpenCabinSearch).not.toHaveBeenCalled();
     expect(
-      screen.getByText(
-        "You have been thrown overboard or fed to the Kraken. Your journey ends here.",
-      ),
+      screen.getByText("You've been eliminated and cannot perform actions."),
     ).toBeDefined();
-    expect(screen.queryByText("Denial of Command?")).toBeNull();
   });
 
   it("shows disabled-looking flogging button and shows alert when used", () => {
@@ -214,8 +243,10 @@ describe("GameView", () => {
       <GameView {...defaultProps} lobby={eliminatedLobby} onLeave={onLeave} />,
     );
 
-    // Click Return to Shore to show the End Session modal
-    fireEvent.click(screen.getByText("Return to Shore"));
+    revealRole();
+
+    // Click End Session? to show the modal (eliminated players use the same button now)
+    fireEvent.click(screen.getByRole("button", { name: /End Session/i }));
 
     // Modal should appear
     const leaveButton = screen.getByRole("button", { name: /Leave/i });
@@ -239,8 +270,10 @@ describe("GameView", () => {
 
     render(<GameView {...defaultProps} lobby={eliminatedLobby} />);
 
-    // Click Return to Shore to show the End Session modal
-    fireEvent.click(screen.getByText("Return to Shore"));
+    revealRole();
+
+    // Click End Session?
+    fireEvent.click(screen.getByRole("button", { name: /End Session/i }));
 
     // Modal should appear
     const stayButton = screen.getByRole("button", { name: /Stay/i });
@@ -249,7 +282,7 @@ describe("GameView", () => {
     // Click Stay
     fireEvent.click(stayButton);
 
-    // Modal should be closed (Stay button should no longer exist)
+    // Modal should be closed
     expect(screen.queryByRole("button", { name: /Stay/i })).toBeNull();
   });
 

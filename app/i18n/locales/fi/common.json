@@ -102,6 +102,7 @@
     "noConverts": "Käännytetyt kultistit näkyvät täällä",
     "sailors": "Merenkulkijaa",
     "eliminatedDesc": "Sinut on heitetty yli laidan tai syötetty Krakenille. Matkasi päättyy tähän.",
+    "eliminatedCannotAct": "Olet eliminoitu etkä voi suorittaa toimintoja.",
     "returnToShore": "Palaa rannalle",
     "endSession": "Poistu pelistä?",
     "endSessionDesc": "Oletko varma, että haluat poistua pelistä? Et voi liittyä takaisin, jos poistut.",
