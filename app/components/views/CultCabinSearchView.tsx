@@ -340,17 +340,6 @@ export function CultCabinSearchView({ onDismiss }: { onDismiss: () => void }) {
               {t("conversion.ritualComplete")}
             </h1>
           </div>
-          {myClaim !== "CREW" && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center space-y-4">
-              <Eye className="w-16 h-16 text-amber-500 mx-auto" />
-              <h2 className="text-xl font-bold text-white">
-                {t("cabinSearch.roleRevealed")}
-              </h2>
-              <p className="text-slate-400">
-                {t("cabinSearch.revealedToLeader")}
-              </p>
-            </div>
-          )}
 
           {isCultLeader === false && (
             <FeedbackCard.Root variant={isCorrect ? "success" : "error"}>
