@@ -9,6 +9,7 @@ import { Avatar } from "../Avatar";
 import { FeedbackCard } from "../FeedbackCard";
 import { PlayerSelectionList } from "../PlayerSelectionList";
 import { Quiz } from "../Quiz";
+import { QUIZ_DURATION_MS } from "@/party/machine/constants";
 
 interface ConversionViewProps {
   onDismiss: () => void;
@@ -17,7 +18,7 @@ interface ConversionViewProps {
 export function ConversionView({ onDismiss }: ConversionViewProps) {
   const { lobby, myPlayerId, myRole, submitConversionAction } = useGame();
   const { t } = useT("common");
-  const [timeLeft, setTimeLeft] = useState(15);
+  const [timeLeft, setTimeLeft] = useState(QUIZ_DURATION_MS / 1000);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [selectedAnswerId, setSelectedAnswerId] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);

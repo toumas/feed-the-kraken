@@ -253,9 +253,13 @@
     "distMore_plural": "Jaa vielä {{count}} asetta",
     "receivedCount": "Sait {{count}} aseen!",
     "receivedCount_plural": "Sait {{count}} asetta!",
+    "gunsDistribution": "Aseiden jako",
+    "playerReceivedGuns": "{{count}} ase",
+    "playerReceivedGuns_plural": "{{count}} asetta",
     "useWisely": "Käytä niitä viisaasti.",
     "emptyHands": "Tyhjät kädet",
     "noGuns": "Et saanut yhtään asetta varastosta.",
+    "nobodyReceivedGuns": "Kukaan ei saanut aseita varastosta.",
     "alreadyUsed": "Kultin asevarasto on jo käytetty tässä pelissä."
   },
   "roleReveal": {

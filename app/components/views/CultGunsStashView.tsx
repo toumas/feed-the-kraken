@@ -19,6 +19,7 @@ import { Avatar } from "../Avatar";
 import { FeedbackCard } from "../FeedbackCard";
 import { Quiz } from "../Quiz";
 import { ReadyCheckModal } from "../ReadyCheckModal";
+import { QUIZ_DURATION_MS } from "@/party/machine/constants";
 
 export function CultGunsStashView({ onDismiss }: { onDismiss: () => void }) {
   const {
@@ -32,7 +33,7 @@ export function CultGunsStashView({ onDismiss }: { onDismiss: () => void }) {
   } = useGame();
   const { t } = useT("common");
 
-  const [timeLeft, setTimeLeft] = useState(15);
+  const [timeLeft, setTimeLeft] = useState(QUIZ_DURATION_MS / 1000);
   const [distribution, setDistribution] = useState<Record<string, number>>({});
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -315,9 +316,19 @@ export function CultGunsStashView({ onDismiss }: { onDismiss: () => void }) {
 
   // --- COMPLETED PHASE ---
   if (gunsStashStatus.state === "COMPLETED") {
-    const myGuns = gunsStashStatus.distribution?.[myPlayerId] || 0;
     const isCorrect =
       gunsStashStatus.results?.correctAnswers.includes(myPlayerId) || false;
+
+    const recipients = Object.entries(gunsStashStatus.distribution || {})
+      .filter(([_, count]) => count > 0)
+      .map(([playerId, count]) => {
+        const player = lobby?.players.find((p) => p.id === playerId);
+        return { player, count };
+      })
+      .filter(
+        (item): item is { player: (typeof lobby.players)[0]; count: number } =>
+          !!item.player,
+      );
 
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 animate-in fade-in duration-1000">
@@ -328,24 +339,47 @@ export function CultGunsStashView({ onDismiss }: { onDismiss: () => void }) {
             </h1>
           </div>
 
-          {/* Info Card: Guns Received */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center space-y-4">
-            {myGuns > 0 ? (
-              <>
-                <div className="text-4xl mb-4">🔫</div>
-                <h2 className="text-xl font-bold text-white">
-                  {t("cultGunsStash.receivedCount", { count: myGuns })}
-                </h2>
-                <p className="text-slate-400">{t("cultGunsStash.useWisely")}</p>
-              </>
+          {/* Info Card: Public Guns Distribution Summary */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div className="flex items-center gap-2 px-2 border-b border-slate-800 pb-3">
+              <span className="text-xl">🔫</span>
+              <h2 className="text-lg font-bold text-white uppercase tracking-tight">
+                {t("cultGunsStash.gunsDistribution")}
+              </h2>
+            </div>
+
+            {recipients.length > 0 ? (
+              <div className="space-y-3">
+                {recipients.map(({ player, count }) => (
+                  <div
+                    key={player.id}
+                    className="flex items-center justify-between p-3 rounded-xl bg-slate-800/50 border border-slate-700/50 group hover:border-amber-500/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar
+                        url={player.photoUrl}
+                        size="sm"
+                        className="w-10 h-10 border border-slate-700"
+                      />
+                      <span className="font-bold text-slate-100">
+                        {player.name}
+                      </span>
+                    </div>
+                    <div className="bg-amber-950/40 px-3 py-1 rounded-full border border-amber-900/50">
+                      <span className="text-amber-500 font-black font-mono">
+                        {t("cultGunsStash.playerReceivedGuns", { count })}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <>
-                <Frown className="w-16 h-16 text-slate-600 mx-auto" />
-                <h2 className="text-xl font-bold text-white">
-                  {t("cultGunsStash.emptyHands")}
-                </h2>
-                <p className="text-slate-400">{t("cultGunsStash.noGuns")}</p>
-              </>
+              <div className="py-8 text-center space-y-3">
+                <Frown className="w-12 h-12 text-slate-700 mx-auto" />
+                <p className="text-slate-400 italic">
+                  {t("cultGunsStash.nobodyReceivedGuns")}
+                </p>
+              </div>
             )}
           </div>
 

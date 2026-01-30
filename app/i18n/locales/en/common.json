@@ -253,9 +253,13 @@
     "distMore_plural": "Distribute {{count}} more guns",
     "receivedCount": "You received {{count}} gun!",
     "receivedCount_plural": "You received {{count}} guns!",
+    "gunsDistribution": "Guns Distribution",
+    "playerReceivedGuns": "{{count}} gun",
+    "playerReceivedGuns_plural": "{{count}} guns",
     "useWisely": "Use them wisely.",
     "emptyHands": "Empty Hands",
     "noGuns": "You did not receive any guns from the stash.",
+    "nobodyReceivedGuns": "Nobody received any guns from the stash.",
     "alreadyUsed": "Cult's Guns Stash has already been used this game."
   },
   "roleReveal": {

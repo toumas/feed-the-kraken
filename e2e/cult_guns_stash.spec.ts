@@ -27,40 +27,51 @@ test.describe("Cult Guns Stash Flow", () => {
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
 
-    // 2. 4 Players join (Total 5 players)
-    const players = [];
-    for (let i = 0; i < 4; i++) {
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      const playerName = `Player ${i + 1}`;
-      await page.addInitScript((name) => {
-        localStorage.setItem("kraken_player_name", name);
-        localStorage.setItem(
-          "kraken_player_photo",
-          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-        );
-      }, playerName);
-      await page.goto("/");
-      await page.getByRole("button", { name: "Join Crew" }).click();
-      await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
-      await completeIdentifyPage(page);
-      await expect(page.getByText("Crew Manifest")).toBeVisible({
-        timeout: 15000,
-      });
-      players.push({ context, page, name: playerName });
-    }
+    // 2. 4 Players join in parallel
+    const players = await Promise.all(
+      Array.from({ length: 4 }).map(async (_, i) => {
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        const playerName = `Player ${i + 1}`;
+        await page.addInitScript((name) => {
+          localStorage.setItem("kraken_player_name", name);
+          localStorage.setItem(
+            "kraken_player_photo",
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+          );
+        }, playerName);
+        await page.goto("/");
+        await page.getByRole("button", { name: "Join Crew" }).click();
+        await page.getByPlaceholder("XP7K9L").fill(code);
+        // Auto-submit triggers on 6th char
+        await completeIdentifyPage(page);
+        await expect(page.getByText(/Crew Manifest/)).toBeVisible({
+          timeout: 15000,
+        });
+        return { context, page, name: playerName };
+      }),
+    );
 
     // 3. Host starts game
     await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+
+    // Dismiss Captain Popup for all players
+    const allCrewPages = [hostPage, ...players.map((p) => p.page)];
+    for (const p of allCrewPages) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: "To the Voyage!" }).click();
+    }
+
+    await expect(hostPage.getByText(/Crew Status/)).toBeVisible({
       timeout: 15000,
     });
 
     // Wait for all players to be in game view
     for (const p of players) {
-      await expect(p.page.getByText("Crew Manifest")).toBeVisible();
+      await expect(p.page.getByText(/Crew Status/)).toBeVisible();
     }
 
     // 4. Host navigates to Guns Stash
@@ -78,7 +89,7 @@ test.describe("Cult Guns Stash Flow", () => {
 
     // Host should be automatically ready (Waiting...)
     // But might see "Waiting..."
-    await expect(hostPage.getByText("Waiting...")).toBeVisible();
+    await expect(hostPage.getByText(/Waiting/)).toBeVisible({ timeout: 10000 });
 
     // 6. Other players confirm ready
     // Host is already ready, so we skip clicking for host
@@ -163,11 +174,27 @@ test.describe("Cult Guns Stash Flow", () => {
     // 9. Wait for completion (30 seconds)
     await hostPage.waitForTimeout(31000);
 
-    // 10. Verify COMPLETED state
-    await expect(
-      hostPage.getByRole("heading", { name: "Ritual Complete" }),
-    ).toBeVisible({ timeout: 5000 });
-    await expect(hostPage.getByText("Return to Ship")).toBeVisible();
+    // 10. Verify COMPLETED state for all players in parallel
+    const pagesToCheck = [hostPage, ...players.map((p) => p.page)];
+
+    await Promise.all(
+      pagesToCheck.map(async (p) => {
+        await expect(
+          p.getByRole("heading", { name: "Ritual Complete" }),
+        ).toBeVisible({ timeout: 10000 });
+
+        // Verify public summary is visible
+        await expect(
+          p.getByRole("heading", { name: "Guns Distribution" }),
+        ).toBeVisible();
+
+        // Check for any gun distribution (1, 2, or 3 guns)
+        // Since 3 guns are always distributed, we should see at least one of these patterns
+        await expect(p.locator("text=/\\d guns?/").first()).toBeVisible();
+
+        await expect(p.getByText("Return to Ship")).toBeVisible();
+      }),
+    );
 
     // Cleanup
     await hostContext.close();
@@ -198,33 +225,44 @@ test.describe("Cult Guns Stash Flow", () => {
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
 
-    // 2. 4 Players join (Total 5 players)
-    const players = [];
-    for (let i = 0; i < 4; i++) {
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      const playerName = `Player ${i + 1}`;
-      await page.addInitScript((name) => {
-        localStorage.setItem("kraken_player_name", name);
-        localStorage.setItem(
-          "kraken_player_photo",
-          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-        );
-      }, playerName);
-      await page.goto("/");
-      await page.getByRole("button", { name: "Join Crew" }).click();
-      await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
-      await completeIdentifyPage(page);
-      await expect(page.getByText("Crew Manifest")).toBeVisible({
-        timeout: 15000,
-      });
-      players.push({ context, page, name: playerName });
-    }
+    // 2. 4 Players join in parallel
+    const players = await Promise.all(
+      Array.from({ length: 4 }).map(async (_, i) => {
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        const playerName = `Player ${i + 1}`;
+        await page.addInitScript((name) => {
+          localStorage.setItem("kraken_player_name", name);
+          localStorage.setItem(
+            "kraken_player_photo",
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+          );
+        }, playerName);
+        await page.goto("/");
+        await page.getByRole("button", { name: "Join Crew" }).click();
+        await page.getByPlaceholder("XP7K9L").fill(code);
+        // Auto-submit triggers on 6th char
+        await completeIdentifyPage(page);
+        await expect(page.getByText(/Crew Manifest/)).toBeVisible({
+          timeout: 15000,
+        });
+        return { context, page, name: playerName };
+      }),
+    );
 
     // 3. Start game
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+
+    // Dismiss Captain Popup for all players
+    const allCrewPagesCancellation = [hostPage, ...players.map((p) => p.page)];
+    for (const p of allCrewPagesCancellation) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: "To the Voyage!" }).click();
+    }
+
+    await expect(hostPage.getByText(/Crew Status/)).toBeVisible({
       timeout: 15000,
     });
 
@@ -311,33 +349,44 @@ test.describe("Cult Guns Stash Flow", () => {
     await expect(codeElement).toBeVisible();
     const code = await codeElement.innerText();
 
-    // 2. 4 Players join (Total 5 players)
-    const players = [];
-    for (let i = 0; i < 4; i++) {
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      const playerName = `Player ${i + 1}`;
-      await page.addInitScript((name) => {
-        localStorage.setItem("kraken_player_name", name);
-        localStorage.setItem(
-          "kraken_player_photo",
-          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-        );
-      }, playerName);
-      await page.goto("/");
-      await page.getByRole("button", { name: "Join Crew" }).click();
-      await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
-      await completeIdentifyPage(page);
-      await expect(page.getByText("Crew Manifest")).toBeVisible({
-        timeout: 15000,
-      });
-      players.push({ context, page, name: playerName });
-    }
+    // 2. 4 Players join in parallel
+    const players = await Promise.all(
+      Array.from({ length: 4 }).map(async (_, i) => {
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        const playerName = `Player ${i + 1}`;
+        await page.addInitScript((name) => {
+          localStorage.setItem("kraken_player_name", name);
+          localStorage.setItem(
+            "kraken_player_photo",
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+          );
+        }, playerName);
+        await page.goto("/");
+        await page.getByRole("button", { name: "Join Crew" }).click();
+        await page.getByPlaceholder("XP7K9L").fill(code);
+        // Auto-submit triggers on 6th char
+        await completeIdentifyPage(page);
+        await expect(page.getByText(/Crew Manifest/)).toBeVisible({
+          timeout: 15000,
+        });
+        return { context, page, name: playerName };
+      }),
+    );
 
     // 3. Start game
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+
+    // Dismiss Captain Popup for all players
+    const allCrewPagesRestriction = [hostPage, ...players.map((p) => p.page)];
+    for (const p of allCrewPagesRestriction) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: "To the Voyage!" }).click();
+    }
+
+    await expect(hostPage.getByText(/Crew Status/)).toBeVisible({
       timeout: 15000,
     });
 
