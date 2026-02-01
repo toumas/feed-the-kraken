@@ -153,7 +153,6 @@ test.describe("Visual Regression Tests", () => {
       await playerPage.goto("/");
       await playerPage.getByRole("button", { name: "Join Crew" }).click();
       await playerPage.getByPlaceholder("XP7K9L").fill(code);
-      await playerPage.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(playerPage);
       await expect(playerPage.getByText("Crew Manifest")).toBeVisible({
         timeout: 15000,
@@ -222,10 +221,20 @@ test.describe("Action Flow Visual Tests", () => {
 
     // Start game
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage.getByText("Crew Manifest")).toBeVisible();
+
+    // Dismiss Captain Popup
+    await expect(hostPage.getByText("First Captain Appointed!")).toBeVisible({
+      timeout: 15000,
+    });
+    await hostPage
+      .getByRole("button", { name: /to the voyage|matkaan/i })
+      .click();
+    await expect(hostPage.getByText("First Captain Appointed!")).toBeHidden();
+
+    await expect(hostPage.getByText("Crew Status")).toBeVisible();
 
     // Navigate to flogging page
-    await hostPage.getByText(/Flogging/).click();
+    await hostPage.getByRole("button", { name: /Flogging/i }).click();
     await expect(
       hostPage.getByRole("heading", { name: "Flogging" }),
     ).toBeVisible();
@@ -272,10 +281,20 @@ test.describe("Action Flow Visual Tests", () => {
 
     // Start game
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage.getByText("Crew Manifest")).toBeVisible();
+
+    // Dismiss Captain Popup
+    await expect(hostPage.getByText("First Captain Appointed!")).toBeVisible({
+      timeout: 15000,
+    });
+    await hostPage
+      .getByRole("button", { name: /to the voyage|matkaan/i })
+      .click();
+    await expect(hostPage.getByText("First Captain Appointed!")).toBeHidden();
+
+    await expect(hostPage.getByText("Crew Status")).toBeVisible();
 
     // Navigate to cabin search page
-    await hostPage.getByText("Cabin Search", { exact: true }).click();
+    await hostPage.getByRole("button", { name: "Cabin Search", exact: true }).click();
     await expect(
       hostPage.getByRole("heading", { name: "Cabin Search" }),
     ).toBeVisible();
@@ -325,7 +344,17 @@ test.describe("Action Flow Visual Tests", () => {
 
     // Start game
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage.getByText("Crew Manifest")).toBeVisible();
+
+    // Dismiss Captain Popup
+    await expect(hostPage.getByText("First Captain Appointed!")).toBeVisible({
+      timeout: 15000,
+    });
+    await hostPage
+      .getByRole("button", { name: /to the voyage|matkaan/i })
+      .click();
+    await expect(hostPage.getByText("First Captain Appointed!")).toBeHidden();
+
+    await expect(hostPage.getByText("Crew Status")).toBeVisible();
 
     // Navigate to denial page
     await hostPage.getByRole("button", { name: "Denial of Command" }).click();
@@ -373,7 +402,17 @@ test.describe("Action Flow Visual Tests", () => {
 
     // Start game
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage.getByText("Crew Manifest")).toBeVisible();
+
+    // Dismiss Captain Popup
+    await expect(hostPage.getByText("First Captain Appointed!")).toBeVisible({
+      timeout: 15000,
+    });
+    await hostPage
+      .getByRole("button", { name: /to the voyage|matkaan/i })
+      .click();
+    await expect(hostPage.getByText("First Captain Appointed!")).toBeHidden();
+
+    await expect(hostPage.getByText("Crew Status")).toBeVisible();
 
     // Wait for game page with action buttons
     await expect(

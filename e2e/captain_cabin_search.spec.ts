@@ -42,7 +42,6 @@ test.describe("Captain Cabin Search Flow", () => {
       await page.goto("/");
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       players.push({ context, page, name: playerName });
@@ -51,7 +50,18 @@ test.describe("Captain Cabin Search Flow", () => {
     // 3. Start Game
     await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+
+    // Dismiss "First Captain Appointed!" popup for all players
+    const allCrewPages = [hostPage, ...players.map((p) => p.page)];
+    for (const p of allCrewPages) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+      await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+    }
+
+    await expect(hostPage.getByText("Crew Status")).toBeVisible({
       timeout: 10000,
     });
 
@@ -135,7 +145,6 @@ test.describe("Captain Cabin Search Flow", () => {
     await page.goto("/");
     await page.getByRole("button", { name: "Join Crew" }).click();
     await page.getByPlaceholder("XP7K9L").fill(code);
-    await page.getByRole("button", { name: "Board Ship" }).click();
     await completeIdentifyPage(page);
     await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
@@ -147,7 +156,18 @@ test.describe("Captain Cabin Search Flow", () => {
     // 4. Start Game
     await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage.getByText("Crew Manifest")).toBeVisible();
+
+    // Dismiss "First Captain Appointed!" popup for all players
+    const allCrewPages2 = [hostPage, page];
+    for (const p of allCrewPages2) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+      await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+    }
+
+    await expect(hostPage.getByText("Crew Status")).toBeVisible();
 
     // 5. Host initiates Cabin Search on Player 1
     await hostPage

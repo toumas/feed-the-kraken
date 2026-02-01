@@ -47,7 +47,6 @@ test.describe("Conversion Role Display", () => {
       await page.goto("/");
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
       await expect(page.getByText("Crew Manifest")).toBeVisible({
         timeout: 15000,
@@ -58,7 +57,18 @@ test.describe("Conversion Role Display", () => {
     // 3. Host starts game
     await expect(hostPage.getByText("Crew Manifest (6/11)")).toBeVisible();
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+
+    // Dismiss "First Captain Appointed!" popup for all players
+    const allCrewPagesStart = [hostPage, ...players.map((p) => p.page)];
+    for (const p of allCrewPagesStart) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+      await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+    }
+
+    await expect(hostPage.getByText("Crew Status")).toBeVisible({
       timeout: 30000,
     });
 
@@ -137,7 +147,7 @@ test.describe("Conversion Role Display", () => {
 
     // Wait for everyone to be back
     for (const page of allPages) {
-      await expect(page).toHaveURL(/\/game/);
+      await expect(page).toHaveURL(/\/game/, { timeout: 15000 });
     }
 
     // 6. Verify Roles
@@ -213,7 +223,6 @@ test.describe("Conversion Role Display", () => {
       await page.goto("/");
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
       await expect(page.getByText("Crew Manifest")).toBeVisible({
         timeout: 15000,
@@ -224,7 +233,18 @@ test.describe("Conversion Role Display", () => {
     // 3. Host starts game
     await expect(hostPage.getByText("Crew Manifest (6/11)")).toBeVisible();
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+
+    // Dismiss "First Captain Appointed!" popup for all players
+    const allCrewPagesStart2 = [hostPage, ...players.map((p) => p.page)];
+    for (const p of allCrewPagesStart2) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+      await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+    }
+
+    await expect(hostPage.getByText("Crew Status")).toBeVisible({
       timeout: 30000,
     });
 
@@ -363,6 +383,12 @@ test.describe("Conversion Role Display", () => {
       await revealBtn.click();
     }
 
+    // Wait for the close button to appear (indicates reveal is complete)
+    const closeBtn = searcherSailor.page.getByRole("button", {
+      name: /close|sulje/i,
+    });
+    await closeBtn.waitFor({ state: "visible", timeout: 5000 });
+
     // Should show original role (Sailor) and Converted to Cult badge
     const resultOverlay = searcherSailor.page.locator(".fixed");
     await expect(resultOverlay.getByText("Sailor")).toBeVisible({
@@ -370,11 +396,9 @@ test.describe("Conversion Role Display", () => {
     });
     await expect(resultOverlay.getByText("Converted to Cult")).toBeVisible();
 
-    // Click the hide button to hide
-    const hideBtn = resultOverlay.getByRole("button", {
-      name: "Tap once to hide",
-    });
-    await hideBtn.click();
+    // Click the close button to hide
+    await closeBtn.click();
+    await closeBtn.waitFor({ state: "hidden", timeout: 5000 });
 
     // Cleanup
     await hostContext.close();

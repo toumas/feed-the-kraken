@@ -55,6 +55,7 @@ vi.mock("../RoleReveal", () => {
         <div>{children}</div>
       ),
       HideInstruction: () => <div>Hide Instruction</div>,
+      CloseButton: () => <div>Close Button</div>,
     },
   };
 });

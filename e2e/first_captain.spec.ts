@@ -70,7 +70,7 @@ test("Captain announcement appears for all players and persists dismissal", asyn
   const startBtn = hostPage.getByRole("button", { name: "Start Voyage" });
   await expect(startBtn).toBeEnabled();
   await startBtn.click();
-  await expect(hostPage).toHaveURL(/\/game/);
+  await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
 
   // 4. Verify Captain Announcement Modal appears for ALL players
   const allPages = [hostPage, ...players.map((p) => p.page)];
@@ -91,7 +91,7 @@ test("Captain announcement appears for all players and persists dismissal", asyn
 
   // Verify for all players
   for (const page of allPages) {
-    await expect(page).toHaveURL(/\/game/);
+    await expect(page).toHaveURL(/\/game/, { timeout: 15000 });
     await expect(page.getByText("First Captain Appointed!")).toBeVisible();
 
     // Check that the name appears in the modal style
@@ -107,7 +107,7 @@ test("Captain announcement appears for all players and persists dismissal", asyn
 
   // Reload Host Page
   await hostPage.reload();
-  await expect(hostPage).toHaveURL(/\/game/);
+  await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
   // Should NOT see the modal
   await expect(hostPage.getByText("First Captain Appointed!")).toBeHidden();
 

@@ -218,4 +218,62 @@ describe("RoleReveal", () => {
 
     vi.useRealTimers();
   });
+
+  it("renders as a dialog and calls onDismiss when clicking backdrop or close", () => {
+    const onDismiss = vi.fn();
+    const { rerender } = render(
+      <RoleReveal.Dialog isOpen={false} onDismiss={onDismiss}>
+        <div>Dialog Content</div>
+      </RoleReveal.Dialog>,
+    );
+
+    expect(screen.queryByText("Dialog Content")).toBeNull();
+
+    rerender(
+      <RoleReveal.Dialog
+        isOpen={true}
+        onDismiss={onDismiss}
+        defaultRevealed={true}
+      >
+        <RoleReveal.Hidden />
+        <RoleReveal.Revealed>
+          <div>Dialog Content</div>
+          <RoleReveal.CloseButton />
+        </RoleReveal.Revealed>
+      </RoleReveal.Dialog>,
+    );
+
+    expect(screen.getByText("Dialog Content")).toBeDefined();
+
+    // Backdrop click
+    const backdrop = screen.getByTestId("dialog-backdrop");
+    fireEvent.click(backdrop);
+    expect(onDismiss).toHaveBeenCalled();
+  });
+
+  it("auto-closes dialog when timer runs out", () => {
+    vi.useFakeTimers();
+    const onDismiss = vi.fn();
+    render(
+      <RoleReveal.Dialog
+        isOpen={true}
+        onDismiss={onDismiss}
+        defaultRevealed={true}
+      >
+        <RoleReveal.Revealed>
+          <div>Dialog Content</div>
+        </RoleReveal.Revealed>
+      </RoleReveal.Dialog>,
+    );
+
+    expect(screen.getByText("Dialog Content")).toBeDefined();
+
+    // Advance 5 seconds
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(onDismiss).toHaveBeenCalled();
+    vi.useRealTimers();
+  });
 });

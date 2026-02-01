@@ -46,8 +46,8 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
 
     // Fill join form
     await page.getByPlaceholder("XP7K9L").fill(code);
-    await page.getByRole("button", { name: "Board Ship" }).click();
 
+    // Auto-submit triggers on 6th char, so we wait for redirect instead of clicking
     // Player should be redirected to Identify page
     await expect(page).toHaveURL(
       new RegExp(`/identify\\?next=join&code=${code}`),
@@ -67,7 +67,15 @@ test("Game flow: 5 Players Join and Start Game", async ({ browser }) => {
   const startBtn = hostPage.getByRole("button", { name: "Start Voyage" });
   await expect(startBtn).toBeEnabled();
   await startBtn.click();
-  await expect(hostPage).toHaveURL(/\/game/);
+  await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
+
+  // Dismiss "First Captain Appointed!" popup for all players before role checks
+  const allPages = [hostPage, ...players.map((p) => p.page)];
+  for (const p of allPages) {
+    await expect(p.getByText("First Captain Appointed!")).toBeVisible();
+    await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+    await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+  }
 
   // 4. Verify roles using withRoleRevealed
   // Host role

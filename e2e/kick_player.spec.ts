@@ -40,7 +40,6 @@ test.describe("Kick Player Flow", () => {
     await playerPage.goto("/");
     await playerPage.getByRole("button", { name: "Join Crew" }).click();
     await playerPage.getByPlaceholder("XP7K9L").fill(code);
-    await playerPage.getByRole("button", { name: "Board Ship" }).click();
     await expect(
       playerPage.getByRole("heading", { name: /Identify Yourself/i }),
     ).toBeVisible();
@@ -77,7 +76,6 @@ test.describe("Kick Player Flow", () => {
     // 6. Player rejoins the lobby
     await playerPage.getByRole("button", { name: "Join Crew" }).click();
     await playerPage.getByPlaceholder("XP7K9L").fill(code);
-    await playerPage.getByRole("button", { name: "Board Ship" }).click();
     await expect(
       playerPage.getByRole("heading", { name: /Identify Yourself/i }),
     ).toBeVisible();

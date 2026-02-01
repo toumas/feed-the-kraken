@@ -25,8 +25,15 @@ test("Team Composition component appears in game", async ({ page }) => {
   // Start game
   await page.click("text=Start Voyage");
 
+  // Dismiss "First Captain Appointed!" popup
+  await expect(page.getByText("First Captain Appointed!")).toBeVisible({
+    timeout: 15000,
+  });
+  await page.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+  await expect(page.getByText("First Captain Appointed!")).toBeHidden();
+
   // Wait for game to load
-  await page.waitForSelector("text=Team Composition Overview");
+  await expect(page.getByText("Crew Status")).toBeVisible({ timeout: 10000 });
 
   // Check text
   await expect(

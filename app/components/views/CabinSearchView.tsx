@@ -211,7 +211,10 @@ export function CabinSearchView({ onDismiss }: CabinSearchViewProps) {
                   <RoleReveal.Description>
                     {t("cabinSearch.foundCard", { name: targetPlayer?.name })}
                   </RoleReveal.Description>
-                  <RoleReveal.HideInstruction />
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <RoleReveal.HideInstruction />
+                    <RoleReveal.CloseButton />
+                  </div>
                 </RoleReveal.Revealed>
               </RoleReveal.Root>
 

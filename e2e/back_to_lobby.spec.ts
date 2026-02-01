@@ -41,7 +41,6 @@ test.describe("Back to Lobby", () => {
       await page.goto("/");
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       players.push({ context, page, name: playerName });
@@ -49,7 +48,17 @@ test.describe("Back to Lobby", () => {
 
     // 3. Start the game
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-    await expect(hostPage).toHaveURL(/\/game/);
+    await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
+
+    // Dismiss "First Captain Appointed!" popup for all players before actions
+    const allCrewPagesStart = [hostPage, ...players.map((p) => p.page)];
+    for (const p of allCrewPagesStart) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+      await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+    }
 
     // 4. Host clicks "Back to Lobby"
     await hostPage.getByRole("button", { name: "Back to Lobby" }).click();

@@ -2,6 +2,7 @@
 
 import { CheckCircle, Clock, Eye, XCircle } from "lucide-react";
 import { useEffect, useEffectEvent, useState } from "react";
+import { QUIZ_DURATION_MS } from "@/party/machine/constants";
 import { useGame } from "../../context/GameContext";
 import { QUIZ_QUESTIONS } from "../../data/quiz";
 import { useT } from "../../i18n/client";
@@ -9,7 +10,6 @@ import { Avatar } from "../Avatar";
 import { FeedbackCard } from "../FeedbackCard";
 import { PlayerSelectionList } from "../PlayerSelectionList";
 import { Quiz } from "../Quiz";
-import { QUIZ_DURATION_MS } from "@/party/machine/constants";
 
 interface ConversionViewProps {
   onDismiss: () => void;

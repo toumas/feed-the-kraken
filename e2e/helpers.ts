@@ -35,18 +35,16 @@ export const checkRoleVisible = async (
     await revealBtn.click();
   }
 
-  // Wait for the reveal animation
-  await page.waitForTimeout(300);
+  // Wait for the close button to appear (indicates reveal is complete)
+  const closeBtn = page.getByRole("button", { name: /close|sulje/i });
+  await closeBtn.waitFor({ state: "visible", timeout: 5000 });
 
   const isVisible = await page.getByText(roleText, { exact: true }).isVisible();
 
-  // Try to click the hide button if it exists
-  const hideBtn = page.getByRole("button", { name: /hide|tap once/i });
-  if (await hideBtn.isVisible()) {
-    await hideBtn.click();
-  } else {
-    // If no hide button, we might just wait or assume it hids eventually
-    // For tests, we usually just continue.
+  // Click the close button to dismiss the overlay
+  if (await closeBtn.isVisible()) {
+    await closeBtn.click();
+    await closeBtn.waitFor({ state: "hidden", timeout: 5000 });
   }
 
   return isVisible;
@@ -73,15 +71,18 @@ export const withRoleRevealed = async <T>(
     await revealBtn.click();
   }
 
-  // Wait for the reveal animation
-  await page.waitForTimeout(300);
+  // Wait for the close button to appear (indicates reveal is complete)
+  // Works for both standalone Dialog/Overlay and embedded RoleReveal components
+  const closeBtn = page.getByRole("button", { name: /close|sulje/i });
+  await closeBtn.waitFor({ state: "visible", timeout: 5000 });
 
   const result = await callback();
 
-  // Try to click the hide button if it exists
-  const hideBtn = page.getByRole("button", { name: /hide|tap once/i });
-  if (await hideBtn.isVisible()) {
-    await hideBtn.click();
+  // Click the close button to dismiss the overlay
+  if (await closeBtn.isVisible()) {
+    await closeBtn.click();
+    // Wait for close button to disappear
+    await closeBtn.waitFor({ state: "hidden", timeout: 5000 });
   }
 
   return result;

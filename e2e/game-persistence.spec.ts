@@ -31,6 +31,11 @@ test("Game persistence across reloads", async ({ page }) => {
   // 3. Start Game
   await page.getByRole("button", { name: "Start Voyage" }).click();
 
+  // Handle Captain Announcement Modal
+  await expect(page.getByText("First Captain Appointed!")).toBeVisible();
+  await page.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+  await expect(page.getByText("First Captain Appointed!")).toBeHidden();
+
   // 4. Verify Game Started and Role Assigned
   await expect(page.getByText("Crew Status")).toBeVisible();
 

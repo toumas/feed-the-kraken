@@ -42,7 +42,6 @@ test.describe("Manual Role Selection", () => {
       await page.goto("/");
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       players.push({ page, name: playerName });
@@ -78,7 +77,17 @@ test.describe("Manual Role Selection", () => {
     }
 
     // 5. Verify transition to game
-    await expect(hostPage).toHaveURL(/\/game/);
+    await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
+
+    // Dismiss Captain Popup for all players
+    const pages1 = [hostPage, ...players.map((p) => p.page)];
+    for (const p of pages1) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+      await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+    }
 
     // 6. verify that the player roles are what they picked by using checkRoleVisible from helpers.ts
     for (const p of rolesToSelect) {
@@ -124,7 +133,6 @@ test.describe("Manual Role Selection", () => {
       await page.goto("/");
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       players.push(page);
@@ -195,7 +203,6 @@ test.describe("Manual Role Selection", () => {
       await page.goto("/");
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       players.push(page);
@@ -227,6 +234,16 @@ test.describe("Manual Role Selection", () => {
     }
 
     await expect(hostPage).toHaveURL(/\/game/, { timeout: 30000 });
+
+    // Dismiss Captain Popup for all players
+    const pages3 = [hostPage, ...players];
+    for (const p of pages3) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+      await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+    }
 
     for (const p of rolesToSelect) {
       const isCorrectRole = await checkRoleVisible(p.p, p.r);

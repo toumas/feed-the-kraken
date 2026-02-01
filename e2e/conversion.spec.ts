@@ -45,7 +45,6 @@ test.describe("Conversion to Cult", () => {
       await page.getByRole("button", { name: "Join Crew" }).click();
 
       await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
       await expect(page.getByText("Crew Manifest")).toBeVisible({
         timeout: 15000,
@@ -62,7 +61,19 @@ test.describe("Conversion to Cult", () => {
     const startBtn = hostPage.getByRole("button", { name: "Start Voyage" });
     await expect(startBtn).toBeEnabled();
     await startBtn.click();
-    await expect(hostPage.getByText("Crew Manifest")).toBeVisible({
+    await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
+
+    // Dismiss "First Captain Appointed!" popup for all players before role checks
+    const allCrewPagesStart1 = [hostPage, ...players.map((p) => p.page)];
+    for (const p of allCrewPagesStart1) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+      await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+    }
+
+    await expect(hostPage.getByText("Crew Status")).toBeVisible({
       timeout: 15000,
     });
 
@@ -272,12 +283,15 @@ test.describe("Conversion to Cult", () => {
 
     // 15a. Verify Cult Leader sees "Your Converts" section with the converted player
     // First, reveal the role again to see the "Your Converts" section
-    const revealButton = cultLeaderPage.getByText(
-      "Tap 5 times to reveal your role.",
-    );
+    const revealButton = cultLeaderPage.getByRole("button", {
+      name: /reveal|tap 5 times/i,
+    });
     for (let i = 0; i < 5; i++) {
       await revealButton.click();
     }
+    const backdrop1 = cultLeaderPage.getByTestId("dialog-backdrop");
+    await backdrop1.waitFor({ state: "visible", timeout: 5000 });
+
     // Verify "Your Converts" section is visible
     await expect(cultLeaderPage.getByText("Your Converts")).toBeVisible();
     // Verify the converted player's name appears in the section
@@ -294,8 +308,9 @@ test.describe("Conversion to Cult", () => {
         yourConvertsSection.getByText(convertedPlayerName),
       ).toBeVisible();
     }
-    // Hide the role again by tapping once
-    await cultLeaderPage.getByText("Tap once to hide your role.").click();
+    // Hide the role again by clicking Close
+    await cultLeaderPage.getByRole("button", { name: /close|sulje/i }).click();
+    await backdrop1.waitFor({ state: "hidden", timeout: 5000 });
 
     // ==========================================
     // SECOND CONVERSION
@@ -413,12 +428,15 @@ test.describe("Conversion to Cult", () => {
     await expect(secondConvertedPage).toHaveURL(/\/game/, { timeout: 15000 });
 
     // 26. Verify Cult Leader sees both converted players in "Your Converts" section
-    const finalRevealButton = cultLeaderPage.getByText(
-      "Tap 5 times to reveal your role.",
-    );
+    const finalRevealButton = cultLeaderPage.getByRole("button", {
+      name: /reveal|tap 5 times/i,
+    });
     for (let i = 0; i < 5; i++) {
       await finalRevealButton.click();
     }
+    const backdrop2 = cultLeaderPage.getByTestId("dialog-backdrop");
+    await backdrop2.waitFor({ state: "visible", timeout: 5000 });
+
     await expect(cultLeaderPage.getByText("Your Converts")).toBeVisible();
     const finalConvertsSection = cultLeaderPage
       .locator("div")
@@ -441,6 +459,9 @@ test.describe("Conversion to Cult", () => {
         finalConvertsSection.getByText(secondConvertedName),
       ).toBeVisible();
     }
+    // Hide by clicking Close
+    await cultLeaderPage.getByRole("button", { name: /close|sulje/i }).click();
+    await backdrop2.waitFor({ state: "hidden", timeout: 5000 });
   });
 
   test("Cancelled Conversion", async ({ browser }) => {
@@ -483,7 +504,6 @@ test.describe("Conversion to Cult", () => {
       await page.getByRole("button", { name: "Join Crew" }).click();
 
       await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
@@ -498,6 +518,18 @@ test.describe("Conversion to Cult", () => {
     const startBtn = hostPage.getByRole("button", { name: "Start Voyage" });
     await expect(startBtn).toBeEnabled();
     await startBtn.click();
+    await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
+
+    // Dismiss "First Captain Appointed!" popup for all players before role checks
+    const allCrewPagesStart2 = [hostPage, ...players.map((p) => p.page)];
+    for (const p of allCrewPagesStart2) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+      await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+    }
+
     await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
 
     // 4. Find which player is the Cult Leader
@@ -544,7 +576,7 @@ test.describe("Conversion to Cult", () => {
     // A non-leader declines
     const nonLeaderPage =
       players[0].page === cultLeaderPage ? players[1].page : players[0].page;
-    await nonLeaderPage.getByRole("button", { name: "Decline" }).click();
+    await nonLeaderPage.getByRole("button", { name: "Cancel" }).click();
 
     // Verify Cancellation
     await expect(
@@ -610,7 +642,6 @@ test.describe("Conversion to Cult", () => {
       await page.getByRole("button", { name: "Join Crew" }).click();
 
       await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
@@ -625,6 +656,18 @@ test.describe("Conversion to Cult", () => {
     const startBtn = hostPage.getByRole("button", { name: "Start Voyage" });
     await expect(startBtn).toBeEnabled();
     await startBtn.click();
+    await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
+
+    // Dismiss "First Captain Appointed!" popup for all players before role checks
+    const allCrewPagesStart3 = [hostPage, ...players.map((p) => p.page)];
+    for (const p of allCrewPagesStart3) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+      await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+    }
+
     await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
 
     // 4. Find which player is the Cult Leader
@@ -675,7 +718,7 @@ test.describe("Conversion to Cult", () => {
     await expect(
       nonLeaderPage.getByText("Waiting for others..."),
     ).toBeVisible();
-    await nonLeaderPage.getByRole("button", { name: "Decline" }).click();
+    await nonLeaderPage.getByRole("button", { name: "Cancel" }).click();
 
     // Verify Cancellation
     await expect(
@@ -737,7 +780,6 @@ test.describe("Conversion to Cult", () => {
       await page.goto("/");
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
       await expect(page.getByText(`${playerName}(You)`)).toBeVisible();
@@ -747,6 +789,18 @@ test.describe("Conversion to Cult", () => {
     // 3. Start Game
     await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
+    await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
+
+    // Dismiss "First Captain Appointed!" popup for all players before role checks
+    const allCrewPagesStart4 = [hostPage, ...players.map((p) => p.page)];
+    for (const p of allCrewPagesStart4) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+      await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+    }
+
     await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
 
     // 4. Identify Cult Leader

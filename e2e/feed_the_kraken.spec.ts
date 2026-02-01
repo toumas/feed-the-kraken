@@ -44,7 +44,6 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Join Crew" }).click();
   await page.getByPlaceholder("XP7K9L").fill(code);
-  await page.getByRole("button", { name: "Board Ship" }).click();
   await completeIdentifyPage(page);
   await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
@@ -64,7 +63,6 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   await page2.goto("/");
   await page2.getByRole("button", { name: "Join Crew" }).click();
   await page2.getByPlaceholder("XP7K9L").fill(code);
-  await page2.getByRole("button", { name: "Board Ship" }).click();
   await completeIdentifyPage(page2);
   await expect(page2).toHaveURL(/\/lobby/, { timeout: 15000 });
 
@@ -76,7 +74,17 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   // 4. Start Game
   await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
   await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-  await expect(hostPage).toHaveURL(/\/game/);
+  await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
+
+  // Dismiss Captain Popup for all players
+  const allCrewPages = [hostPage, page, page2];
+  for (const p of allCrewPages) {
+    await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+      timeout: 15000,
+    });
+    await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+    await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+  }
 
   // Check if Player 1 is the Cult Leader
   const isCultLeader = await checkRoleVisible(page);
@@ -110,7 +118,7 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   await page.getByRole("button", { name: "Accept Fate" }).click();
 
   // 7. Verify Result on Host
-  await expect(hostPage).toHaveURL(/\/game/); // Should redirect back
+  await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 }); // Should redirect back
 
   if (isCultLeader) {
     await expect(hostPage.getByText("CULT WINS!")).toBeVisible();
@@ -127,11 +135,11 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
       .last();
     await expect(modal).toBeVisible();
     await expect(modal.getByText("Eliminated", { exact: true })).toBeVisible();
-    await expect(modal.getByText("Player 1")).toBeVisible();
+    await expect(modal.getByText("Player 1", { exact: true })).toBeVisible();
   }
 
   // Verify Result on Player 2 (Bystander) - Broadcast Check
-  await expect(page2).toHaveURL(/\/game/);
+  await expect(page2).toHaveURL(/\/game/, { timeout: 15000 });
   if (isCultLeader) {
     await expect(page2.getByText("CULT WINS!")).toBeVisible();
     await expect(
@@ -156,9 +164,8 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
   await expect(hostPage.getByText("Fed to the Kraken")).not.toBeVisible();
 
   // 8. Verify Result on Player 1 (Eliminated screen)
-  await expect(page).toHaveURL(/\/game/);
-  await expect(page.getByRole("heading", { name: "Eliminated" })).toBeVisible();
-  await expect(page.getByText("Return to Shore")).toBeVisible();
+  await expect(page).toHaveURL(/\/game/, { timeout: 15000 });
+  await expect(page.locator(".fixed").getByText("Eliminated", { exact: true })).toBeVisible();
 });
 
 test("Feed the Kraken Flow: Player 1 denies", async ({ browser }) => {
@@ -196,7 +203,6 @@ test("Feed the Kraken Flow: Player 1 denies", async ({ browser }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Join Crew" }).click();
   await page.getByPlaceholder("XP7K9L").fill(code);
-  await page.getByRole("button", { name: "Board Ship" }).click();
   await completeIdentifyPage(page);
 
   // 3. Add bots
@@ -207,9 +213,20 @@ test("Feed the Kraken Flow: Player 1 denies", async ({ browser }) => {
   // 4. Start Game
   await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
   await hostPage.getByRole("button", { name: "Start Voyage" }).click();
-  await expect(hostPage).toHaveURL(/\/game/);
+  await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
+
+  // Dismiss Captain Popup for all players
+  const allCrewPages2 = [hostPage, page];
+  for (const p of allCrewPages2) {
+    await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+      timeout: 15000,
+    });
+    await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+    await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+  }
+
   // Ensure Player 1 is also in game
-  await expect(page).toHaveURL(/\/game/);
+  await expect(page).toHaveURL(/\/game/, { timeout: 15000 });
 
   // Check role for sync
   await checkRoleVisible(page);
@@ -253,7 +270,7 @@ test("Feed the Kraken Flow: Player 1 denies", async ({ browser }) => {
 
   // Host should still be on action page or redirected?
   // Code in page.tsx: useEffect clears isPending on error. It keeps user on the page.
-  await expect(hostPage).toHaveURL(/\/en\/game/);
+  await expect(hostPage).toHaveURL(/\/en\/game/, { timeout: 15000 });
 });
 
 test("Feed the Kraken Flow: Cult Leader is fed (Automatic)", async ({
@@ -313,7 +330,6 @@ test("Feed the Kraken Flow: Cult Leader is fed (Automatic)", async ({
           await page.goto("/");
           await page.getByRole("button", { name: "Join Crew" }).click();
           await page.getByPlaceholder("XP7K9L").fill(code);
-          await page.getByRole("button", { name: "Board Ship" }).click();
           await completeIdentifyPage(page);
           await expect(page).toHaveURL(/\/lobby/, { timeout: 30000 });
         }),
@@ -322,6 +338,17 @@ test("Feed the Kraken Flow: Cult Leader is fed (Automatic)", async ({
       // 3. Start Game (Automatic Roles is default)
       await hostPage.getByRole("button", { name: "Start Voyage" }).click();
       await expect(hostPage).toHaveURL(/\/game/, { timeout: 30000 });
+
+      // Dismiss Captain Popup for all players
+      for (const p of players) {
+        await expect(p.page.getByText("First Captain Appointed!")).toBeVisible({
+          timeout: 15000,
+        });
+        await p.page
+          .getByRole("button", { name: /to the voyage|matkaan/i })
+          .click();
+        await expect(p.page.getByText("First Captain Appointed!")).toBeHidden();
+      }
 
       // 4. Identify Roles
       // We need to find the Cult Leader.

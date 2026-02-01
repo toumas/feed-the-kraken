@@ -109,10 +109,10 @@ test.describe("Cult Uprising Denial - Parallel E2E", () => {
     await expect(denialBtn).toBeHidden({ timeout: 10000 });
 
     // Increase timeout for elimination text to appear (state sync via PartyKit)
-    // Use role and name for more precision
-    await expect(
-      clPage.getByRole("heading", { name: "Eliminated" }),
-    ).toBeVisible({ timeout: 15000 });
+    // Use exact: true to avoid matching "eliminated" in the denial description paragraph
+    await expect(clPage.getByText("Eliminated", { exact: true })).toBeVisible({
+      timeout: 15000,
+    });
 
     // 6. Another player starts Conversion (Ritual)
     const initiatorSession = allSessions.find((s) => s.name !== clName);
@@ -160,7 +160,7 @@ test.describe("Cult Uprising Denial - Parallel E2E", () => {
       if (session.name === clName) {
         // Eliminated player dashboard doesn't show role reveal
         await expect(
-          session.page.getByRole("heading", { name: "Eliminated" }),
+          session.page.getByText("Eliminated", { exact: true }),
         ).toBeVisible();
         continue;
       }

@@ -148,78 +148,118 @@ export function GameView({
         </div>
       )}
 
+      {/* Role Reveal Dashboard Hook */}
       <RoleReveal.Root className="max-w-sm mx-auto">
         <RoleReveal.Hidden />
-        <RoleReveal.Revealed className="space-y-6">
-          <RoleReveal.Icon>{roleInfo.icon}</RoleReveal.Icon>
-          <RoleReveal.Title className={roleInfo.color}>
-            {roleInfo.title}
-          </RoleReveal.Title>
-          <RoleReveal.Description>{roleInfo.desc}</RoleReveal.Description>
-          <RoleReveal.HideInstruction className="mt-4" />
-          {myRole === "PIRATE" && lobby.assignments && (
-            <div
-              data-testid="role-team-info"
-              className="mt-6 pt-6 border-t border-slate-700 w-full"
-            >
-              <h3 className="text-red-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
-                {t("game.pirateCrew")}
-              </h3>
-              <div className="flex flex-wrap justify-center gap-3">
-                {lobby.players
-                  .filter(
+        <RoleReveal.Overlay>
+          <RoleReveal.Revealed className="space-y-6">
+            <RoleReveal.Icon>{roleInfo.icon}</RoleReveal.Icon>
+            <RoleReveal.Title className={roleInfo.color}>
+              {roleInfo.title}
+            </RoleReveal.Title>
+            <RoleReveal.Description>{roleInfo.desc}</RoleReveal.Description>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <RoleReveal.HideInstruction />
+            </div>
+            {myRole === "PIRATE" && lobby.assignments && (
+              <div
+                data-testid="role-team-info"
+                className="mt-6 pt-6 border-t border-slate-700 w-full"
+              >
+                <h3 className="text-red-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
+                  {t("game.pirateCrew")}
+                </h3>
+                <div className="flex flex-wrap justify-center gap-3">
+                  {lobby.players
+                    .filter(
+                      (p) =>
+                        p.id !== myPlayerId &&
+                        (lobby.originalRoles?.[p.id] === "PIRATE" ||
+                          lobby.assignments?.[p.id] === "PIRATE"),
+                    )
+                    .map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex flex-col items-center gap-1"
+                      >
+                        <Avatar
+                          url={p.photoUrl}
+                          size="sm"
+                          className="ring-2 ring-red-900/50"
+                        />
+                        <span className="text-xs text-red-200/70 font-medium max-w-[60px] truncate">
+                          {p.name}
+                        </span>
+                      </div>
+                    ))}
+                  {lobby.players.filter(
                     (p) =>
                       p.id !== myPlayerId &&
                       (lobby.originalRoles?.[p.id] === "PIRATE" ||
                         lobby.assignments?.[p.id] === "PIRATE"),
-                  )
-                  .map((p) => (
-                    <div
-                      key={p.id}
-                      className="flex flex-col items-center gap-1"
-                    >
-                      <Avatar
-                        url={p.photoUrl}
-                        size="sm"
-                        className="ring-2 ring-red-900/50"
-                      />
-                      <span className="text-xs text-red-200/70 font-medium max-w-[60px] truncate">
-                        {p.name}
-                      </span>
-                    </div>
-                  ))}
-                {lobby.players.filter(
-                  (p) =>
-                    p.id !== myPlayerId &&
-                    (lobby.originalRoles?.[p.id] === "PIRATE" ||
-                      lobby.assignments?.[p.id] === "PIRATE"),
-                ).length === 0 && (
-                  <p className="text-xs text-slate-500 italic">
-                    {t("game.noPirates")}
-                  </p>
-                )}
+                  ).length === 0 && (
+                    <p className="text-xs text-slate-500 italic">
+                      {t("game.noPirates")}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {myRole === "CULTIST" &&
-            lobby.assignments &&
-            lobby.originalRoles &&
-            // Show "Your Leader" if:
-            // 1. Player was converted (original role was NOT Cultist), OR
-            // 2. Player is in convertedPlayerIds (original Cultist who was converted and now knows leader)
-            (lobby.originalRoles[myPlayerId] !== "CULTIST" ||
-              lobby.convertedPlayerIds?.includes(myPlayerId)) && (
+            {myRole === "CULTIST" &&
+              lobby.assignments &&
+              lobby.originalRoles &&
+              // Show "Your Leader" if:
+              // 1. Player was converted (original role was NOT Cultist), OR
+              // 2. Player is in convertedPlayerIds (original Cultist who was converted and now knows leader)
+              (lobby.originalRoles[myPlayerId] !== "CULTIST" ||
+                lobby.convertedPlayerIds?.includes(myPlayerId)) && (
+                <div
+                  data-testid="role-team-info"
+                  className="mt-6 pt-6 border-t border-slate-700 w-full"
+                >
+                  <h3 className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
+                    {t("game.yourLeader")}
+                  </h3>
+                  <div className="flex flex-wrap justify-center gap-3">
+                    {lobby.players
+                      .filter(
+                        (p) => lobby.assignments?.[p.id] === "CULT_LEADER",
+                      )
+                      .map((p) => (
+                        <div
+                          key={p.id}
+                          className="flex flex-col items-center gap-1"
+                        >
+                          <Avatar
+                            url={p.photoUrl}
+                            size="sm"
+                            className="ring-2 ring-purple-900/50"
+                          />
+                          <span className="text-xs text-purple-200/70 font-medium max-w-[60px] truncate">
+                            {p.name}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+            {myRole === "CULT_LEADER" && lobby.assignments && (
               <div
                 data-testid="role-team-info"
                 className="mt-6 pt-6 border-t border-slate-700 w-full"
               >
                 <h3 className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
-                  {t("game.yourLeader")}
+                  {t("game.yourConverts")}
                 </h3>
                 <div className="flex flex-wrap justify-center gap-3">
                   {lobby.players
-                    .filter((p) => lobby.assignments?.[p.id] === "CULT_LEADER")
+                    .filter(
+                      (p) =>
+                        p.id !== myPlayerId &&
+                        lobby.convertedPlayerIds?.includes(p.id),
+                    )
                     .map((p) => (
                       <div
                         key={p.id}
@@ -235,50 +275,18 @@ export function GameView({
                         </span>
                       </div>
                     ))}
+                  {(!lobby.convertedPlayerIds ||
+                    lobby.convertedPlayerIds.length === 0) && (
+                    <p className="text-xs text-slate-500 italic">
+                      {t("game.noConverts")}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
-
-          {myRole === "CULT_LEADER" && lobby.assignments && (
-            <div
-              data-testid="role-team-info"
-              className="mt-6 pt-6 border-t border-slate-700 w-full"
-            >
-              <h3 className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3 text-center">
-                {t("game.yourConverts")}
-              </h3>
-              <div className="flex flex-wrap justify-center gap-3">
-                {lobby.players
-                  .filter(
-                    (p) =>
-                      p.id !== myPlayerId &&
-                      lobby.convertedPlayerIds?.includes(p.id),
-                  )
-                  .map((p) => (
-                    <div
-                      key={p.id}
-                      className="flex flex-col items-center gap-1"
-                    >
-                      <Avatar
-                        url={p.photoUrl}
-                        size="sm"
-                        className="ring-2 ring-purple-900/50"
-                      />
-                      <span className="text-xs text-purple-200/70 font-medium max-w-[60px] truncate">
-                        {p.name}
-                      </span>
-                    </div>
-                  ))}
-                {(!lobby.convertedPlayerIds ||
-                  lobby.convertedPlayerIds.length === 0) && (
-                  <p className="text-xs text-slate-500 italic">
-                    {t("game.noConverts")}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-        </RoleReveal.Revealed>
+            <RoleReveal.CloseButton />
+          </RoleReveal.Revealed>
+        </RoleReveal.Overlay>
       </RoleReveal.Root>
 
       {/* Team Composition */}

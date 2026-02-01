@@ -40,6 +40,7 @@ interface RootProps {
   className?: string;
   defaultRevealed?: boolean;
   onReveal?: () => void;
+  onHide?: () => void;
 }
 
 function Root({
@@ -47,6 +48,7 @@ function Root({
   className,
   defaultRevealed = false,
   onReveal,
+  onHide,
 }: RootProps) {
   const [isRevealed, setIsRevealed] = useState(defaultRevealed);
   const [isPaused, setIsPaused] = useState(false);
@@ -78,6 +80,7 @@ function Root({
     timerStartTimeRef.current = null;
     setIsRevealed(false);
     setIsPaused(false);
+    onHide?.();
   };
 
   const handlePauseStart = () => {
@@ -110,10 +113,11 @@ function Root({
 
     const timer = setTimeout(() => {
       setIsRevealed(false);
+      onHide?.();
     }, remainingTimeMsRef.current);
 
     return () => clearTimeout(timer);
-  }, [isRevealed, isPaused]);
+  }, [isRevealed, isPaused, onHide]);
 
   const handleTap = () => {
     if (isRevealed) {
@@ -361,6 +365,84 @@ function HideInstruction({ className }: HideInstructionProps) {
   );
 }
 
+interface CloseButtonProps {
+  className?: string;
+}
+
+function CloseButton({ className }: CloseButtonProps) {
+  const { t } = useT("common");
+  const { endReveal } = useRoleReveal();
+
+  return (
+    <button
+      type="button"
+      onClick={endReveal}
+      className={cn(
+        "px-6 py-3 bg-slate-700/50 hover:bg-slate-600/50 text-slate-200 border border-slate-600/50 rounded-xl font-medium transition-all cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-slate-500/50",
+        className,
+      )}
+    >
+      {t("roleReveal.close")}
+    </button>
+  );
+}
+
+interface DialogProps extends RootProps {
+  isOpen: boolean;
+  onDismiss: () => void;
+}
+
+function Dialog({ isOpen, onDismiss, children, ...rootProps }: DialogProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+      <div
+        className="absolute inset-0"
+        onClick={onDismiss}
+        aria-hidden="true"
+        data-testid="dialog-backdrop"
+      />
+      <div className="relative w-full max-w-sm mx-4">
+        <Root onHide={onDismiss} {...rootProps}>
+          {children}
+        </Root>
+      </div>
+    </div>
+  );
+}
+
+interface OverlayProps {
+  children: React.ReactNode;
+  className?: string;
+  onDismiss?: () => void;
+}
+
+function Overlay({ children, className, onDismiss }: OverlayProps) {
+  const { isRevealed, endReveal } = useRoleReveal();
+
+  if (!isRevealed) return null;
+
+  const handleDismiss = () => {
+    onDismiss?.();
+    endReveal();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+      <div
+        className="absolute inset-0"
+        onClick={handleDismiss}
+        aria-hidden="true"
+        data-testid="dialog-backdrop"
+      />
+      <div className={cn("relative w-full max-w-sm mx-4", className)}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export const RoleReveal = {
   Root,
   Canvas,
@@ -370,4 +452,7 @@ export const RoleReveal = {
   Title,
   Description,
   HideInstruction,
+  CloseButton,
+  Dialog,
+  Overlay,
 };

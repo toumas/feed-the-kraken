@@ -42,7 +42,6 @@ test.describe("Cult Role Visibility in 11-Player Games", () => {
       await page.goto("/");
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
       await expect(page.getByText("Crew Manifest")).toBeVisible({
         timeout: 15000,
@@ -89,6 +88,16 @@ test.describe("Cult Role Visibility in 11-Player Games", () => {
     await expect(hostPage.getByText("Crew status")).toBeVisible({
       timeout: 30000,
     });
+
+    // Dismiss "First Captain Appointed!" popup for all players before role checks
+    const allPagesStart1 = [hostPage, ...players.map((p) => p.page)];
+    for (const p of allPagesStart1) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+      await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+    }
 
     // 6. Verify: Original Cultist (P1) does NOT see "Your Leader" or Cult Leader's name
     const originalCultistPage = players[0].page;
@@ -158,7 +167,6 @@ test.describe("Cult Role Visibility in 11-Player Games", () => {
       await page.goto("/");
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
       await expect(page.getByText("Crew Manifest")).toBeVisible({
         timeout: 15000,
@@ -203,6 +211,16 @@ test.describe("Cult Role Visibility in 11-Player Games", () => {
     await expect(hostPage.getByText("Crew status")).toBeVisible({
       timeout: 30000,
     });
+
+    // Dismiss "First Captain Appointed!" popup for all players before role checks
+    const allPagesStart2 = [hostPage, ...players.map((p) => p.page)];
+    for (const p of allPagesStart2) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+      await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+    }
 
     // 5. Convert P2 (Sailor)
     const cultLeaderPage = hostPage;
@@ -366,7 +384,6 @@ test.describe("Cult Role Visibility in 11-Player Games", () => {
       await page.goto("/");
       await page.getByRole("button", { name: "Join Crew" }).click();
       await page.getByPlaceholder("XP7K9L").fill(code);
-      await page.getByRole("button", { name: "Board Ship" }).click();
       await completeIdentifyPage(page);
       await expect(page.getByText("Crew Manifest")).toBeVisible({
         timeout: 15000,
@@ -412,6 +429,16 @@ test.describe("Cult Role Visibility in 11-Player Games", () => {
     await expect(hostPage.getByText("Crew status")).toBeVisible({
       timeout: 30000,
     });
+
+    // Dismiss "First Captain Appointed!" popup for all players before role checks
+    const allPagesStart3 = [hostPage, ...players.map((p) => p.page)];
+    for (const p of allPagesStart3) {
+      await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+        timeout: 15000,
+      });
+      await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+      await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+    }
 
     // 5. Start conversion and verify original Cultist (P1) is in the target list
     const cultLeaderPage = hostPage;

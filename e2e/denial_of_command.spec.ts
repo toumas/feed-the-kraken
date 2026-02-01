@@ -24,25 +24,54 @@ test.describe("Denial of Command Elimination", () => {
     }
     await hostPage.getByRole("button", { name: "Start Voyage" }).click();
 
+    // Handle Captain Announcement Modal
+    await expect(hostPage.getByText("First Captain Appointed!")).toBeVisible({
+      timeout: 15000,
+    });
+    await hostPage
+      .getByRole("button", { name: /to the voyage|matkaan/i })
+      .click();
+    await expect(hostPage.getByText("First Captain Appointed!")).toBeHidden();
+
     // Perform Denial
     await hostPage.getByRole("button", { name: "Denial of Command" }).click();
     await hostPage.getByRole("button", { name: "Yes, I Deny Command" }).click();
 
-    // Reload to ensure state is synchronized and we are in Eliminated view
+    // Wait for the denial confirmation modal to close
+    await expect(
+      hostPage.getByRole("button", { name: "Yes, I Deny Command" }),
+    ).toBeHidden({ timeout: 10000 });
+
+    // After denial, the player should be eliminated and see the dashboard
+    // with their player card showing "Eliminated" status
+    await expect(hostPage.getByText("Crew Status")).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Reload to verify state is persisted (elimination is saved on server)
     await hostPage.reload();
 
-    // Click Return to Shore
-    await hostPage.getByRole("button", { name: "Return to Shore" }).click();
+    // Verify dashboard is still visible after reload (eliminated players see the same dashboard)
+    await expect(hostPage.getByText("Crew Status")).toBeVisible({
+      timeout: 15000,
+    });
 
-    // Verify confirmation modal
-    await expect(hostPage.getByText("End Session?")).toBeVisible();
+    // For eliminated players, verify they can still see the "End Session?" button
+    await hostPage.getByRole("button", { name: "End Session?" }).click();
+
+    // Verify confirmation modal heading is visible
+    await expect(
+      hostPage.getByRole("heading", { name: "End Session?" }),
+    ).toBeVisible();
 
     // Test Stay first
     await hostPage.getByRole("button", { name: "Stay" }).click();
-    await expect(hostPage.getByText("End Session?")).not.toBeVisible();
+    await expect(
+      hostPage.getByRole("heading", { name: "End Session?" }),
+    ).toBeHidden();
 
-    // Now actually leave
-    await hostPage.getByRole("button", { name: "Return to Shore" }).click();
+    // Now actually leave via End Session
+    await hostPage.getByRole("button", { name: "End Session?" }).click();
     await hostPage.getByRole("button", { name: "Leave" }).click();
 
     // Should be back at Home Page

@@ -39,7 +39,6 @@ test("Off with the Tongue Flow: Host silences Player 1", async ({
   await page.goto("/");
   await page.getByRole("button", { name: "Join Crew" }).click();
   await page.getByPlaceholder("XP7K9L").fill(code);
-  await page.getByRole("button", { name: "Board Ship" }).click();
   await completeIdentifyPage(page);
   await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
@@ -51,6 +50,17 @@ test("Off with the Tongue Flow: Host silences Player 1", async ({
   // 4. Start Game
   await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
   await hostPage.getByRole("button", { name: "Start Voyage" }).click();
+
+  // Dismiss Captain Popup for all players
+  const allCrewPagesStart1 = [hostPage, page];
+  for (const p of allCrewPagesStart1) {
+    await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+      timeout: 15000,
+    });
+    await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+    await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+  }
+
   await expect(hostPage.getByText(/Crew Status/i)).toBeVisible();
   await expect(page.getByText(/Crew Status/i)).toBeVisible();
 
@@ -143,7 +153,6 @@ test("Off with the Tongue Flow: Player 1 denies", async ({ browser }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Join Crew" }).click();
   await page.getByPlaceholder("XP7K9L").fill(code);
-  await page.getByRole("button", { name: "Board Ship" }).click();
   await completeIdentifyPage(page);
 
   // 3. Add bots
@@ -154,6 +163,17 @@ test("Off with the Tongue Flow: Player 1 denies", async ({ browser }) => {
   // 4. Start Game
   await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
   await hostPage.getByRole("button", { name: "Start Voyage" }).click();
+
+  // Dismiss Captain Popup for all players
+  const allCrewPagesStart2 = [hostPage, page];
+  for (const p of allCrewPagesStart2) {
+    await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+      timeout: 15000,
+    });
+    await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+    await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+  }
+
   await expect(hostPage.getByText(/Crew Status/i)).toBeVisible();
   await expect(page.getByText(/Crew Status/i)).toBeVisible();
 
@@ -245,7 +265,6 @@ test("Silenced player cannot claim Captain in Cult Cabin Search", async ({
   await page.goto("/");
   await page.getByRole("button", { name: "Join Crew" }).click();
   await page.getByPlaceholder("XP7K9L").fill(code);
-  await page.getByRole("button", { name: "Board Ship" }).click();
   await completeIdentifyPage(page);
   await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
 
@@ -257,6 +276,17 @@ test("Silenced player cannot claim Captain in Cult Cabin Search", async ({
   // 4. Start Game
   await expect(hostPage.getByText("Crew Manifest (5/11)")).toBeVisible();
   await hostPage.getByRole("button", { name: "Start Voyage" }).click();
+
+  // Dismiss Captain Popup for all players
+  const allCrewPagesStart3 = [hostPage, page];
+  for (const p of allCrewPagesStart3) {
+    await expect(p.getByText("First Captain Appointed!")).toBeVisible({
+      timeout: 15000,
+    });
+    await p.getByRole("button", { name: /to the voyage|matkaan/i }).click();
+    await expect(p.getByText("First Captain Appointed!")).toBeHidden();
+  }
+
   await expect(hostPage.getByText(/Crew Status/i)).toBeVisible();
   await expect(page.getByText(/Crew Status/i)).toBeVisible();
 
