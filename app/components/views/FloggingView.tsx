@@ -43,6 +43,9 @@ export function FloggingView({ onDismiss }: { onDismiss: () => void }) {
   }
 
   const handlePlayerSelect = (targetId: string) => {
+    if (error) {
+      setError(null);
+    }
     handleFloggingRequest(targetId);
     setIsPending(true);
   };

@@ -49,6 +49,9 @@ export function FeedTheKrakenView({ onDismiss }: { onDismiss: () => void }) {
   }
 
   const handlePlayerSelect = (targetId: string) => {
+    if (error) {
+      setError(null);
+    }
     handleFeedTheKrakenRequest(targetId);
     setIsPending(true);
   };

@@ -136,6 +136,25 @@ describe("CabinSearchView", () => {
     expect(screen.getByText("Player 2")).toBeDefined();
   });
 
+  it("clears error when initiating a new search after a previous error", () => {
+    const setError = vi.fn();
+    mockUseGame.mockReturnValue({
+      ...defaultContext,
+      error: "Previous denial error",
+      setError,
+    });
+
+    render(<CabinSearchView onDismiss={vi.fn()} />);
+
+    // Select a player and submit
+    fireEvent.click(screen.getByText("Player 2"));
+    fireEvent.click(screen.getByText("Confirm Search"));
+
+    // Error should be cleared before initiating new search
+    expect(setError).toHaveBeenCalledWith(null);
+    expect(defaultContext.handleCabinSearch).toHaveBeenCalledWith("p2");
+  });
+
   it("renders the correct instruction text when showing search results", () => {
     mockUseGame.mockReturnValue({
       ...defaultContext,

@@ -105,4 +105,18 @@ describe("FloggingView", () => {
     expect(screen.queryByText("Test error message")).not.toBeInTheDocument();
     expect(screen.getByText("flogging.title")).toBeInTheDocument();
   });
+
+  it("clears error when initiating a new flogging request after a previous error", () => {
+    mockError = "Previous denial error";
+    const onDismiss = vi.fn();
+    render(<FloggingView onDismiss={onDismiss} />);
+
+    // Select a player and submit
+    fireEvent.click(screen.getByText("Player 2"));
+    fireEvent.click(screen.getByText("flogging.flogPlayer"));
+
+    // Error should be cleared before initiating new request
+    expect(mockSetError).toHaveBeenCalledWith(null);
+    expect(mockHandleFloggingRequest).toHaveBeenCalledWith("player2");
+  });
 });

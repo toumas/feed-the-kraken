@@ -37,6 +37,9 @@ export function OffWithTongueView({ onDismiss }: { onDismiss: () => void }) {
   }
 
   const handlePlayerSelect = (targetId: string) => {
+    if (error) {
+      setError(null);
+    }
     handleOffWithTongueRequest(targetId);
     setIsPending(true);
   };

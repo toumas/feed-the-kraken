@@ -89,6 +89,9 @@ export function CabinSearchView({ onDismiss }: CabinSearchViewProps) {
   }
 
   const handlePlayerSelect = (targetId: string) => {
+    if (error) {
+      setError(null);
+    }
     handleCabinSearch(targetId);
     setIsPending(true);
   };
