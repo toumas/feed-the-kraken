@@ -130,8 +130,11 @@ describe("GameView", () => {
         onOpenFlogging={onOpenFlogging}
       />,
     );
-    const button = screen.getByText("Flogging (Used)");
-    expect(button).toBeDefined();
+    const textElement = screen.getByText("Flogging (Used)");
+    const button = textElement.closest("button");
+    expect(button).not.toBeNull();
+    if (!button) throw new Error("Button not found");
+
     expect(button.className).toContain("bg-slate-800/50");
     expect(button.className).toContain("text-slate-500");
     fireEvent.click(button);
@@ -198,7 +201,7 @@ describe("GameView", () => {
       />,
     );
     revealRole();
-    const button = screen.getByText("Cabin Search (Cult)");
+    const button = screen.getByText("Cult Cabin Search");
     fireEvent.click(button);
     expect(onStartCabinSearch).toHaveBeenCalled();
   });
@@ -910,7 +913,11 @@ describe("GameView", () => {
         onStartConversion={onStartConversion}
       />,
     );
-    const button = screen.getByText("Conversion to Cult (Used)");
+    const textElement = screen.getByText("Conversion to Cult (Used)");
+    const button = textElement.closest("button");
+
+    expect(button).not.toBeNull();
+    if (!button) throw new Error("Button not found");
 
     // Button should be styled as disabled
     expect(button.className).toContain("bg-slate-800/50");

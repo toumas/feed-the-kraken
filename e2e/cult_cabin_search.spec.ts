@@ -73,8 +73,8 @@ test.describe("Cult Cabin Search Flow", () => {
     }
 
     // 4. Navigate to Cabin Search
-    await hostPage.getByRole("button", { name: "Cabin Search (Cult)" }).click();
-    // Verify valid headings for any role (Leader sees Cabin Search (Cult), others see Quiz/Inspection)
+    await hostPage.getByRole("button", { name: "Cult Cabin Search" }).click();
+    // Verify valid headings for any role (Leader sees Cult Cabin Search, others see Quiz/Inspection)
     await expect(
       hostPage.getByRole("heading", {
         name: /Cabin Search|Crew Quiz|Cabin Inspection/,
@@ -390,7 +390,7 @@ test.describe("Cult Cabin Search Flow", () => {
       }, playerName);
       await page.goto("/");
       await page.getByRole("button", { name: "Join Crew" }).click();
-      await page.getByPlaceholder("XP7K9L").fill(code);
+      await page.getByRole("textbox").fill(code);
       // Auto-submit triggers on 6th char
       await completeIdentifyPage(page);
       await expect(page).toHaveURL(/\/lobby/, { timeout: 15000 });
@@ -412,7 +412,7 @@ test.describe("Cult Cabin Search Flow", () => {
     await expect(hostPage).toHaveURL(/\/game/, { timeout: 15000 });
 
     // 4. Navigate to Cabin Search
-    await hostPage.getByRole("button", { name: "Cabin Search (Cult)" }).click();
+    await hostPage.getByRole("button", { name: "Cult Cabin Search" }).click();
 
     for (const p of players) {
       await expect(
@@ -490,7 +490,7 @@ test.describe("Cult Cabin Search Flow", () => {
       }, playerName);
       await page.goto("/");
       await page.getByRole("button", { name: "Join Crew" }).click();
-      await page.getByPlaceholder("XP7K9L").fill(code);
+      await page.getByRole("textbox").fill(code);
       // Auto-submit triggers on 6th char
       await completeIdentifyPage(page);
       await expect(page.getByText("Crew Manifest")).toBeVisible({
@@ -515,7 +515,7 @@ test.describe("Cult Cabin Search Flow", () => {
     });
 
     // 4. Navigate to Cabin Search
-    await hostPage.getByRole("button", { name: "Cabin Search (Cult)" }).click();
+    await hostPage.getByRole("button", { name: "Cult Cabin Search" }).click();
     await expect(
       hostPage.getByRole("heading", {
         name: /Cabin Search|Crew Quiz|Cabin Inspection/,
@@ -613,7 +613,7 @@ test.describe("Cult Cabin Search Flow", () => {
       }, playerName);
       await page.goto("/");
       await page.getByRole("button", { name: "Join Crew" }).click();
-      await page.getByPlaceholder("XP7K9L").fill(code);
+      await page.getByRole("textbox").fill(code);
       // Auto-submit triggers on 6th char
       await completeIdentifyPage(page);
       await expect(page.getByText("Crew Manifest")).toBeVisible({
@@ -642,7 +642,7 @@ test.describe("Cult Cabin Search Flow", () => {
     }
 
     // 4. Navigate to Cabin Search
-    await hostPage.getByRole("button", { name: "Cabin Search (Cult)" }).click();
+    await hostPage.getByRole("button", { name: "Cult Cabin Search" }).click();
     await expect(
       hostPage.getByRole("heading", {
         name: /Cabin Search|Crew Quiz|Cabin Inspection/,
@@ -684,7 +684,7 @@ test.describe("Cult Cabin Search Flow", () => {
     });
 
     const cabinSearchLink = hostPage.getByRole("button", {
-      name: "Cabin Search (Cult) (Used)",
+      name: "Cult Cabin Search (Used)",
     });
     await expect(cabinSearchLink).toBeVisible();
     await expect(cabinSearchLink).toHaveClass(/bg-slate-800\/50/);

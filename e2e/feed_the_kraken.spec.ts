@@ -165,7 +165,9 @@ test("Feed the Kraken Flow: Host feeds Player 1", async ({ browser }) => {
 
   // 8. Verify Result on Player 1 (Eliminated screen)
   await expect(page).toHaveURL(/\/game/, { timeout: 15000 });
-  await expect(page.locator(".fixed").getByText("Eliminated", { exact: true })).toBeVisible();
+  await expect(
+    page.locator(".fixed").getByText("Eliminated", { exact: true }),
+  ).toBeVisible();
 });
 
 test("Feed the Kraken Flow: Player 1 denies", async ({ browser }) => {

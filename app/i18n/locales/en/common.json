@@ -185,6 +185,7 @@
     "crew": "Crew Member",
     "request": "wants to search your cabin. Do you allow it?",
     "cult": "Cult",
+    "cultTitle": "Cult Cabin Search",
     "alreadyUsed": "Cult Cabin Search has already been used this game.",
     "alreadySearched": "Already searched",
     "confirmSearch": "Confirm Search",

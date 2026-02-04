@@ -294,7 +294,9 @@ test.describe("Action Flow Visual Tests", () => {
     await expect(hostPage.getByText("Crew Status")).toBeVisible();
 
     // Navigate to cabin search page
-    await hostPage.getByRole("button", { name: "Cabin Search", exact: true }).click();
+    await hostPage
+      .getByRole("button", { name: "Cabin Search", exact: true })
+      .click();
     await expect(
       hostPage.getByRole("heading", { name: "Cabin Search" }),
     ).toBeVisible();
