@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { InlineError } from "../../components/InlineError";
 import { LobbyView } from "../../components/LobbyView";
+import { FeedbackModal } from "../../components/FeedbackModal";
 import { useGame } from "../../context/GameContext";
 import { useLocalizedRouter } from "../../hooks/useLocalizedRouter";
 import { useT } from "../../i18n/client";
@@ -26,6 +27,7 @@ export default function LobbyPage() {
     null,
   );
   const [isLeaving, setIsLeaving] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   useEffect(() => {
     // If game starts, go to appropriate page based on mode
@@ -114,9 +116,14 @@ export default function LobbyPage() {
           onAddBot={addBotPlayer}
           onKickPlayer={kickPlayer}
           onSetRoleDistributionMode={setRoleDistributionMode}
+          onOpenFeedback={() => setShowFeedback(true)}
           connectionStatus={connectionStatus}
         />
       </main>
+      <FeedbackModal
+        isOpen={showFeedback}
+        onClose={() => setShowFeedback(false)}
+      />
     </div>
   );
 }

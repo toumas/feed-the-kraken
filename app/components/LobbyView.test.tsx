@@ -9,13 +9,19 @@ describe("LobbyView", () => {
     vi.restoreAllMocks();
   });
 
+  // Mock clipboard
+  const mockClipboard = {
+    writeText: vi.fn().mockImplementation(() => Promise.resolve()),
+  };
+  (global.navigator as any).clipboard = mockClipboard;
+
   const createMockLobby = (playerCount: number): LobbyState => ({
     code: "ABC123",
     players: Array.from({ length: playerCount }, (_, i) => ({
       id: `p${i + 1}`,
       name: i === 0 ? "Host" : `Player ${i + 1}`,
       isHost: i === 0,
-      photoUrl: null,
+      photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=p" + (i + 1),
       isOnline: true,
       isEliminated: false,
       isUnconvertible: false,
@@ -35,6 +41,7 @@ describe("LobbyView", () => {
     onAddBot: vi.fn(),
     onKickPlayer: vi.fn(),
     onSetRoleDistributionMode: vi.fn(),
+    onOpenFeedback: vi.fn(),
     connectionStatus: "connected" as const,
   };
 
@@ -125,6 +132,97 @@ describe("LobbyView", () => {
       }
 
       expect(screen.queryByText("Scan to Join")).toBeNull();
+    });
+  });
+
+  describe("Interactions", () => {
+    it("copies the lobby code", () => {
+      render(<LobbyView lobby={createMockLobby(5)} {...defaultProps} />);
+      const copyButton = screen.getByTitle("Copy Code");
+      fireEvent.click(copyButton);
+      expect(mockClipboard.writeText).toHaveBeenCalledWith("ABC123");
+    });
+
+    it("opens profile editor and updates profile", () => {
+      const onUpdateProfile = vi.fn();
+      render(
+        <LobbyView
+          lobby={createMockLobby(5)}
+          {...defaultProps}
+          onUpdateProfile={onUpdateProfile}
+        />,
+      );
+
+      fireEvent.click(screen.getByText("Edit Identity"));
+
+      const nameInput = screen.getByLabelText("Display Name");
+      fireEvent.change(nameInput, { target: { value: "New Name" } });
+
+      fireEvent.click(screen.getByText("Save Profile"));
+
+      expect(onUpdateProfile).toHaveBeenCalledWith(
+        "New Name",
+        "https://api.dicebear.com/7.x/avataaars/svg?seed=p1",
+      );
+    });
+
+    it("allows host to add a bot in dev mode", () => {
+      const onAddBot = vi.fn();
+      // Use vi.stubEnv to mock development mode
+      vi.stubEnv("NODE_ENV", "development");
+
+      render(
+        <LobbyView
+          lobby={createMockLobby(5)}
+          {...defaultProps}
+          onAddBot={onAddBot}
+        />,
+      );
+
+      fireEvent.click(screen.getByText("Debug Bot"));
+      expect(onAddBot).toHaveBeenCalled();
+
+      vi.unstubAllEnvs();
+    });
+
+    it("allows host to kick a player", () => {
+      const onKickPlayer = vi.fn();
+      render(
+        <LobbyView
+          lobby={createMockLobby(5)}
+          {...defaultProps}
+          onKickPlayer={onKickPlayer}
+        />,
+      );
+
+      // Kick Player 2 (Host is p1)
+      const kickButtons = screen.getAllByTitle("Remove player");
+      fireEvent.click(kickButtons[0]); // p2 is first non-host in list
+      expect(onKickPlayer).toHaveBeenCalledWith("p2");
+    });
+
+    it("allows host to set role distribution mode", () => {
+      const onSetRoleDistributionMode = vi.fn();
+      render(
+        <LobbyView
+          lobby={createMockLobby(5)}
+          {...defaultProps}
+          onSetRoleDistributionMode={onSetRoleDistributionMode}
+        />,
+      );
+
+      fireEvent.click(screen.getByText("Manual"));
+      expect(onSetRoleDistributionMode).toHaveBeenCalledWith("manual");
+    });
+
+    it("shows offline status for players", () => {
+      const lobby = createMockLobby(2);
+      lobby.players[1].isOnline = false;
+
+      render(<LobbyView lobby={lobby} {...defaultProps} />);
+
+      expect(screen.getAllByTitle("Offline").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Offline").length).toBeGreaterThan(0);
     });
   });
 });

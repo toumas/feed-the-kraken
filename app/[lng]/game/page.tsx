@@ -21,6 +21,7 @@ import { Avatar } from "../../components/Avatar";
 import { CancellationModal } from "../../components/CancellationModal";
 import { ConfirmationModal } from "../../components/ConfirmationModal";
 import { GameView } from "../../components/GameView";
+import { FeedbackModal } from "../../components/FeedbackModal";
 import { InlineError } from "../../components/InlineError";
 import { ReadyCheckModal } from "../../components/ReadyCheckModal";
 // Import Views
@@ -91,6 +92,7 @@ export default function GamePage() {
   const [localView, setLocalView] = useState<LocalView>("NONE");
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showBackToLobbyConfirm, setShowBackToLobbyConfirm] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const [isCaptainAnnouncementDismissed, setIsCaptainAnnouncementDismissed] =
     useState(() => {
@@ -282,6 +284,7 @@ export default function GamePage() {
               onStartGunsStash={startGunsStash}
               onOpenResetGame={() => setShowResetConfirm(true)}
               onOpenBackToLobby={() => setShowBackToLobbyConfirm(true)}
+              onOpenFeedback={() => setShowFeedback(true)}
             />
           </main>
         </div>
@@ -771,6 +774,11 @@ export default function GamePage() {
           </ConfirmationModal.Actions>
         </ConfirmationModal.Root>
       )}
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={showFeedback}
+        onClose={() => setShowFeedback(false)}
+      />
     </>
   );
 }

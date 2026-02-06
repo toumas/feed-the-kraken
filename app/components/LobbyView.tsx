@@ -2,6 +2,7 @@ import {
   Anchor,
   CheckCircle2,
   Copy,
+  MessageSquare,
   Play,
   QrCode,
   Settings,
@@ -32,6 +33,7 @@ interface LobbyViewProps {
   onAddBot: () => void;
   onKickPlayer: (targetPlayerId: string) => void;
   onSetRoleDistributionMode: (mode: "automatic" | "manual") => void;
+  onOpenFeedback: () => void;
   connectionStatus: ConnectionStatus;
 }
 
@@ -44,6 +46,7 @@ export function LobbyView({
   onAddBot,
   onKickPlayer,
   onSetRoleDistributionMode,
+  onOpenFeedback,
   connectionStatus,
 }: LobbyViewProps) {
   const { t } = useT("common");
@@ -381,6 +384,15 @@ export function LobbyView({
           className="w-full py-3 text-slate-500 hover:text-red-400 text-sm font-medium transition-colors"
         >
           {t("lobby.abandonShip")}
+        </button>
+
+        <button
+          type="button"
+          onClick={onOpenFeedback}
+          className="w-full py-2 text-slate-600 hover:text-cyan-500 text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
+        >
+          <MessageSquare className="w-3.5 h-3.5" />
+          {t("feedback.title")}
         </button>
       </div>
     </div>

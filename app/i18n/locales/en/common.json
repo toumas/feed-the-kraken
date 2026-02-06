@@ -365,5 +365,16 @@
     "title": "First Captain Appointed!",
     "message": "The crew has chosen their first leader. The First Captain is:",
     "ok": "To the Voyage!"
+  },
+  "feedback": {
+    "title": "Send Feedback",
+    "message": "Message",
+    "messagePlaceholder": "Tell us what you think about the companion app...",
+    "email": "Email (optional)",
+    "emailPlaceholder": "your@email.com (if you'd like a reply)",
+    "submit": "Send Feedback",
+    "cancel": "Cancel",
+    "success": "Thanks for your feedback! It has been sent.",
+    "error": "Failed to send feedback. Please try again later."
   }
 }

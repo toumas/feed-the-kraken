@@ -365,5 +365,16 @@
     "title": "Ensimmäinen kapteeni valittu!",
     "message": "Miehistö on valinnut ensimmäisen johtajansa. Ensimmäinen kapteeni on:",
     "ok": "Matkaan!"
+  },
+  "feedback": {
+    "title": "Lähetä palautetta",
+    "message": "Viesti",
+    "messagePlaceholder": "Kerro mitä mieltä olet apusovelluksesta...",
+    "email": "Sähköposti (valinnainen)",
+    "emailPlaceholder": "sinun@sahkoposti.fi (jos haluat vastauksen)",
+    "submit": "Lähetä palaute",
+    "cancel": "Peruuta",
+    "success": "Kiitos palautteestasi! Se on lähetetty.",
+    "error": "Palautteen lähettäminen epäonnistui. Yritä myöhemmin uudelleen."
   }
 }

@@ -4,6 +4,7 @@ import {
   Eye,
   Gavel,
   LogOut,
+  MessageSquare,
   Scissors,
   Search,
   Skull,
@@ -43,6 +44,7 @@ interface GameViewProps {
 
   onOpenResetGame: () => void;
   onOpenBackToLobby: () => void;
+  onOpenFeedback: () => void;
   className?: string;
 }
 
@@ -65,6 +67,7 @@ export function GameView({
 
   onOpenResetGame,
   onOpenBackToLobby,
+  onOpenFeedback,
   className,
 }: GameViewProps) {
   const { t } = useT("common");
@@ -660,6 +663,17 @@ export function GameView({
               </button>
             </>
           )}
+
+          <button
+            type="button"
+            onClick={onOpenFeedback}
+            className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors flex items-center gap-3"
+          >
+            <span className="w-8 shrink-0 flex justify-center">
+              <MessageSquare className="w-5 h-5" />
+            </span>
+            <span className="text-left">{t("feedback.title")}</span>
+          </button>
         </div>
       </div>
 
