@@ -4,6 +4,7 @@ import {
   type ReactNode,
   type SetStateAction,
   useContext,
+  useEffect,
   useState,
 } from "react";
 
@@ -39,6 +40,13 @@ export function EditableProfile({
   onSave,
 }: EditableProfileProps) {
   const [isEditing, setIsEditing] = useState(defaultEditing);
+
+  // Close editor when profile becomes valid (defaultEditing changes to false)
+  useEffect(() => {
+    if (!defaultEditing) {
+      setIsEditing(false);
+    }
+  }, [defaultEditing]);
 
   const save = () => {
     onSave?.();

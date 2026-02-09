@@ -1,0 +1,35 @@
+TODO:
+* add props to selfie camera, i.e., Captain's beard, a parrot, an eyepathc, etc.
+* show navigation card descriptions in game view
+* captains logbook i.e., action history log
+* add themed soundboard (i.e., musket shot, flogging, etc.)
+* detect language from browser => already installed, needs configuration?
+* show private info to the player in the lobby for example the result of Cult Cabin Search. But how to display such info secretly from other players?
+* when the game started and navigated to /game, browserstack saw Flogging Result evn though flogging had not happened yet. Given the player has played the game before and quit without clearing the local storage, when the user presses Save Profile in join view, then the local storage that controls the modal visibility should be cleared.
+* some times the browserstack is kicked out and all other players are taken back to lobby with bs still visible but offline
+* use xstate on the client side instead context
+* view transitions
+* show any cultists that were serving the Cult Leader in the victory popup.
+* lisää linkki kraken.ukko.la jos kieli on suomi
+
+## testaus 18.1.2026
+
+* pelinhoitaja poisti sinut aulasta????
+* select map in lobby (long vs. short journey), then limit actions accordingly
+
+
+probably because I forgot to deploy partykit:
+* double check that limitations apply to Conversion to Cult, Cult's Cabin Search, Flogging, Cult's Guns Stash, Captain's Cabin Search, 
+* captain's cabin search does not reset selection status on second search
+* limit captain's cabin search to 2 per game* tarkista että kaikilta pelaajilta kysytään ready check conversion to cult -toiminnossa
+
+
+* lisää kysymyksiä
+* send notification to offline players when there is a prompt waiting for them
+    * shutting down the phone screen takes long time to register as offline
+    * switching app on the phone takes long time to register as offline
+
+## Rule clarifications
+
+https://boardgamegeek.com/thread/3595017/do-you-still-give-the-captain-your-old-role-when-d
+
