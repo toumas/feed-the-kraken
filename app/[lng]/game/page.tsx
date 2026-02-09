@@ -4,6 +4,7 @@ import React, {
   type ComponentType,
   type ReactNode,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -21,6 +22,7 @@ import { Avatar } from "../../components/Avatar";
 import { CancellationModal } from "../../components/CancellationModal";
 import { ConfirmationModal } from "../../components/ConfirmationModal";
 import { GameView } from "../../components/GameView";
+import { DevStateImporter } from "../../components/DevStateImporter";
 import { FeedbackModal } from "../../components/FeedbackModal";
 import { InlineError } from "../../components/InlineError";
 import { ReadyCheckModal } from "../../components/ReadyCheckModal";
@@ -37,6 +39,7 @@ import { RoleSelectionView } from "../../components/views/RoleSelectionView";
 import { useGame } from "../../context/GameContext";
 import { useT } from "../../i18n/client";
 import { getRoleColor, sortPlayersWithSelfFirst } from "../../utils/role-utils";
+import { anonymizeGameState } from "../../utils/anonymize-game-state";
 
 type LocalView =
   | "NONE"
@@ -88,6 +91,12 @@ export default function GamePage() {
     handleOffWithTongueResponse,
   } = useGame();
   const { t } = useT("common");
+
+  // Memoize anonymized game state for feedback
+  const anonymizedGameState = useMemo(() => {
+    if (!lobby) return null;
+    return anonymizeGameState(lobby);
+  }, [lobby]);
 
   const [localView, setLocalView] = useState<LocalView>("NONE");
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -778,7 +787,9 @@ export default function GamePage() {
       <FeedbackModal
         isOpen={showFeedback}
         onClose={() => setShowFeedback(false)}
+        anonymizedGameState={anonymizedGameState}
       />
+      {process.env.NODE_ENV === "development" && <DevStateImporter />}
     </>
   );
 }

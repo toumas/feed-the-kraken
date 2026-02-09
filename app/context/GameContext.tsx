@@ -19,6 +19,8 @@ import {
   type Role,
 } from "../types";
 import { useGameHandlers } from "./useGameHandlers";
+import { rehydrateGameState } from "../utils/rehydrate-game-state";
+import type { AnonymizedGameState } from "../utils/anonymize-game-state";
 
 export interface GameContextValue {
   // User State
@@ -125,11 +127,8 @@ export interface GameContextValue {
   // UI State
   error: string | null;
   setError: (error: string | null) => void;
-  view: string; // "HOME" | "JOIN" | "LOBBY" | "GAME" | "PROFILE_SETUP" (managed locally in page.tsx mostly, but exposed if needed?)
-  // Actually, view state is better kept local to page.tsx for navigation,
-  // but we might need to trigger view changes from context (e.g. on game start).
-  // For now, let's expose a way to set view or just let page.tsx handle it via effects on lobby state.
-  // For now, let's expose a way to set view or just let page.tsx handle it via effects on lobby state.
+  view: string;
+  importDevState: (json: string) => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -149,7 +148,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   // User State
-  const [myPlayerId] = useState<string>(() => {
+  const [myName, setMyName] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("kraken_player_name") || "";
+    }
+    return "";
+  });
+
+  const [myPlayerId, setMyPlayerId] = useState<string>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("kraken_player_id");
       if (stored) return stored;
@@ -158,13 +164,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       return newId;
     }
     return `player_${Math.random().toString(36).substr(2, 9)}`;
-  });
-
-  const [myName, setMyName] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("kraken_player_name") || "";
-    }
-    return "";
   });
 
   const [myPhoto, setMyPhoto] = useState<string | null>(() => {
@@ -426,12 +425,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Derive floggingReveal from lobby state
   const floggingReveal =
     lobby?.floggingStatus?.state === "COMPLETED" &&
-    lobby?.floggingStatus?.result?.notRole &&
-    !isFloggingDismissed
+      lobby?.floggingStatus?.result?.notRole &&
+      !isFloggingDismissed
       ? {
-          targetPlayerId: lobby.floggingStatus.targetPlayerId,
-          revealedRole: lobby.floggingStatus.result.notRole,
-        }
+        targetPlayerId: lobby.floggingStatus.targetPlayerId,
+        revealedRole: lobby.floggingStatus.result.notRole,
+      }
       : null;
 
   const clearFloggingReveal = useCallback(() => {
@@ -911,6 +910,28 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     [socket, myPlayerId],
   );
 
+  const importDevState = useCallback(
+    (json: string) => {
+      if (process.env.NODE_ENV !== "development") return;
+
+      try {
+        const anonymizedState: AnonymizedGameState = JSON.parse(json);
+        const rehydrated = rehydrateGameState(anonymizedState);
+        if (rehydrated) {
+          setLobby(rehydrated);
+          // Set current player to "dev_player_1" to correspond with the first player in rehydrated state
+          setMyPlayerId("dev_player_1");
+          setMyName("Dev Player 1");
+          setError(null);
+        }
+      } catch (err) {
+        console.error("Failed to import dev state:", err);
+        setError("Invalid JSON format for game state import");
+      }
+    },
+    [setError, setLobby, setMyPlayerId, setMyName],
+  );
+
   return (
     <GameContext.Provider
       value={{
@@ -959,6 +980,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         error,
         setError,
         view: "", // Placeholder
+        importDevState,
       }}
     >
       {children}

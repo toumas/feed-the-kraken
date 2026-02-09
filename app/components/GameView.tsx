@@ -201,10 +201,10 @@ export function GameView({
                       (lobby.originalRoles?.[p.id] === "PIRATE" ||
                         lobby.assignments?.[p.id] === "PIRATE"),
                   ).length === 0 && (
-                    <p className="text-xs text-slate-500 italic">
-                      {t("game.noPirates")}
-                    </p>
-                  )}
+                      <p className="text-xs text-slate-500 italic">
+                        {t("game.noPirates")}
+                      </p>
+                    )}
                 </div>
               </div>
             )}
@@ -280,10 +280,10 @@ export function GameView({
                     ))}
                   {(!lobby.convertedPlayerIds ||
                     lobby.convertedPlayerIds.length === 0) && (
-                    <p className="text-xs text-slate-500 italic">
-                      {t("game.noConverts")}
-                    </p>
-                  )}
+                      <p className="text-xs text-slate-500 italic">
+                        {t("game.noConverts")}
+                      </p>
+                    )}
                 </div>
               </div>
             )}
@@ -357,8 +357,8 @@ export function GameView({
                         : "ring-slate-700",
                       !p.isEliminated && p.isUnconvertible && "ring-purple-500",
                       !p.isEliminated &&
-                        p.hasTongue === false &&
-                        "ring-amber-500",
+                      p.hasTongue === false &&
+                      "ring-amber-500",
                     )}
                   />
                   <div className="absolute -bottom-1 -right-1 flex flex-wrap-reverse justify-end gap-0.5 pointer-events-none max-w-[40px]">

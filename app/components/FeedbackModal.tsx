@@ -1,16 +1,22 @@
 "use client";
 
-import { MessageSquare, Send, X } from "lucide-react";
+import { MessageSquare, Send } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ConfirmationModal } from "./ConfirmationModal";
+import type { AnonymizedGameState } from "../utils/anonymize-game-state";
 
 interface FeedbackModalProps {
   isOpen: boolean;
   onClose: () => void;
+  anonymizedGameState?: AnonymizedGameState | null;
 }
 
-export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
+export function FeedbackModal({
+  isOpen,
+  onClose,
+  anonymizedGameState,
+}: FeedbackModalProps) {
   const { t } = useTranslation("common");
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
@@ -30,7 +36,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ message, email }),
+        body: JSON.stringify({ message, email, gameState: anonymizedGameState }),
       });
 
       if (!response.ok) throw new Error("Failed to send feedback");

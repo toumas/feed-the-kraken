@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { anonymizeGameState } from "../../utils/anonymize-game-state";
 import { InlineError } from "../../components/InlineError";
 import { LobbyView } from "../../components/LobbyView";
+import { DevStateImporter } from "../../components/DevStateImporter";
 import { FeedbackModal } from "../../components/FeedbackModal";
 import { useGame } from "../../context/GameContext";
 import { useLocalizedRouter } from "../../hooks/useLocalizedRouter";
@@ -52,6 +54,11 @@ export default function LobbyPage() {
       setCancellationMessage(lobby.roleSelectionStatus.cancellationReason);
     }
   }, [lobby?.roleSelectionStatus]);
+
+  const anonymizedGameState = useMemo(() => {
+    if (!lobby) return null;
+    return anonymizeGameState(lobby);
+  }, [lobby]);
 
   const handleLeave = () => {
     setIsLeaving(true);
@@ -123,7 +130,9 @@ export default function LobbyPage() {
       <FeedbackModal
         isOpen={showFeedback}
         onClose={() => setShowFeedback(false)}
+        anonymizedGameState={anonymizedGameState}
       />
+      {process.env.NODE_ENV === "development" && <DevStateImporter />}
     </div>
   );
 }

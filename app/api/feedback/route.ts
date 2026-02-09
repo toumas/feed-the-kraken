@@ -5,7 +5,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
   try {
-    const { message, email } = await request.json();
+    const { message, email, gameState } = await request.json();
 
     if (!message || typeof message !== "string") {
       return NextResponse.json(
@@ -23,6 +23,14 @@ export async function POST(request: Request) {
       );
     }
 
+    // Build game state section if provided
+    const gameStateSection = gameState
+      ? `
+        <h3>Anonymized Game State:</h3>
+        <pre style="padding: 15px; background-color: #f4f4f4; border-radius: 5px; color: #333; overflow-x: auto; font-size: 12px;">${JSON.stringify(gameState, null, 2)}</pre>
+      `
+      : "";
+
     const { data, error } = await resend.emails.send({
       from: "Feed the Kraken Feedback <feed-the-kraken-feedback@feed-the-kraken-feedback.ukko.la>",
       to: [recipientEmail],
@@ -34,6 +42,7 @@ export async function POST(request: Request) {
           ${message.replace(/\n/g, "<br>")}
         </div>
         <p><strong>User Email:</strong> ${email || "Anonymous"}</p>
+        ${gameStateSection}
         <hr>
         <p><small>Sent via Feed the Kraken Companion Feedback Feature</small></p>
       `,

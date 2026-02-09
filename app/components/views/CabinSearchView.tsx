@@ -177,7 +177,7 @@ export function CabinSearchView({ onDismiss }: CabinSearchViewProps) {
                 <RoleReveal.Revealed className="space-y-6">
                   {/* Show original role with Cultist badge if converted */}
                   {cabinSearchResult.role === "CULTIST" &&
-                  cabinSearchResult.originalRole ? (
+                    cabinSearchResult.originalRole ? (
                     <>
                       <RoleReveal.Icon>
                         {getRoleDetails(cabinSearchResult.originalRole).icon}
