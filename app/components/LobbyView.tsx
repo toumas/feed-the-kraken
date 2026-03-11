@@ -1,5 +1,6 @@
 import {
   Anchor,
+  BookOpen,
   CheckCircle2,
   Copy,
   MessageSquare,
@@ -49,7 +50,7 @@ export function LobbyView({
   onOpenFeedback,
   connectionStatus,
 }: LobbyViewProps) {
-  const { t } = useT("common");
+  const { t, i18n } = useT("common");
   const myPlayer = lobby.players.find((p) => p.id === myPlayerId);
   const isHost = myPlayer?.isHost;
   const playerCount = lobby.players.length;
@@ -394,6 +395,18 @@ export function LobbyView({
           <MessageSquare className="w-3.5 h-3.5" />
           {t("feedback.title")}
         </button>
+
+        {i18n.language === "fi" && (
+          <a
+            href="http://kraken.ukko.la"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full py-2 text-slate-600 hover:text-cyan-500 text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            {t("lobby.instructions")}
+          </a>
+        )}
       </div>
     </div>
   );

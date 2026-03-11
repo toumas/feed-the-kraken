@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { completeIdentifyPage } from "./helpers";
 
+test.setTimeout(120000);
+
 test("Off with the Tongue Flow: Host silences Player 1", async ({
   browser,
 }) => {

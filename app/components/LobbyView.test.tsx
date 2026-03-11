@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { LobbyState } from "../types";
 import { LobbyView } from "./LobbyView";
 
@@ -224,5 +224,82 @@ describe("LobbyView", () => {
       expect(screen.getAllByTitle("Offline").length).toBeGreaterThan(0);
       expect(screen.getAllByText("Offline").length).toBeGreaterThan(0);
     });
+  });
+
+  describe("Instruction Link", () => {
+    it("does not show instructions link when language is 'en'", () => {
+      // Default mock has language 'en'
+      render(<LobbyView lobby={createMockLobby(5)} {...defaultProps} />);
+
+      // The link should not be visible when language is English
+      expect(
+        screen.queryByRole("link", { name: /instructions/i }),
+      ).toBeNull();
+    });
+  });
+});
+
+// Separate test file context for Finnish language test
+describe("LobbyView Finnish Language", () => {
+  it("shows instructions link when language is 'fi'", async () => {
+    // Reset modules and mock react-i18next with Finnish language
+    vi.resetModules();
+    vi.doMock("react-i18next", () => ({
+      useTranslation: () => ({
+        t: (key: string) =>
+          key === "lobby.instructions" ? "Pelin ohjeet" : key,
+        i18n: {
+          changeLanguage: () => Promise.resolve(),
+          resolvedLanguage: "fi",
+          language: "fi",
+        },
+      }),
+      initReactI18next: {
+        type: "3rdParty",
+        init: () => { },
+      },
+    }));
+
+    // Dynamically import to use the mocked version
+    const { LobbyView: LobbyViewFi } = await import("./LobbyView");
+
+    const createMockLobby = (playerCount: number) => ({
+      code: "ABC123",
+      players: Array.from({ length: playerCount }, (_, i) => ({
+        id: `p${i + 1}`,
+        name: i === 0 ? "Host" : `Player ${i + 1}`,
+        isHost: i === 0,
+        photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=p" + (i + 1),
+        isOnline: true,
+        isEliminated: false,
+        isUnconvertible: false,
+        isReady: false,
+        notRole: null,
+        joinedAt: Date.now(),
+        hasTongue: true,
+      })),
+      status: "WAITING" as const,
+    });
+
+    const defaultProps = {
+      myPlayerId: "p1",
+      onUpdateProfile: vi.fn(),
+      onLeave: vi.fn(),
+      onStart: vi.fn(),
+      onAddBot: vi.fn(),
+      onKickPlayer: vi.fn(),
+      onSetRoleDistributionMode: vi.fn(),
+      onOpenFeedback: vi.fn(),
+      connectionStatus: "connected" as const,
+    };
+
+    render(<LobbyViewFi lobby={createMockLobby(5)} {...defaultProps} />);
+
+    const instructionsLink = screen.getByText("Pelin ohjeet");
+    expect(instructionsLink).toBeDefined();
+    expect(instructionsLink.getAttribute("href")).toBe("http://kraken.ukko.la");
+
+    cleanup();
+    vi.doUnmock("react-i18next");
   });
 });
